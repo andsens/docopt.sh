@@ -1,11 +1,4 @@
-"""Pythonic command-line interface parser that will make you smile.
-
- * http://docopt.org
- * Repository and issue-tracker: https://github.com/docopt/docopt
- * Licensed under terms of MIT license (see LICENSE-MIT)
- * Copyright (c) 2013 Vladimir Keleshev, vladimir@keleshev.com
-
-"""
+#!/usr/bin/env python3
 import sys
 import re
 
@@ -110,23 +103,68 @@ class LeafPattern(Pattern):
         return [self] if not types or type(self) in types else []
 
     def match(self, left, collected=None):
+    #   local left=(${p_left[@]})
+    #   if [[ $p_collected == false ]]; then
+    #       local collected=()
+    #   else
+    #       local collected=(${p_collected[@]})
+    #   fi
         collected = [] if collected is None else collected
+    #   $1
         pos, match = self.single_match(left)
+    #   pos=$r_pos
+    #   match=$r_match
+    #   if [[ $match == false ]]; then
         if match is None:
+    #       r_match=false
+    #       r_left=(${left[@]})
+    #       r_collected=(${collected[@]})
+    #       return
             return False, left, collected
+    #   left_=(${left[@]:0:$pos})
+    #   left_+=(${left[@]:((pos+1))})
         left_ = left[:pos] + left[pos + 1:]
+    #   for a in "${collected[@]}"; do
+    #       if [[ ??? == $2 ]]; then
+    #           same_name=???
+    #           break
+    #       fi
+    #   done
         same_name = [a for a in collected if a.name == self.name]
+    #   if ???
         if type(self.value) in (int, list):
+    #   if ???
             if type(self.value) is int:
+    #           increment=1
                 increment = 1
+    #       else
             else:
+    #           ???
                 increment = ([match.value] if type(match.value) is str
                              else match.value)
+    #       if [[ -z $same_name ]]; then
             if not same_name:
+    #           ??? = increment
                 match.value = increment
+    #           r_match=true
+    #           r_left=(${left_[@]})
+    #           r_collected=(${r_collected[@]})
+    #           r_collected+=(match???)
+    #           return
                 return True, left_, collected + [match]
+    #       same_name???=((same_name??? + increment))
             same_name[0].value += increment
+    #       r_match=true
+    #       r_left=(${left_[@]})
+    #       r_collected=(${r_collected[@]})
+    #       r_collected[???]=same_name
+    #       return
             return True, left_, collected
+    #   r_match=true
+    #   r_left=(${left_[@]})
+    #   r_collected=(${r_collected[@]})
+    #   r_collected+=(match???)
+    #   return
         return True, left_, collected + [match]
 
 
@@ -150,9 +188,19 @@ class BranchPattern(Pattern):
 class Argument(LeafPattern):
 
     def single_match(self, left):
+    #   local left=(${p_left[@]})
+    #   pos=0
+    #   for l in "${left[@]}"; do
         for n, pattern in enumerate(left):
+    #       ???
             if type(pattern) is Argument:
+    #               r_pos=$pos
+    #               r_res=$?????
+    #               return
                 return n, Argument(self.name, pattern.value)
+    #   r_pos=false
+    #   r_res=false
+    #   return
         return None, None
 
     @classmethod
@@ -167,13 +215,27 @@ class Command(Argument):
     def __init__(self, name, value=False):
         self.name, self.value = name, value
 
+    # command() {
     def single_match(self, left):
+    #   local left=(${p_left[@]})
+    #   pos=0
+    #   for l in "${left[@]}"; do
         for n, pattern in enumerate(left):
+    #       ???
             if type(pattern) is Argument:
+    #           if [[ ??? == $1 ]]; then
                 if pattern.value == self.name:
+    #               r_pos=$pos
+    #               r_res=$?????
+    #               return
                     return n, Command(self.name, True)
+    #           else
                 else:
+    #               break
                     break
+    #   r_pos=false
+    #   r_res=false
+    #   return
         return None, None
 
 
@@ -201,10 +263,21 @@ class Option(LeafPattern):
             value = matched[0] if matched else None
         return class_(short, long, argcount, value)
 
+    # option() {
     def single_match(self, left):
+    #   local left=(${p_left[@]})
+    #   pos=0
+    #   for l in "${left[@]}"; do
         for n, pattern in enumerate(left):
+    #       if [[ $1 == $l ]]; then
             if self.name == pattern.name:
+    #           r_pos=$pos
+    #           r_res=$?????
+    #           return
                 return n, pattern
+    #   r_pos=false
+    #   r_res=false
+    #   return
         return None, None
 
     @property
@@ -218,23 +291,69 @@ class Option(LeafPattern):
 
 class Required(BranchPattern):
 
+    # required() {
     def match(self, left, collected=None):
+    #   local left=(${p_left[@]})
+    #   if [[ $p_collected == false ]]; then
+    #       local collected=()
+    #   else
+    #       local collected=(${p_collected[@]})
+    #   fi
         collected = [] if collected is None else collected
+    #   local l=(${left[@]})
         l = left
+    #   local c=(${collected[@]})
         c = collected
+    #   local matched=true
+    #   for pattern in "${@[@]}"; do
         for pattern in self.children:
+    #       p_left=(${l[@]})
+    #       p_collected=(${c[@]})
+    #       $pattern
             matched, l, c = pattern.match(l, c)
+    #       matched=$r_matched
+    #       l=(${r_left[@]})
+    #       c=(${r_collected[@]})
+    #       if ! $r_matched; then
             if not matched:
+    #           r_matched=false
+    #           r_left=(${left[@]})
+    #           r_collected=(${collected[@]})
+    #           return
                 return False, left, collected
+    #       fi
+    #   done
+    #   r_matched=true
+    #   r_left=(${l[@]})
+    #   r_collected=(${c[@]})
+    #   return
         return True, l, c
 
 
 class Optional(BranchPattern):
 
+    # optional() {
     def match(self, left, collected=None):
+    #   local left=(${p_left[@]})
+    #   if [[ $p_collected == false ]]; then
+    #       local collected=()
+    #   else
+    #       local collected=(${p_collected[@]})
+    #   fi
         collected = [] if collected is None else collected
+    #   for pattern in "${@[@]}"; do
         for pattern in self.children:
+    #       p_left=(${left[@]})
+    #       p_collected=(${collected[@]})
+    #       $pattern
             m, left, collected = pattern.match(left, collected)
+    #       left=(${r_left[@]})
+    #       collected=(${r_collected[@]})
+    #   done
+    #   r_matched=true
+    #   r_left=(${left[@]})
+    #   r_collected=(${collected[@]})
+    #   return
         return True, left, collected
 
 
@@ -245,38 +364,117 @@ class OptionsShortcut(Optional):
 
 class OneOrMore(BranchPattern):
 
+    # oneormore() {
     def match(self, left, collected=None):
+    #   assert len(self.children) == 1
         assert len(self.children) == 1
+    #   if [[ $p_collected == false ]]; then
+    #       local collected=()
+    #   else
+    #       local collected=(${p_collected[@]})
+    #   fi
         collected = [] if collected is None else collected
+    #   local l=(${p_left[@]})
         l = left
+    #   local c=(${collected[@]})
         c = collected
+    #   local l_=false
         l_ = None
+    #   local matched=true
         matched = True
+    #   local times=0
         times = 0
+    #   while $matched; do
         while matched:
+    #       p_left=(${l[@]})
+    #       p_collected=(${c[@]})
+    #       $1
             # could it be that something didn't match but changed l or c?
             matched, l, c = self.children[0].match(l, c)
+    #       matched=$r_matched
+    #       l=(${r_left[@]})
+    #       c=(${r_collected[@]})
+    #       $matched && times=((times++))
             times += 1 if matched else 0
+    #       if [[ ${_l[@]} == ${l[@]} ]]; then
             if l_ == l:
+    #           break
                 break
+    #       fi
+    #       _l=${l[@]}
             l_ = l
+    #   done
+    #   if [[ $times -ge 1 ]]; then
         if times >= 1:
+    #       r_matched=true
+    #       r_left=${l[@]}
+    #       r_collected=${c[@]}
+    #       return
             return True, l, c
+    #   fi
+    #   r_matched=false
+    #   r_left=${left[@]}
+    #   r_collected=${collected[@]}
+    #   return
         return False, left, collected
 
 
 class Either(BranchPattern):
 
+    # either() {
     def match(self, left, collected=None):
+    #   local left=(${p_left[@]})
+    #   if [[ $p_collected == false ]]; then
+    #       local collected=()
+    #   else
+    #       local collected=(${p_collected[@]})
+    #   fi
         collected = [] if collected is None else collected
+    #   local outcomes=()
         outcomes = []
+    #   local min_m
+    #   local min_l
+    #   local min_c
+    #   for pattern in "${@[@]}"; do
         for pattern in self.children:
+    #       p_left=(${l[@]})
+    #       p_collected=(${c[@]})
+    #       $pattern
             matched, _, _ = outcome = pattern.match(left, collected)
+    #       if [[ $r_matched && -z $min_left || ${#r_left[@]} -lt ${#min_left[@]} ]]; then
             if matched:
+    #           min_matched=r_matched
+    #           min_left=(${r_left[@]})
+    #           min_collected=(${r_collected[@]})
                 outcomes.append(outcome)
+    #       fi
+    #   if [[ -n $min_left ]]; then
         if outcomes:
+    #       r_matched=min_matched
+    #       r_left=(${min_left[@]})
+    #       r_collected=(${min_collected[@]})
+    #       return
             return min(outcomes, key=lambda outcome: len(outcome[1]))
+    #   fi
+    #   r_matched=false
+    #   r_left=(${left[@]})
+    #   r_collected=(${collected[@]})
+    #   return
         return False, left, collected
+
+    def get_matcher():
+        '''
+        min_left
+        '''
+        for pattern in self.children:
+            pattern.get_matcher()
+            '''
+            if [[ $matched == true && -z $min_left || ${#left[@]} -lt ${#min_left[@]} ]]; then
+              min_matched=matched
+              min_left=(${left[@]})
+              min_collected=(${collected[@]})
+            fi
+            '''
 
 
 class Tokens(list):
@@ -300,67 +498,150 @@ class Tokens(list):
 
 def parse_long(tokens, options):
     """long ::= '--' chars [ ( ' ' | '=' ) chars ] ;"""
+    # long=${tokens%%=*}
+    # value=${tokens#*=}
+    # shift
     long, eq, value = tokens.move().partition('=')
     assert long.startswith('--')
+    # [[ $token == --* ]] || assert_fail
+    # if [[ $long = *=* ]]; then
+    #     eq='='
+    # else
+    #     eq=''
+    #     value=false
+    # fi
     value = None if eq == value == '' else value
+    # local similar=()
+    # for o in "${long_options[@]}"; do
+    #     [[ $o == $long ]] && similar+=$long
+    # done
     similar = [o for o in options if o.long == long]
+    # if [[ ${#similar[@]} -eq 0 ]]; then
     if tokens.error is DocoptExit and similar == []:  # if no exact match
+    #   for o in "${long_options[@]}"; do
+    #       [[ $long != '' && $o = "${long}*" ]] && similar+=$long
+    #   done
         similar = [o for o in options if o.long and o.long.startswith(long)]
+    # if [[ ${#similar[@]} -gt 1 ]]; then
     if len(similar) > 1:  # might be simply specified ambiguously 2+ times?
+    #   die "%s is not a unique prefix: %s?" "$long" "${similar[*]}"
         raise tokens.error('%s is not a unique prefix: %s?' %
                            (long, ', '.join(o.long for o in similar)))
+    # if [[ ${#similar[@]} -lt 1 ]]; then
     elif len(similar) < 1:
+    #   if [[ $eq == '=' ]]; then
+    #       argcount=1
+    #   else
+    #       argcount=0
+    #   fi
         argcount = 1 if eq == '=' else 0
         o = Option(None, long, argcount)
         options.append(o)
+    #   ???
         if tokens.error is DocoptExit:
+    #       if [[ argcount -eq 0 ]]; then
+    #           option_value[$long]=$value
+    #       else
+    #           option_value[$long]=true
+    #       fi
             o = Option(None, long, argcount, value if argcount else True)
     else:
         o = Option(similar[0].short, similar[0].long,
                    similar[0].argcount, similar[0].value)
+    #   if [[ $option_argcount -eq 0 ]]; then
         if o.argcount == 0:
+    #       if [[ $value != false ]]; then
             if value is not None:
+    #           die "%s must not have an argument" "$long"
                 raise tokens.error('%s must not have an argument' % o.long)
+    #       fi
+    #   else
         else:
+    #       if [[ $value == false ]]; then
             if value is None:
+    #           if [[ -z $1 || $1 == '--']]; then
                 if tokens.current() in [None, '--']:
+    #               die "%s requires argument" "$long"
                     raise tokens.error('%s requires argument' % o.long)
+    #           fi
                 value = tokens.move()
+    #           value=$1
+    #           shift
+    #       fi
+    #   fi
+    #   ???
         if tokens.error is DocoptExit:
+    #       if [[ -n $value ]]; then
+    #           option_value[$long]=value
+    #       else
+    #           option_value[$long]=true
+    #       fi
             o.value = value if value is not None else True
     return [o]
 
 
 def parse_shorts(tokens, options):
     """shorts ::= '-' ( chars )* [ [ ' ' ] chars ] ;"""
+    # local token=$1
+    # shift
     token = tokens.move()
+    # [[ $token == -* && $token != --* ]] || assert_fail
     assert token.startswith('-') and not token.startswith('--')
+    # local left=${token#-}
     left = token.lstrip('-')
+    # local parsed=()
     parsed = []
+    # while [[ -n $left ]]; do
     while left != '':
+    #   short="-${left:0:1}"
+    #   left="${left:1}"
         short, left = '-' + left[0], left[1:]
+    #   for o in "${short_options[@]}"; do
+    #       [[ $o == $short ]] && similar+=$short
+    #   done
         similar = [o for o in options if o.short == short]
+    #   if [[ ${#similar[@]} -gt 1 ]]; then
         if len(similar) > 1:
+    #       die "%s is specified ambiguously %d times" "$short" "${#similar[@]}"
             raise tokens.error('%s is specified ambiguously %d times' %
                                (short, len(similar)))
+    #   elif [[ ${#similar[@]} -lt 1 ]]; then
         elif len(similar) < 1:
             o = Option(short, None, 0)
             options.append(o)
+    #       ???
             if tokens.error is DocoptExit:
+    #           option_value[$short]=true
                 o = Option(short, None, 0, True)
         else:  # why copying is necessary here?
             o = Option(short, similar[0].long,
                        similar[0].argcount, similar[0].value)
+    #       value=false
             value = None
+    #       if [[ $options_argcount[$short] -neq 0 ]]; then
             if o.argcount != 0:
+    #           if [[ $left == '' ]]; then
                 if left == '':
+    #               if [[ -z $1 || $1 == '--' ]]; then
                     if tokens.current() in [None, '--']:
+    #                   die "%s requires argument" "$short"
                         raise tokens.error('%s requires argument' % short)
+    #               value=$1
+    #               shift
                     value = tokens.move()
+    #           else
                 else:
+    #               value=$left
                     value = left
+    #               left=''
                     left = ''
+    #       ???
             if tokens.error is DocoptExit:
+    #           if [[ -n $value ]]; then
+    #               option_value[$short]=value
+    #           else
+    #               option_value[$short]=true
+    #           fi
                 o.value = value if value is not None else True
         parsed.append(o)
     return parsed
@@ -434,17 +715,32 @@ def parse_argv(tokens, options, options_first=False):
         argv ::= [ long | shorts | argument ]* [ '--' [ argument ]* ] ;
 
     """
+    # local parsed=()
     parsed = []
+    # while [[ $# -gt 0 ]]; do
     while tokens.current() is not None:
+    #   if [[ $1 == "--" ]]; then
         if tokens.current() == '--':
+    #       parsed+=($@)
+    #       return
             return parsed + [Argument(None, v) for v in tokens]
+    #   elif [[ $1 = --* ]]; then
         elif tokens.current().startswith('--'):
+    #       parsed+=($(parse_long "$@" "$options"))
             parsed += parse_long(tokens, options)
+    #   elif [[ $1 == -* && $1 != "-" ]]; then
         elif tokens.current().startswith('-') and tokens.current() != '-':
+    #       parsed+=($(parse_shorts "$@" "$options"))
             parsed += parse_shorts(tokens, options)
+    #   elif $options_first; then
         elif options_first:
+    #       parsed+=($@)
+    #       return
             return parsed + [Argument(None, v) for v in tokens]
+    #   else
         else:
+    #       parsed+=($1)
+    #       shift
             parsed.append(Argument(None, tokens.move()))
     return parsed
 
@@ -488,68 +784,6 @@ class Dict(dict):
 
 
 def docopt(doc, argv=None, help=True, version=None, options_first=False):
-    """Parse `argv` based on command-line interface described in `doc`.
-
-    `docopt` creates your command-line interface based on its
-    description that you pass as `doc`. Such description can contain
-    --options, <positional-argument>, commands, which could be
-    [optional], (required), (mutually | exclusive) or repeated...
-
-    Parameters
-    ----------
-    doc : str
-        Description of your command-line interface.
-    argv : list of str, optional
-        Argument vector to be parsed. sys.argv[1:] is used if not
-        provided.
-    help : bool (default: True)
-        Set to False to disable automatic help on -h or --help
-        options.
-    version : any object
-        If passed, the object will be printed if --version is in
-        `argv`.
-    options_first : bool (default: False)
-        Set to True to require options precede positional arguments,
-        i.e. to forbid options and positional arguments intermix.
-
-    Returns
-    -------
-    args : dict
-        A dictionary, where keys are names of command-line elements
-        such as e.g. "--verbose" and "<path>", and values are the
-        parsed values of those elements.
-
-    Example
-    -------
-    >>> from docopt import docopt
-    >>> doc = '''
-    ... Usage:
-    ...     my_program tcp <host> <port> [--timeout=<seconds>]
-    ...     my_program serial <port> [--baud=<n>] [--timeout=<seconds>]
-    ...     my_program (-h | --help | --version)
-    ...
-    ... Options:
-    ...     -h, --help  Show this screen and exit.
-    ...     --baud=<n>  Baudrate [default: 9600]
-    ... '''
-    >>> argv = ['tcp', '127.0.0.1', '80', '--timeout', '30']
-    >>> docopt(doc, argv)
-    {'--baud': '9600',
-     '--help': False,
-     '--timeout': '30',
-     '--version': False,
-     '<host>': '127.0.0.1',
-     '<port>': '80',
-     'serial': False,
-     'tcp': True}
-
-    See also
-    --------
-    * For video introduction see http://docopt.org
-    * Full documentation is available in README.rst as well as online
-      at https://github.com/docopt/docopt#readme
-
-    """
     argv = sys.argv[1:] if argv is None else argv
 
     usage_sections = parse_section('usage:', doc)
@@ -561,21 +795,64 @@ def docopt(doc, argv=None, help=True, version=None, options_first=False):
 
     options = parse_defaults(doc)
     pattern = parse_pattern(formal_usage(DocoptExit.usage), options)
-    # [default] syntax for argument is disabled
-    #for a in pattern.flat(Argument):
-    #    same_name = [d for d in arguments if d.name == a.name]
-    #    if same_name:
-    #        a.value = same_name[0].value
     argv = parse_argv(Tokens(argv), list(options), options_first)
     pattern_options = set(pattern.flat(Option))
     for options_shortcut in pattern.flat(OptionsShortcut):
         doc_options = parse_defaults(doc)
         options_shortcut.children = list(set(doc_options) - pattern_options)
-        #if any_options:
-        #    options_shortcut.children += [Option(o.short, o.long, o.argcount)
-        #                    for o in argv if type(o) is Option]
+
     extras(help, version, argv, doc)
     matched, left, collected = pattern.fix().match(argv)
+
+
+    def out(node, idx=0):
+        if isinstance(node, LeafPattern):
+            # err(prefix + type(node).__name__ + ' (%s)' % node.name)
+            if isinstance(node, Argument):
+                name='arg_%d' % idx
+                print('%s() { argument %s }' % (name, node.name))
+            if isinstance(node, Command):
+                name='cmd_%d' % idx
+                print('%s() { command %s }' % (name, node.name))
+            if isinstance(node, Option):
+                name='opt_%d' % idx
+                print('%s() { option %s }' % (name, node.name))
+            return name, idx + 1
+        else:
+            # err(prefix + type(node).__name__)
+            if isinstance(node, BranchPattern):
+                names = []
+                for child in node.children:
+                    name, idx = out(child, idx)
+                    names.append(name)
+            if isinstance(node, Required):
+                name='req_%d' % idx
+                print('%s() { required %s }' % (name, ' '.join(names)))
+            if isinstance(node, Either):
+                name='either_%d' % idx
+                print('%s() { either %s }' % (name, ' '.join(names)))
+            if isinstance(node, Optional):
+                name='optional_%d' % idx
+                print('%s() { optional %s }' % (name, ' '.join(names)))
+            if isinstance(node, OneOrMore):
+                name='oneormore_%d' % idx
+                print('%s() { oneormore %s }' % (name, ' '.join(names)))
+            return name, idx + 1
+    out(pattern.fix())
     if matched and left == []:  # better error message if left?
+        # err(pattern.flat())
+        # err(collected)
+        # [print("%s=%s" % (bash_name(a.name), a.value)) for a in (pattern.flat() + collected)]
         return Dict((a.name, a.value) for a in (pattern.flat() + collected))
     raise DocoptExit()
+
+def bash_name(name):
+    name = name.replace('<', '_')
+    name = name.replace('>', '_')
+    name = name.replace('-', '_')
+    return name
+
+def err(msg):
+    sys.stderr.write(str(msg) + '\n')
+
+docopt(sys.stdin.read())
