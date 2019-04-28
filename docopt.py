@@ -188,6 +188,7 @@ class BranchPattern(Pattern):
 class Argument(LeafPattern):
 
     def single_match(self, left):
+    #   local name=$1
     #   local left=(${p_left[@]})
     #   pos=0
     #   for l in "${left[@]}"; do
@@ -195,9 +196,11 @@ class Argument(LeafPattern):
     #       ???
             if type(pattern) is Argument:
     #               r_pos=$pos
+    #               r_name=$?????
     #               r_res=$?????
     #               return
                 return n, Argument(self.name, pattern.value)
+    #       ((pos++))
     #   r_pos=false
     #   r_res=false
     #   return
@@ -496,156 +499,203 @@ class Tokens(list):
         return self[0] if len(self) else None
 
 
+# parse_long() {
 def parse_long(tokens, options):
     """long ::= '--' chars [ ( ' ' | '=' ) chars ] ;"""
-    # long=${tokens%%=*}
-    # value=${tokens#*=}
-    # shift
+#   token=${argv[0]}
+#   long=${token%%=*}
+#   value=${token#*=}
+#   argv=(${argv[@]:1})
     long, eq, value = tokens.move().partition('=')
     assert long.startswith('--')
-    # [[ $token == --* ]] || assert_fail
-    # if [[ $long = *=* ]]; then
-    #     eq='='
-    # else
-    #     eq=''
-    #     value=false
-    # fi
+#   [[ $token == --* ]] || assert_fail
+#   if [[ $long = *=* ]]; then
+#       eq='='
+#   else
+#       eq=''
+#       value=false
+#   fi
     value = None if eq == value == '' else value
-    # local similar=()
-    # for o in "${long_options[@]}"; do
-    #     [[ $o == $long ]] && similar+=$long
-    # done
+#   local i=0
+#   local similar=()
+#   local similar_idx=false
+#   for o in "${options_long[@]}"; do
+#       if [[ $o == $long ]]; then
+#           similar+=($long)
+#           [[ $similar_idx == false ]] && similar_idx=$i
+#       fi
+#       ((i++))
+#   done
     similar = [o for o in options if o.long == long]
-    # if [[ ${#similar[@]} -eq 0 ]]; then
+#   if [[ ${#similar[@]} -eq 0 ]]; then
     if tokens.error is DocoptExit and similar == []:  # if no exact match
-    #   for o in "${long_options[@]}"; do
-    #       [[ $long != '' && $o = "${long}*" ]] && similar+=$long
-    #   done
+#       for o in "${options_long[@]}"; do
+#           if [[ $o == $long* ]]; then
+#               similar+=($long)
+#               [[ $similar_idx == false ]] && similar_idx=$i
+#           fi
+#           ((i++))
+#       done
         similar = [o for o in options if o.long and o.long.startswith(long)]
-    # if [[ ${#similar[@]} -gt 1 ]]; then
+#   fi
+#   if [[ ${#similar[@]} -gt 1 ]]; then
     if len(similar) > 1:  # might be simply specified ambiguously 2+ times?
-    #   die "%s is not a unique prefix: %s?" "$long" "${similar[*]}"
+#       die "%s is not a unique prefix: %s?" "$long" "${similar[*]}"
         raise tokens.error('%s is not a unique prefix: %s?' %
                            (long, ', '.join(o.long for o in similar)))
-    # if [[ ${#similar[@]} -lt 1 ]]; then
+#   elif [[ ${#similar[@]} -lt 1 ]]; then
     elif len(similar) < 1:
-    #   if [[ $eq == '=' ]]; then
-    #       argcount=1
-    #   else
-    #       argcount=0
-    #   fi
+#       if [[ $eq == '=' ]]; then
+#           argcount=1
+#       else
+#           argcount=0
+#       fi
         argcount = 1 if eq == '=' else 0
         o = Option(None, long, argcount)
+#       options_short+=('')
+#       options_long+=($long)
+#       options_argcount+=($argcount)
+#       options_value+=(false)
         options.append(o)
-    #   ???
         if tokens.error is DocoptExit:
-    #       if [[ argcount -eq 0 ]]; then
-    #           option_value[$long]=$value
-    #       else
-    #           option_value[$long]=true
-    #       fi
             o = Option(None, long, argcount, value if argcount else True)
+#       parsed_options_short+=('')
+#       parsed_options_long+=($long)
+#       parsed_options_argcount+=($argcount)
+#       if [[ argcount -eq 0 ]]; then
+#           parsed_options_value[$long]=$value
+#       else
+#           parsed_options_value[$long]=true
+#       fi
+#       parsed_types+=('o')
+#   else
     else:
         o = Option(similar[0].short, similar[0].long,
                    similar[0].argcount, similar[0].value)
-    #   if [[ $option_argcount -eq 0 ]]; then
+#       if [[ $options_argcount -eq 0 ]]; then
         if o.argcount == 0:
-    #       if [[ $value != false ]]; then
+#           if [[ $value != false ]]; then
             if value is not None:
-    #           die "%s must not have an argument" "$long"
+#               die "%s must not have an argument" "$long"
                 raise tokens.error('%s must not have an argument' % o.long)
-    #       fi
-    #   else
+#           fi
+#       else
         else:
-    #       if [[ $value == false ]]; then
+#           if [[ $value == false ]]; then
             if value is None:
-    #           if [[ -z $1 || $1 == '--']]; then
+#               if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
                 if tokens.current() in [None, '--']:
-    #               die "%s requires argument" "$long"
+#                   die "%s requires argument" "$long"
                     raise tokens.error('%s requires argument' % o.long)
-    #           fi
+#               fi
                 value = tokens.move()
-    #           value=$1
-    #           shift
-    #       fi
-    #   fi
-    #   ???
+#               value=${argv[0]}
+#               argv=(${argv[@]:1})
+#           fi
+#       fi
         if tokens.error is DocoptExit:
-    #       if [[ -n $value ]]; then
-    #           option_value[$long]=value
-    #       else
-    #           option_value[$long]=true
-    #       fi
+#       if [[ $value == false ]]; then
+#           value=true
             o.value = value if value is not None else True
+#       fi
+#   fi
+#   parsed_options_short+=(${options_short[$similar_idx]})
+#   parsed_options_long+=(${options_long[$similar_idx]})
+#   parsed_options_argcount+=(${options_argcount[$similar_idx]})
+#   parsed_options_value+=($value)
+#   parsed_types+=('o')
     return [o]
+# }
 
 
+# parse_shorts() {
 def parse_shorts(tokens, options):
     """shorts ::= '-' ( chars )* [ [ ' ' ] chars ] ;"""
-    # local token=$1
-    # shift
+#   token=${argv[0]}
+#   argv=(${argv[@]:1})
     token = tokens.move()
-    # [[ $token == -* && $token != --* ]] || assert_fail
+#   [[ $token == -* && $token != --* ]] || assert_fail
     assert token.startswith('-') and not token.startswith('--')
-    # local left=${token#-}
+#   local left=${token#-}
     left = token.lstrip('-')
-    # local parsed=()
     parsed = []
-    # while [[ -n $left ]]; do
+#   while [[ -n $left ]]; do
     while left != '':
-    #   short="-${left:0:1}"
-    #   left="${left:1}"
+#       short="-${left:0:1}"
+#       left="${left:1}"
         short, left = '-' + left[0], left[1:]
-    #   for o in "${short_options[@]}"; do
-    #       [[ $o == $short ]] && similar+=$short
-    #   done
+#       local i=0
+#       local similar=()
+#       local similar_idx=false
+#       for o in "${options_short[@]}"; do
+#           if [[ $o == $short ]]; then
+#               similar+=($short)
+#               [[ $similar_idx == false ]] && similar_idx=$i
+#           fi
+#           ((i++))
+#       done
         similar = [o for o in options if o.short == short]
-    #   if [[ ${#similar[@]} -gt 1 ]]; then
+#       if [[ ${#similar[@]} -gt 1 ]]; then
         if len(similar) > 1:
-    #       die "%s is specified ambiguously %d times" "$short" "${#similar[@]}"
+#           die "%s is specified ambiguously %d times" "$short" "${#similar[@]}"
             raise tokens.error('%s is specified ambiguously %d times' %
                                (short, len(similar)))
-    #   elif [[ ${#similar[@]} -lt 1 ]]; then
+#       elif [[ ${#similar[@]} -lt 1 ]]; then
         elif len(similar) < 1:
             o = Option(short, None, 0)
             options.append(o)
-    #       ???
+#           options_short+=($short)
+#           options_long+=('')
+#           options_argcount+=(0)
+#           options_value+=(false)
             if tokens.error is DocoptExit:
-    #           option_value[$short]=true
+#           parsed_options_short+=($short)
+#           parsed_options_long+=('')
+#           parsed_options_argcount+=(0)
+#           parsed_options_value+=(true)
+#           parsed_types+=('o')
                 o = Option(short, None, 0, True)
+#       else
         else:  # why copying is necessary here?
             o = Option(short, similar[0].long,
                        similar[0].argcount, similar[0].value)
-    #       value=false
+#           value=false
             value = None
-    #       if [[ $options_argcount[$short] -neq 0 ]]; then
+#           if [[ ${options_argcount[$similar_idx]} -neq 0 ]]; then
             if o.argcount != 0:
-    #           if [[ $left == '' ]]; then
+#               if [[ $left == '' ]]; then
                 if left == '':
-    #               if [[ -z $1 || $1 == '--' ]]; then
+#                   if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
                     if tokens.current() in [None, '--']:
-    #                   die "%s requires argument" "$short"
+#                       die "%s requires argument" "$short"
                         raise tokens.error('%s requires argument' % short)
-    #               value=$1
-    #               shift
+#                   fi
+#                   value=${argv[0]}
+#                   argv=(${argv[@]:1})
                     value = tokens.move()
-    #           else
+#               else
                 else:
-    #               value=$left
+#                   value=$left
                     value = left
-    #               left=''
+#                   left=''
                     left = ''
-    #       ???
+#               fi
+#           fi
             if tokens.error is DocoptExit:
-    #           if [[ -n $value ]]; then
-    #               option_value[$short]=value
-    #           else
-    #               option_value[$short]=true
-    #           fi
-                o.value = value if value is not None else True
+#           if [[ $value == false ]]; then
+                  o.value = value if value is not None else True
+#                 option_value[$short]=true
+#           fi
+#       fi
+#       parsed_options_short+=($short)
+#       parsed_options_long+=(${options_long[$similar_idx]})
+#       parsed_options_argcount+=(${options_argcount[$similar_idx]})
+#       parsed_options_value+=($value)
+#       parsed_types+=('o')
         parsed.append(o)
+#   done
     return parsed
-
+# }
 
 def parse_pattern(source, options):
     tokens = Tokens.from_pattern(source)
@@ -705,7 +755,7 @@ def parse_atom(tokens, options):
     else:
         return [Command(tokens.move())]
 
-
+# parse_argv() {
 def parse_argv(tokens, options, options_first=False):
     """Parse command-line argument vector.
 
@@ -715,34 +765,43 @@ def parse_argv(tokens, options, options_first=False):
         argv ::= [ long | shorts | argument ]* [ '--' [ argument ]* ] ;
 
     """
-    # local parsed=()
     parsed = []
-    # while [[ $# -gt 0 ]]; do
+#   while [[ ${#argv[@]} -gt 0 ]]; do
     while tokens.current() is not None:
-    #   if [[ $1 == "--" ]]; then
+#       if [[ ${argv[0]} == "--" ]]; then
         if tokens.current() == '--':
-    #       parsed+=($@)
-    #       return
+#           for arg in ${argv[@]}; do
+#               parsed_arguments+=($arg)
+#               parsed_types+=('a')
+#           done
+#           return
             return parsed + [Argument(None, v) for v in tokens]
-    #   elif [[ $1 = --* ]]; then
+#       elif [[ ${argv[0]} = --* ]]; then
         elif tokens.current().startswith('--'):
-    #       parsed+=($(parse_long "$@" "$options"))
+#           parse_long
             parsed += parse_long(tokens, options)
-    #   elif [[ $1 == -* && $1 != "-" ]]; then
+#       elif [[ ${argv[0]} == -* && ${argv[0]} != "-" ]]; then
         elif tokens.current().startswith('-') and tokens.current() != '-':
-    #       parsed+=($(parse_shorts "$@" "$options"))
+#           parse_shorts
             parsed += parse_shorts(tokens, options)
-    #   elif $options_first; then
+#       elif $options_first; then
         elif options_first:
-    #       parsed+=($@)
-    #       return
+#           for arg in ${argv[@]}; do
+#               parsed_arguments+=($arg)
+#               parsed_types+=('a')
+#           done
+#           return
             return parsed + [Argument(None, v) for v in tokens]
-    #   else
+#       else
         else:
-    #       parsed+=($1)
-    #       shift
+#           parsed_arguments+=($arg)
+#           parsed_types+=('a')
+#           argv=(${argv[@]:1})
             parsed.append(Argument(None, tokens.move()))
+#       fi
+#   done
     return parsed
+# }
 
 
 def parse_defaults(doc):
@@ -795,28 +854,54 @@ def docopt(doc, argv=None, help=True, version=None, options_first=False):
 
     options = parse_defaults(doc)
     pattern = parse_pattern(formal_usage(DocoptExit.usage), options)
-    argv = parse_argv(Tokens(argv), list(options), options_first)
     pattern_options = set(pattern.flat(Option))
     for options_shortcut in pattern.flat(OptionsShortcut):
         doc_options = parse_defaults(doc)
         options_shortcut.children = list(set(doc_options) - pattern_options)
 
+    print('options_short=(%s)' % ' '.join(["''" if o.short is None else o.short for o in options]))
+    print('options_long=(%s)' % ' '.join(["''" if o.long is None else o.long for o in options]))
+    print('options_argcount=(%s)' % ' '.join([str(o.argcount) for o in options]))
+    print('options_value=(%s)' % ' '.join([str(o.value).lower() if type(o.value) is bool else o.value for o in options]))
+
+#   parsed_options_short=()
+#   parsed_options_long=()
+#   parsed_options_argcount=()
+#   parsed_options_value=()
+#   parsed_arguments=()
+#   parsed_types=()
+#   argv=${@[@]}
+#   parse_argv
+    argv = parse_argv(Tokens(argv), list(options), options_first)
+    # err(argv)
     extras(help, version, argv, doc)
     matched, left, collected = pattern.fix().match(argv)
-
 
     def out(node, idx=0):
         if isinstance(node, LeafPattern):
             # err(prefix + type(node).__name__ + ' (%s)' % node.name)
             if isinstance(node, Argument):
                 name='arg_%d' % idx
-                print('%s() { argument %s }' % (name, node.name))
+                if type(node.default) is list:
+                    print('%s(){ arguments "%s" "%s";}' % (name, node.name, node.default))
+                else:
+                    print('%s(){ argument "%s" "%s";}' % (name, node.name, node.default))
             if isinstance(node, Command):
                 name='cmd_%d' % idx
-                print('%s() { command %s }' % (name, node.name))
+                if type(node.default) is int:
+                    print('%s(){ commands "%s" "%s";}' % (name, node.name, node.default))
+                else:
+                    print('%s(){ command "%s" "%s";}' % (name, node.name, node.default))
             if isinstance(node, Option):
                 name='opt_%d' % idx
-                print('%s() { option %s }' % (name, node.name))
+                if type(node.default) is bool:
+                    print('%s(){ switch "%s" "%s";}' % (name, node.name, node.default))
+                elif type(node.default) is int:
+                    print('%s(){ switches "%s" "%s";}' % (name, node.name, node.default))
+                elif type(node.default) is list:
+                    print('%s(){ options "%s" "%s";}' % (name, node.name, node.default))
+                else:
+                    print('%s(){ option "%s" "%s";}' % (name, node.name, node.default))
             return name, idx + 1
         else:
             # err(prefix + type(node).__name__)
@@ -827,24 +912,24 @@ def docopt(doc, argv=None, help=True, version=None, options_first=False):
                     names.append(name)
             if isinstance(node, Required):
                 name='req_%d' % idx
-                print('%s() { required %s }' % (name, ' '.join(names)))
+                print('%s(){ required %s;}' % (name, ' '.join(names)))
             if isinstance(node, Either):
                 name='either_%d' % idx
-                print('%s() { either %s }' % (name, ' '.join(names)))
+                print('%s(){ either %s;}' % (name, ' '.join(names)))
             if isinstance(node, Optional):
                 name='optional_%d' % idx
-                print('%s() { optional %s }' % (name, ' '.join(names)))
+                print('%s(){ optional %s;}' % (name, ' '.join(names)))
             if isinstance(node, OneOrMore):
                 name='oneormore_%d' % idx
-                print('%s() { oneormore %s }' % (name, ' '.join(names)))
+                print('%s(){ oneormore %s;}' % (name, ' '.join(names)))
             return name, idx + 1
-    out(pattern.fix())
+    # out(pattern.fix())
     if matched and left == []:  # better error message if left?
         # err(pattern.flat())
         # err(collected)
         # [print("%s=%s" % (bash_name(a.name), a.value)) for a in (pattern.flat() + collected)]
         return Dict((a.name, a.value) for a in (pattern.flat() + collected))
-    raise DocoptExit()
+    # raise DocoptExit()
 
 def bash_name(name):
     name = name.replace('<', '_')

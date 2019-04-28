@@ -1,0 +1,38 @@
+Required
+  Either
+    Required
+      Command (ship)
+      Command (new)
+      OneOrMore
+        Argument (<name>)
+    Required
+      Command (ship)
+      Argument (<name>)
+      Command (move)
+      Argument (<x>)
+      Argument (<y>)
+      Optional
+        Option (--speed)
+    Required
+      Command (ship)
+      Command (shoot)
+      Argument (<x>)
+      Argument (<y>)
+    Required
+      Command (mine)
+      Required
+        Either
+          Command (set)
+          Command (remove)
+      Argument (<x>)
+      Argument (<y>)
+      Optional
+        Either
+          Option (--moored)
+          Option (--drifting)
+    Required
+      Either
+        Option (--help)
+        Option (--help)
+    Required
+      Option (--version)
