@@ -102,71 +102,74 @@ class LeafPattern(Pattern):
     def flat(self, *types):
         return [self] if not types or type(self) in types else []
 
+#   leaf() {
     def match(self, left, collected=None):
-    #   local left=(${p_left[@]})
-    #   if [[ $p_collected == false ]]; then
-    #       local collected=()
-    #   else
-    #       local collected=(${p_collected[@]})
-    #   fi
+#       local left=(${p_left[@]})
+#       if [[ $p_collected == false ]]; then
+#           local collected=()
+#       else
+#           local collected=(${p_collected[@]})
+#       fi
         collected = [] if collected is None else collected
-    #   $1
+#       $1
         pos, match = self.single_match(left)
-    #   pos=$r_pos
-    #   match=$r_match
-    #   if [[ $match == false ]]; then
+#       pos=$r_pos
+#       match=$r_match
+#       if [[ $match == false ]]; then
         if match is None:
-    #       r_match=false
-    #       r_left=(${left[@]})
-    #       r_collected=(${collected[@]})
-    #       return
+#           r_match=false
+#           r_left=(${left[@]})
+#           r_collected=(${collected[@]})
+#           return
             return False, left, collected
-    #   left_=(${left[@]:0:$pos})
-    #   left_+=(${left[@]:((pos+1))})
+#       left_=(${left[@]:0:$pos})
+#       left_+=(${left[@]:((pos+1))})
         left_ = left[:pos] + left[pos + 1:]
-    #   for a in "${collected[@]}"; do
-    #       if [[ ??? == $2 ]]; then
-    #           same_name=???
-    #           break
-    #       fi
-    #   done
+#       for a in "${collected[@]}"; do
+#           if [[ ??? == $2 ]]; then
+#               same_name=???
+#               break
+#           fi
+#       done
         same_name = [a for a in collected if a.name == self.name]
-    #   if ???
+#       if ???
         if type(self.value) in (int, list):
-    #   if ???
+#       if ???
             if type(self.value) is int:
-    #           increment=1
+#               increment=1
                 increment = 1
-    #       else
+#           else
             else:
-    #           ???
+#               ???
                 increment = ([match.value] if type(match.value) is str
                              else match.value)
-    #       if [[ -z $same_name ]]; then
+#           if [[ -z $same_name ]]; then
             if not same_name:
-    #           ??? = increment
+#               ??? = increment
                 match.value = increment
-    #           r_match=true
-    #           r_left=(${left_[@]})
-    #           r_collected=(${r_collected[@]})
-    #           r_collected+=(match???)
-    #           return
+#               r_match=true
+#               r_left=(${left_[@]})
+#               r_collected=(${r_collected[@]})
+#               r_collected+=(match???)
+#               return
                 return True, left_, collected + [match]
-    #       same_name???=((same_name??? + increment))
+#           fi
+#           same_name???=((same_name??? + increment))
             same_name[0].value += increment
-    #       r_match=true
-    #       r_left=(${left_[@]})
-    #       r_collected=(${r_collected[@]})
-    #       r_collected[???]=same_name
-    #       return
+#           r_match=true
+#           r_left=(${left_[@]})
+#           r_collected=(${r_collected[@]})
+#           r_collected[???]=same_name
+#           return
             return True, left_, collected
-    #   r_match=true
-    #   r_left=(${left_[@]})
-    #   r_collected=(${r_collected[@]})
-    #   r_collected+=(match???)
-    #   return
+#       fi
+#       r_match=true
+#       r_left=(${left_[@]})
+#       r_collected=(${r_collected[@]})
+#       r_collected+=(match???)
+#       return
         return True, left_, collected + [match]
-
+#   }
 
 class BranchPattern(Pattern):
 
@@ -184,27 +187,55 @@ class BranchPattern(Pattern):
             return [self]
         return sum([child.flat(*types) for child in self.children], [])
 
+    def get_node_functions(self, counters={}):
+        counters[self.function_prefix] = counters.get(self.function_prefix, 0) + 1
+        fn_name = '%s_%d' % (self.function_prefix, counters[self.function_prefix])
+        functions = []
+        function_names = []
+        helpers = set()
+        for child in self.children:
+            if isinstance(child, BranchPattern):
+                c_fn_name, c_fns, c_helpers, counters = child.get_node_functions(counters)
+                functions.extend(c_fns)
+                helpers.update(c_helpers)
+            else:
+                counters[child.function_prefix] = counters.get(child.function_prefix, 0) + 1
+                c_fn_name = '%s_%d' % (child.function_prefix, counters[child.function_prefix])
+                c_helper, c_args = child.get_helper_invocation()
+                c_fn = '%s(){ %s "%s";}' % (c_fn_name, c_helper, '" "'.join(c_args))
+                functions.append(c_fn)
+                helpers.add(c_helper)
+            function_names.append(c_fn_name)
+        functions.insert(0, '%s(){ %s %s;}' % (fn_name, self.helper_name, ' '.join(function_names)))
+        return fn_name, functions, helpers, counters
+
 
 class Argument(LeafPattern):
 
+    function_prefix = 'arg'
+
+#   argument()
     def single_match(self, left):
-    #   local name=$1
-    #   local left=(${p_left[@]})
-    #   pos=0
-    #   for l in "${left[@]}"; do
+#       local name=$1
+#       local left=(${p_left[@]})
+#       pos=0
+#       for l in "${left[@]}"; do
         for n, pattern in enumerate(left):
-    #       ???
+#           ???
             if type(pattern) is Argument:
-    #               r_pos=$pos
-    #               r_name=$?????
-    #               r_res=$?????
-    #               return
+#                   r_pos=$pos
+#                   r_name=$?????
+#                   r_res=$?????
+#                   return
                 return n, Argument(self.name, pattern.value)
-    #       ((pos++))
-    #   r_pos=false
-    #   r_res=false
-    #   return
+#           ((pos++))
+#           fi
+#       done
+#       r_pos=false
+#       r_res=false
+#       return
         return None, None
+#   }
 
     @classmethod
     def parse(class_, source):
@@ -212,37 +243,59 @@ class Argument(LeafPattern):
         value = re.findall('\[default: (.*)\]', source, flags=re.I)
         return class_(name, value[0] if value else None)
 
+    def get_helper_invocation(self):
+        if type(self.value) is list:
+            return 'arguments', self.value
+        elif self.value is bool:
+            return 'arguments', ['true' if self.value else 'false']
+        elif self.value is None:
+            return 'arguments', []
+        else:
+            return 'argument', [self.value]
+
 
 class Command(Argument):
+
+    function_prefix = 'cmd'
 
     def __init__(self, name, value=False):
         self.name, self.value = name, value
 
-    # command() {
+#   command() {
     def single_match(self, left):
-    #   local left=(${p_left[@]})
-    #   pos=0
-    #   for l in "${left[@]}"; do
+#       local left=(${p_left[@]})
+#       pos=0
+#       for l in "${left[@]}"; do
         for n, pattern in enumerate(left):
-    #       ???
+#           ???
             if type(pattern) is Argument:
-    #           if [[ ??? == $1 ]]; then
+#               if [[ ??? == $1 ]]; then
                 if pattern.value == self.name:
-    #               r_pos=$pos
-    #               r_res=$?????
-    #               return
+#                   r_pos=$pos
+#                   r_res=$?????
+#                   return
                     return n, Command(self.name, True)
-    #           else
+#               else
                 else:
-    #               break
+#                   break
                     break
-    #   r_pos=false
-    #   r_res=false
-    #   return
+#          fi
+#       done
+#       r_pos=false
+#       r_res=false
+#       return
         return None, None
+#   }
 
+    def get_helper_invocation(self):
+        if type(self.value) is int:
+            return 'commands', [str(self.value)]
+        else:
+            return 'command', ['true' if self.value else 'false']
 
 class Option(LeafPattern):
+
+    function_prefix = 'opt'
 
     def __init__(self, short=None, long=None, argcount=0, value=False):
         assert argcount in (0, 1)
@@ -266,22 +319,25 @@ class Option(LeafPattern):
             value = matched[0] if matched else None
         return class_(short, long, argcount, value)
 
-    # option() {
+#   option() {
     def single_match(self, left):
-    #   local left=(${p_left[@]})
-    #   pos=0
-    #   for l in "${left[@]}"; do
+#       local left=(${p_left[@]})
+#       pos=0
+#       for l in "${left[@]}"; do
         for n, pattern in enumerate(left):
-    #       if [[ $1 == $l ]]; then
+#           if [[ $1 == $l ]]; then
             if self.name == pattern.name:
-    #           r_pos=$pos
-    #           r_res=$?????
-    #           return
+#               r_pos=$pos
+#               r_res=$?????
+#               return
                 return n, pattern
-    #   r_pos=false
-    #   r_res=false
-    #   return
+#           fi
+#       done
+#       r_pos=false
+#       r_res=false
+#       return
         return None, None
+#   }
 
     @property
     def name(self):
@@ -291,74 +347,92 @@ class Option(LeafPattern):
         return 'Option(%r, %r, %r, %r)' % (self.short, self.long,
                                            self.argcount, self.value)
 
+    def get_helper_invocation(self):
+        if type(self.value) is bool:
+            return 'switch', ['true' if self.value else 'false']
+        elif type(self.value) is int:
+            return 'switches', [str(self.value)]
+        elif type(self.value) is list:
+            return 'options', self.value
+        elif self.value is None:
+            return 'options', []
+        else:
+            return 'option', [self.value]
+
 
 class Required(BranchPattern):
 
-    # required() {
-    def match(self, left, collected=None):
-    #   local left=(${p_left[@]})
-    #   if [[ $p_collected == false ]]; then
-    #       local collected=()
-    #   else
-    #       local collected=(${p_collected[@]})
-    #   fi
-        collected = [] if collected is None else collected
-    #   local l=(${left[@]})
-        l = left
-    #   local c=(${collected[@]})
-        c = collected
-    #   local matched=true
-    #   for pattern in "${@[@]}"; do
-        for pattern in self.children:
-    #       p_left=(${l[@]})
-    #       p_collected=(${c[@]})
-    #       $pattern
-            matched, l, c = pattern.match(l, c)
-    #       matched=$r_matched
-    #       l=(${r_left[@]})
-    #       c=(${r_collected[@]})
-    #       if ! $r_matched; then
-            if not matched:
-    #           r_matched=false
-    #           r_left=(${left[@]})
-    #           r_collected=(${collected[@]})
-    #           return
-                return False, left, collected
-    #       fi
-    #   done
-    #   r_matched=true
-    #   r_left=(${l[@]})
-    #   r_collected=(${c[@]})
-    #   return
-        return True, l, c
+    function_prefix = 'req'
+    helper_name = 'required'
 
+#   required() {
+    def match(self, left, collected=None):
+#       local left=(${p_left[@]})
+#       if [[ $p_collected == false ]]; then
+#           local collected=()
+#       else
+#           local collected=(${p_collected[@]})
+#       fi
+        collected = [] if collected is None else collected
+#       local l=(${left[@]})
+        l = left
+#       local c=(${collected[@]})
+        c = collected
+#       local matched=true
+#       for pattern in "${@[@]}"; do
+        for pattern in self.children:
+#           p_left=(${l[@]})
+#           p_collected=(${c[@]})
+#           $pattern
+            matched, l, c = pattern.match(l, c)
+#           matched=$r_matched
+#           l=(${r_left[@]})
+#           c=(${r_collected[@]})
+#           if ! $r_matched; then
+            if not matched:
+#               r_matched=false
+#               r_left=(${left[@]})
+#               r_collected=(${collected[@]})
+#               return
+                return False, left, collected
+#           fi
+#       done
+#       r_matched=true
+#       r_left=(${l[@]})
+#       r_collected=(${c[@]})
+#       return
+        return True, l, c
+#   }
 
 class Optional(BranchPattern):
 
-    # optional() {
-    def match(self, left, collected=None):
-    #   local left=(${p_left[@]})
-    #   if [[ $p_collected == false ]]; then
-    #       local collected=()
-    #   else
-    #       local collected=(${p_collected[@]})
-    #   fi
-        collected = [] if collected is None else collected
-    #   for pattern in "${@[@]}"; do
-        for pattern in self.children:
-    #       p_left=(${left[@]})
-    #       p_collected=(${collected[@]})
-    #       $pattern
-            m, left, collected = pattern.match(left, collected)
-    #       left=(${r_left[@]})
-    #       collected=(${r_collected[@]})
-    #   done
-    #   r_matched=true
-    #   r_left=(${left[@]})
-    #   r_collected=(${collected[@]})
-    #   return
-        return True, left, collected
+    function_prefix = 'optional'
+    helper_name = 'optional'
 
+#   optional() {
+    def match(self, left, collected=None):
+#       local left=(${p_left[@]})
+#       if [[ $p_collected == false ]]; then
+#           local collected=()
+#       else
+#           local collected=(${p_collected[@]})
+#       fi
+        collected = [] if collected is None else collected
+#       for pattern in "${@[@]}"; do
+        for pattern in self.children:
+#           p_left=(${left[@]})
+#           p_collected=(${collected[@]})
+#           $pattern
+            m, left, collected = pattern.match(left, collected)
+#           left=(${r_left[@]})
+#           collected=(${r_collected[@]})
+#       done
+#       r_matched=true
+#       r_left=(${left[@]})
+#       r_collected=(${collected[@]})
+#       return
+        return True, left, collected
+#   }
 
 class OptionsShortcut(Optional):
 
@@ -367,117 +441,111 @@ class OptionsShortcut(Optional):
 
 class OneOrMore(BranchPattern):
 
-    # oneormore() {
+    function_prefix = 'oneormore'
+    helper_name = 'oneormore'
+
+#   oneormore() {
     def match(self, left, collected=None):
-    #   assert len(self.children) == 1
+#       assert len(self.children) == 1
         assert len(self.children) == 1
-    #   if [[ $p_collected == false ]]; then
-    #       local collected=()
-    #   else
-    #       local collected=(${p_collected[@]})
-    #   fi
+#       if [[ $p_collected == false ]]; then
+#           local collected=()
+#       else
+#           local collected=(${p_collected[@]})
+#       fi
         collected = [] if collected is None else collected
-    #   local l=(${p_left[@]})
+#       local l=(${p_left[@]})
         l = left
-    #   local c=(${collected[@]})
+#       local c=(${collected[@]})
         c = collected
-    #   local l_=false
+#       local l_=false
         l_ = None
-    #   local matched=true
+#       local matched=true
         matched = True
-    #   local times=0
+#       local times=0
         times = 0
-    #   while $matched; do
+#       while $matched; do
         while matched:
-    #       p_left=(${l[@]})
-    #       p_collected=(${c[@]})
-    #       $1
+#           p_left=(${l[@]})
+#           p_collected=(${c[@]})
+#           $1
             # could it be that something didn't match but changed l or c?
             matched, l, c = self.children[0].match(l, c)
-    #       matched=$r_matched
-    #       l=(${r_left[@]})
-    #       c=(${r_collected[@]})
-    #       $matched && times=((times++))
+#           matched=$r_matched
+#           l=(${r_left[@]})
+#           c=(${r_collected[@]})
+#           $matched && times=((times++))
             times += 1 if matched else 0
-    #       if [[ ${_l[@]} == ${l[@]} ]]; then
+#           if [[ ${_l[@]} == ${l[@]} ]]; then
             if l_ == l:
-    #           break
+#               break
                 break
-    #       fi
-    #       _l=${l[@]}
+#           fi
+#           _l=${l[@]}
             l_ = l
-    #   done
-    #   if [[ $times -ge 1 ]]; then
+#       done
+#       if [[ $times -ge 1 ]]; then
         if times >= 1:
-    #       r_matched=true
-    #       r_left=${l[@]}
-    #       r_collected=${c[@]}
-    #       return
+#           r_matched=true
+#           r_left=${l[@]}
+#           r_collected=${c[@]}
+#           return
             return True, l, c
-    #   fi
-    #   r_matched=false
-    #   r_left=${left[@]}
-    #   r_collected=${collected[@]}
-    #   return
+#       fi
+#       r_matched=false
+#       r_left=${left[@]}
+#       r_collected=${collected[@]}
+#       return
         return False, left, collected
-
+#   }
 
 class Either(BranchPattern):
 
-    # either() {
-    def match(self, left, collected=None):
-    #   local left=(${p_left[@]})
-    #   if [[ $p_collected == false ]]; then
-    #       local collected=()
-    #   else
-    #       local collected=(${p_collected[@]})
-    #   fi
-        collected = [] if collected is None else collected
-    #   local outcomes=()
-        outcomes = []
-    #   local min_m
-    #   local min_l
-    #   local min_c
-    #   for pattern in "${@[@]}"; do
-        for pattern in self.children:
-    #       p_left=(${l[@]})
-    #       p_collected=(${c[@]})
-    #       $pattern
-            matched, _, _ = outcome = pattern.match(left, collected)
-    #       if [[ $r_matched && -z $min_left || ${#r_left[@]} -lt ${#min_left[@]} ]]; then
-            if matched:
-    #           min_matched=r_matched
-    #           min_left=(${r_left[@]})
-    #           min_collected=(${r_collected[@]})
-                outcomes.append(outcome)
-    #       fi
-    #   if [[ -n $min_left ]]; then
-        if outcomes:
-    #       r_matched=min_matched
-    #       r_left=(${min_left[@]})
-    #       r_collected=(${min_collected[@]})
-    #       return
-            return min(outcomes, key=lambda outcome: len(outcome[1]))
-    #   fi
-    #   r_matched=false
-    #   r_left=(${left[@]})
-    #   r_collected=(${collected[@]})
-    #   return
-        return False, left, collected
+    function_prefix = 'either'
+    helper_name = 'either'
 
-    def get_matcher():
-        '''
-        min_left
-        '''
+#   either() {
+    def match(self, left, collected=None):
+#       local left=(${p_left[@]})
+#       if [[ $p_collected == false ]]; then
+#           local collected=()
+#       else
+#           local collected=(${p_collected[@]})
+#       fi
+        collected = [] if collected is None else collected
+#       local outcomes=()
+        outcomes = []
+#       local min_m
+#       local min_l
+#       local min_c
+#       for pattern in "${@[@]}"; do
         for pattern in self.children:
-            pattern.get_matcher()
-            '''
-            if [[ $matched == true && -z $min_left || ${#left[@]} -lt ${#min_left[@]} ]]; then
-              min_matched=matched
-              min_left=(${left[@]})
-              min_collected=(${collected[@]})
-            fi
-            '''
+#           p_left=(${l[@]})
+#           p_collected=(${c[@]})
+#           $pattern
+            matched, _, _ = outcome = pattern.match(left, collected)
+#           if [[ $r_matched && -z $min_left || ${#r_left[@]} -lt ${#min_left[@]} ]]; then
+            if matched:
+#               min_matched=r_matched
+#               min_left=(${r_left[@]})
+#               min_collected=(${r_collected[@]})
+                outcomes.append(outcome)
+#           fi
+#       done
+#       if [[ -n $min_left ]]; then
+        if outcomes:
+#           r_matched=min_matched
+#           r_left=(${min_left[@]})
+#           r_collected=(${min_collected[@]})
+#           return
+            return min(outcomes, key=lambda outcome: len(outcome[1]))
+#       fi
+#       r_matched=false
+#       r_left=(${left[@]})
+#       r_collected=(${collected[@]})
+#       return
+        return False, left, collected
+#   }
 
 
 class Tokens(list):
@@ -873,63 +941,43 @@ def docopt(doc, argv=None, help=True, version=None, options_first=False):
 #   argv=${@[@]}
 #   parse_argv
     argv = parse_argv(Tokens(argv), list(options), options_first)
-    # err(argv)
     extras(help, version, argv, doc)
     matched, left, collected = pattern.fix().match(argv)
-
-    def out(node, idx=0):
-        if isinstance(node, LeafPattern):
-            # err(prefix + type(node).__name__ + ' (%s)' % node.name)
-            if isinstance(node, Argument):
-                name='arg_%d' % idx
-                if type(node.default) is list:
-                    print('%s(){ arguments "%s" "%s";}' % (name, node.name, node.default))
-                else:
-                    print('%s(){ argument "%s" "%s";}' % (name, node.name, node.default))
-            if isinstance(node, Command):
-                name='cmd_%d' % idx
-                if type(node.default) is int:
-                    print('%s(){ commands "%s" "%s";}' % (name, node.name, node.default))
-                else:
-                    print('%s(){ command "%s" "%s";}' % (name, node.name, node.default))
-            if isinstance(node, Option):
-                name='opt_%d' % idx
-                if type(node.default) is bool:
-                    print('%s(){ switch "%s" "%s";}' % (name, node.name, node.default))
-                elif type(node.default) is int:
-                    print('%s(){ switches "%s" "%s";}' % (name, node.name, node.default))
-                elif type(node.default) is list:
-                    print('%s(){ options "%s" "%s";}' % (name, node.name, node.default))
-                else:
-                    print('%s(){ option "%s" "%s";}' % (name, node.name, node.default))
-            return name, idx + 1
-        else:
-            # err(prefix + type(node).__name__)
-            if isinstance(node, BranchPattern):
-                names = []
-                for child in node.children:
-                    name, idx = out(child, idx)
-                    names.append(name)
-            if isinstance(node, Required):
-                name='req_%d' % idx
-                print('%s(){ required %s;}' % (name, ' '.join(names)))
-            if isinstance(node, Either):
-                name='either_%d' % idx
-                print('%s(){ either %s;}' % (name, ' '.join(names)))
-            if isinstance(node, Optional):
-                name='optional_%d' % idx
-                print('%s(){ optional %s;}' % (name, ' '.join(names)))
-            if isinstance(node, OneOrMore):
-                name='oneormore_%d' % idx
-                print('%s(){ oneormore %s;}' % (name, ' '.join(names)))
-            return name, idx + 1
-    # out(pattern.fix())
+    generate_ast_functions(pattern.fix())
     if matched and left == []:  # better error message if left?
         # err(pattern.flat())
         # err(collected)
         # [print("%s=%s" % (bash_name(a.name), a.value)) for a in (pattern.flat() + collected)]
         return Dict((a.name, a.value) for a in (pattern.flat() + collected))
     # raise DocoptExit()
+
+def print_ast(node, prefix=''):
+    if isinstance(node, LeafPattern):
+        err(prefix + type(node).__name__ + ' (%s)' % node.name)
+    else:
+        err(prefix + type(node).__name__)
+        for child in node.children:
+            print_ast(child, prefix + '  ')
+
+helper_lib = {
+    'argument': 'argument(){ return;}',
+    'arguments': 'arguments(){ return;}',
+    'command': 'command(){ return;}',
+    'commands': 'commands(){ return;}',
+    'either': 'either(){ return;}',
+    'oneormore': 'oneormore(){ return;}',
+    'option': 'option(){ return;}',
+    'optional': 'optional(){ return;}',
+    'options': 'options(){ return;}',
+    'required': 'required(){ return;}',
+    'switch': 'switch(){ return;}',
+    'switches': 'switches(){ return;}',
+}
+
+def generate_ast_functions(node):
+    fn_name, functions, helpers, _ = node.get_node_functions()
+    print("\n".join([helper_lib[name] for name in helpers]))
+    print("\n".join(functions))
 
 def bash_name(name):
     name = name.replace('<', '_')
