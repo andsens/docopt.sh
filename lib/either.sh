@@ -17,7 +17,6 @@ either() {
     unset_params "${params_set[@]:$reset_from}"
   done
   if [[ -n $best_match ]]; then
-    printf "\n\n%s\n\n" "$best_match"
     $best_match
     return 0
   fi

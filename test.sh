@@ -7,6 +7,11 @@ test() {
     debug=true
     shift
   fi
+  bashprint=false
+  if [[ $1 == '-dd' ]]; then
+    bashprint=true
+    shift
+  fi
   local program=$1
   shift
   local doc
@@ -20,27 +25,31 @@ test() {
   fi
   source parser.sh
 
-  if docopt "$@"; then
-    :
+  docopt "$@"
+  ok=$?
+
+  if $debug; then
+    debug_var "options_short" "${options_short[@]}"
+    debug_var "options_long" "${options_long[@]}"
+    debug_var "parsed_params" "${parsed_params[@]}"
   fi
-  printf "\n"
-  debug_var "options_short" "${options_short[@]}"
-  debug_var "options_long" "${options_long[@]}"
-  debug_var "parsed_params" "${parsed_params[@]}"
-  for var in "${param_names[@]}"; do
-    if declare -p "$var" | grep -q 'declare -a'; then
-      #shellcheck disable=1087
-      printf -- "%s" "$var"
-      local size="$(eval "echo \${#$var[@]}")"
-      printf -- " (%d): " "$size"
-      local i=0
-      while [[ $i -lt $size ]]; do printf -- "'%s' " "$(eval "echo \${$var[$i]}")"; ((i++)); done
-      printf "\n"
-    else
-      debug_var "$var" "$(eval "echo \$$var")"
-    fi
-  done
-  debug_var "left" "${left[@]}"
+  if [[ $ok -eq 0 ]]; then
+    for var in "${param_names[@]}"; do
+      if declare -p "$var" | grep -q 'declare -a'; then
+        #shellcheck disable=1087
+        printf -- "%s" "$var"
+        local size="$(eval "echo \${#$var[@]}")"
+        printf -- " (%d): " "$size"
+        local i=0
+        while [[ $i -lt $size ]]; do printf -- "'%s' " "$(eval "echo \${$var[$i]}")"; ((i++)); done
+        printf "\n"
+      else
+        debug_var "$var" "$(eval "echo \$$var")"
+      fi
+    done
+  fi
+  $debug && debug_var "left" "${left[@]}"
+  return $ok
 }
 
 debug_var() {
