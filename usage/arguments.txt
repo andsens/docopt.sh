@@ -1,0 +1,4 @@
+Command.
+
+Usage:
+  test.sh PROGRAMS...

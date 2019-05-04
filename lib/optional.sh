@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-required() {
+optional() {
   local initial_left=("${left[@]}")
   # shellcheck disable=SC2154
   local reset_from=${#params_set[@]}
@@ -9,7 +9,6 @@ required() {
     if ! $pattern; then
       left=("${initial_left[@]}")
       unset_params "${params_set[@]:$reset_from}"
-      return 1
     fi
   done
   return 0

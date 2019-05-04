@@ -2,7 +2,7 @@
 
 unset_params() {
   while [[ $# -gt 0 ]]; do
-    unset $$1
+    eval "$(printf -- "unset %s" "$1")"
     shift
   done
 }

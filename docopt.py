@@ -204,11 +204,11 @@ class BranchPattern(Pattern):
                 counters[child.function_prefix] = counters.get(child.function_prefix, 0) + 1
                 c_fn_name = '%s_%d' % (child.function_prefix, counters[child.function_prefix])
                 c_helper, c_args = child.get_helper_invocation()
-                c_fn = '%s%s(){ printf "%s\\n"; %s %s;}' % (prefix+'  ', c_fn_name, c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
+                c_fn = '%s%s(){ printf "\\n%s: %%s" "$_f"; %s %s && printf "match, %%s" "$(print_left)";}' % (prefix+'  ', c_fn_name, c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
                 functions.append(c_fn)
                 helpers.add(c_helper)
             function_names.append(c_fn_name)
-        functions.insert(0, '%s%s(){ printf "%s\\n"; %s %s;}' % (prefix, fn_name, fn_name, self.helper_name, ' '.join(function_names)))
+        functions.insert(0, '%s%s(){ printf "\\n%s: %%s" "$(print_left)"; %s %s;}' % (prefix, fn_name, fn_name, self.helper_name, ' '.join(function_names)))
         return fn_name, functions, helpers, counters
 
 
@@ -247,13 +247,13 @@ class Argument(LeafPattern):
 
     def get_helper_invocation(self):
         if type(self.value) is list:
-            return '_arguments', [self.name]
+            return '_arguments', [self.name, bash_name(self.name)]
         elif self.value is bool:
-            return '_argument', [self.name]
+            return '_argument', [self.name, bash_name(self.name)]
         elif self.value is None:
-            return '_argument', [self.name]
+            return '_argument', [self.name, bash_name(self.name)]
         else:
-            return '_argument', [self.name]
+            return '_argument', [self.name, bash_name(self.name)]
 
 
 class Command(Argument):
@@ -954,8 +954,8 @@ def docopt(doc, argv=None, help=True, version=None, options_first=False):
     print('options_value=(%s)' % ' '.join([bash_array_value(o.value) for o in sorted_options]))
     print('param_names=(%s)' % ' '.join([bash_name(p.name) for p in sorted_params]))
     # print('param_defaults=(%s)' % ' '.join([bash_array_value(p.value) for p in sorted_params]))
-    for p in sorted_params:
-        print("{name}=${{{name}:-{default}}}".format(name=bash_name(p.name), default=bash_value(p.value)))
+    defaults = ["{name}=${{{name}:-{default}}}".format(name=bash_name(p.name), default=bash_value(p.value)) for p in sorted_params]
+    print('defaults() {\n%s\n}' % '\n'.join(defaults))
     # if matched and left == []:  # better error message if left?
         # err(pattern.flat())
         # err(collected)
@@ -972,16 +972,16 @@ def print_ast(node, prefix=''):
             print_ast(child, prefix + '  ')
 
 helper_lib = {
-    '_argument': '',
-    '_arguments': '',
+    '_argument': '\n'.join(open('lib/argument.sh').read().split('\n')[1:]),
+    '_arguments': '\n'.join(open('lib/arguments.sh').read().split('\n')[1:]),
     '_command': '\n'.join(open('lib/command.sh').read().split('\n')[1:]),
     '_commands': '\n'.join(open('lib/commands.sh').read().split('\n')[1:]),
-    '_option': '',
+    '_option': '\n'.join(open('lib/option.sh').read().split('\n')[1:]),
     '_options': '',
     '_switch': '\n'.join(open('lib/switch.sh').read().split('\n')[1:]),
-    '_switches': '',
+    '_switches': '\n'.join(open('lib/switches.sh').read().split('\n')[1:]),
     'required': '\n'.join(open('lib/required.sh').read().split('\n')[1:]),
-    'optional': 'optional(){ return;}',
+    'optional': '\n'.join(open('lib/optional.sh').read().split('\n')[1:]),
     'either': '\n'.join(open('lib/either.sh').read().split('\n')[1:]),
     'oneormore': '\n'.join(open('lib/oneormore.sh').read().split('\n')[1:]),
     'parse_argv': '\n'.join(open('lib/parse_argv.sh').read().split('\n')[1:]),
@@ -989,12 +989,13 @@ helper_lib = {
     'parse_shorts': '\n'.join(open('lib/parse_shorts.sh').read().split('\n')[1:]),
     'stack': '\n'.join(open('lib/stack.sh').read().split('\n')[1:]),
     'main': '\n'.join(open('lib/main.sh').read().split('\n')[1:]),
+    'debug': '\n'.join(open('lib/debug.sh').read().split('\n')[1:]),
 }
 
 def generate_ast_functions(node):
     defaults_helpers = []
     fn_name, functions, helpers, _ = node.get_node_functions()
-    helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'stack', 'main'])
+    helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'stack', 'main', 'debug'])
     print("\n".join([helper_lib[name] for name in helpers]))
     print("\n".join(functions))
     print("root(){ %s;}" % fn_name)

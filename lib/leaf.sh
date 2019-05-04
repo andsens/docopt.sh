@@ -5,7 +5,7 @@ leaf() {
 #   pos, match = self.single_match(left)
   if ! $1 "$2"; then
     left=("${left_reset[@]}")
-    unset_params "${params_set[@]:$reset_to}"
+    unset_params "${params_set[@]:$reset_from}"
     return 1
   fi
   left_=(${left[@]:0:$pos})
