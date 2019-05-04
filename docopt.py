@@ -155,11 +155,11 @@ class BranchPattern(Pattern):
                 counters[child.function_prefix] = counters.get(child.function_prefix, 0) + 1
                 c_fn_name = '%s_%d' % (child.function_prefix, counters[child.function_prefix])
                 c_helper, c_args = child.get_helper_invocation()
-                c_fn = '%s%s(){ debug "\n%s:"; %s %s && debug "match, " "$(print_left)";}' % (prefix+'  ', c_fn_name, c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
+                c_fn = '%s(){ %s %s;}' % (c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
                 functions.append(c_fn)
                 helpers.add(c_helper)
             function_names.append(c_fn_name)
-        functions.insert(0, '%s%s(){ debug "\n%s:" "$(print_left)"; %s %s;}' % (prefix, fn_name, fn_name, self.helper_name, ' '.join(function_names)))
+        functions.insert(0, '%s(){ %s %s;}' % (fn_name, self.helper_name, ' '.join(function_names)))
         return fn_name, functions, helpers, counters
 
 
