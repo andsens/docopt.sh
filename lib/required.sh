@@ -5,7 +5,7 @@ required() {
   # shellcheck disable=SC2154
   local reset_to=${#params_set[@]}
   for pattern in "$@"; do
-    if $pattern; then
+    if ! $pattern; then
       left=("${initial_left[@]}")
       unset_params "${params_set[@]:$reset_to}"
       return 1

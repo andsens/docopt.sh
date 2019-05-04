@@ -188,7 +188,7 @@ class BranchPattern(Pattern):
             return [self]
         return sum([child.flat(*types) for child in self.children], [])
 
-    def get_node_functions(self, counters={}):
+    def get_node_functions(self, counters={}, prefix=''):
         counters[self.function_prefix] = counters.get(self.function_prefix, 0) + 1
         fn_name = '%s_%d' % (self.function_prefix, counters[self.function_prefix])
         functions = []
@@ -196,7 +196,7 @@ class BranchPattern(Pattern):
         helpers = set()
         for child in self.children:
             if isinstance(child, BranchPattern):
-                c_fn_name, c_fns, c_helpers, counters = child.get_node_functions(counters)
+                c_fn_name, c_fns, c_helpers, counters = child.get_node_functions(counters, prefix+'  ')
                 functions.extend(c_fns)
                 helpers.update(c_helpers)
                 helpers.add(child.helper_name)
@@ -204,11 +204,11 @@ class BranchPattern(Pattern):
                 counters[child.function_prefix] = counters.get(child.function_prefix, 0) + 1
                 c_fn_name = '%s_%d' % (child.function_prefix, counters[child.function_prefix])
                 c_helper, c_args = child.get_helper_invocation()
-                c_fn = '%s(){ %s %s;}' % (c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
+                c_fn = '%s%s(){ printf "%s\\n"; %s %s;}' % (prefix+'  ', c_fn_name, c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
                 functions.append(c_fn)
                 helpers.add(c_helper)
             function_names.append(c_fn_name)
-        functions.insert(0, '%s(){ %s %s;}' % (fn_name, self.helper_name, ' '.join(function_names)))
+        functions.insert(0, '%s%s(){ printf "%s\\n"; %s %s;}' % (prefix, fn_name, fn_name, self.helper_name, ' '.join(function_names)))
         return fn_name, functions, helpers, counters
 
 
@@ -351,15 +351,15 @@ class Option(LeafPattern):
 
     def get_helper_invocation(self):
         if type(self.value) is bool:
-            return '_switch', [self.index]
+            return '_switch', [self.index, bash_name(self.name)]
         elif type(self.value) is int:
-            return '_switches', [self.index]
+            return '_switches', [self.index, bash_name(self.name)]
         elif type(self.value) is list:
-            return '_options', [self.index]
+            return '_options', [self.index, bash_name(self.name)]
         elif self.value is None:
-            return '_options', [self.index]
+            return '_options', [self.index, bash_name(self.name)]
         else:
-            return '_option', [self.index]
+            return '_option', [self.index, bash_name(self.name)]
 
 
 class Required(BranchPattern):
@@ -975,16 +975,15 @@ helper_lib = {
     '_argument': '',
     '_arguments': '',
     '_command': '\n'.join(open('lib/command.sh').read().split('\n')[1:]),
-    '_commands': '',
+    '_commands': '\n'.join(open('lib/commands.sh').read().split('\n')[1:]),
     '_option': '',
     '_options': '',
-    '_switch': '',
+    '_switch': '\n'.join(open('lib/switch.sh').read().split('\n')[1:]),
     '_switches': '',
-    'leaf': '\n'.join(open('lib/leaf.sh').read().split('\n')[1:]),
     'required': '\n'.join(open('lib/required.sh').read().split('\n')[1:]),
     'optional': 'optional(){ return;}',
     'either': '\n'.join(open('lib/either.sh').read().split('\n')[1:]),
-    'oneormore': 'oneormore(){ return;}',
+    'oneormore': '\n'.join(open('lib/oneormore.sh').read().split('\n')[1:]),
     'parse_argv': '\n'.join(open('lib/parse_argv.sh').read().split('\n')[1:]),
     'parse_long': '\n'.join(open('lib/parse_long.sh').read().split('\n')[1:]),
     'parse_shorts': '\n'.join(open('lib/parse_shorts.sh').read().split('\n')[1:]),

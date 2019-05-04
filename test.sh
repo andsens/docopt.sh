@@ -1,37 +1,30 @@
 #!/usr/bin/env bash
 
-# shellcheck source=lib/parse_argv.sh
-source "lib/parse_argv.sh"
-# shellcheck source=lib/parse_long.sh
-source "lib/parse_long.sh"
-# shellcheck source=lib/parse_shorts.sh
-source "lib/parse_shorts.sh"
-# shellcheck source=lib/required.sh
-source "lib/required.sh"
-
 # def docopt(doc, argv=None, help=True, version=None, options_first=False):
 test() {
-  local doc_name='simple_command'
+  local program=$1
+  shift
   local doc
-  doc=$(cat "usage/$doc_name.txt")
+  doc=$(cat "usage/$program.txt")
   # local help=true
   # local version=''
   options_first=false
   local out
   printf "#!/usr/bin/env bash\n\n" > parser.sh
   ./docopt.py <<<"$doc" >> parser.sh
-  cat parser.sh
   source parser.sh
 
-  docopt "$@"
-
-  debug_var "left" "${left[@]}"
-  debug_var "options_long" "${options_long[@]}"
-  debug_var "parsed_params" "${parsed_params[@]}"
-  debug_var "parsed_values" "${parsed_values[@]}"
+  if docopt "$@"; then
+    :
+  fi
+    debug_var "options_short" "${options_short[@]}"
+    debug_var "options_long" "${options_long[@]}"
+    debug_var "parsed_params" "${parsed_params[@]}"
+    debug_var "parsed_values" "${parsed_values[@]}"
   for var in "${param_names[@]}"; do
     debug_var "$var" "$(eval "echo \$$var")"
   done
+  debug_var "left" "${left[@]}"
 }
 
 debug_var() {
