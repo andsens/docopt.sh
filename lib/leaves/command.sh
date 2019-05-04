@@ -8,10 +8,10 @@ _command() {
       if [[ ${parsed_values[$l]} == "$1" ]]; then
         splice_left "$i"
         params_set+=("$2")
-        if [[ $3 ]]; then
-          eval "$(printf -- "((%s++))" "$2")"
+        if [[ $3 == true ]]; then
+          eval "(($2++))"
         else
-          eval "$(printf -- "%s=true" "$2")"
+          eval "$2=true"
         fi
         return 0
       else

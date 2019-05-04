@@ -7,10 +7,11 @@ _option() {
     if [[ ${parsed_params[${left[$i]}]} == $1 ]]; then
       splice_left "$i"
       params_set+=("$2")
+      local value=$(printf -- "%q" "${parsed_values[$l]}")
       if [[ $3 ]]; then
-        eval "$(printf -- "%s+=(%q)" "$2" "${parsed_values[$l]}")"
+        eval "$2+=($value)"
       else
-        eval "$(printf -- "%s=%q" "$2" "${parsed_values[$l]}")"
+        eval "$2=$value"
       fi
       return 0
     fi
