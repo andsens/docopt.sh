@@ -8,7 +8,7 @@ _argument() {
       splice_left "$i"
       params_set+=("$2")
       local value=$(printf -- "%q" "${parsed_values[$l]}")
-      if [[ $3 ]]; then
+      if [[ $3 == true ]]; then
         eval "$2+=($value)"
       else
         eval "$2=$value"

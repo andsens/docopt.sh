@@ -7,7 +7,7 @@ _switch() {
     if [[ ${parsed_params[$l]} == "$1" ]]; then
       splice_left "$i"
       params_set+=("$2")
-      if [[ $3 ]]; then
+      if [[ $3 == true ]]; then
         eval "(($2++))"
       else
         eval "$2=true"
