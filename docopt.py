@@ -180,15 +180,7 @@ class Argument(LeafPattern):
         return class_(name, value[0] if value else None)
 
     def get_helper_invocation(self):
-        if type(self.value) is list:
-            return '_arguments', [self.name, bash_name(self.name)]
-        elif self.value is bool:
-            return '_argument', [self.name, bash_name(self.name)]
-        elif self.value is None:
-            return '_argument', [self.name, bash_name(self.name)]
-        else:
-            return '_argument', [self.name, bash_name(self.name)]
-
+        return '_argument', [self.name, bash_name(self.name), type(self.value) is list]
 
 class Command(Argument):
 
@@ -207,10 +199,7 @@ class Command(Argument):
         return None, None
 
     def get_helper_invocation(self):
-        if type(self.value) is int:
-            return '_commands', [self.name, bash_name(self.name)]
-        else:
-            return '_command', [self.name, bash_name(self.name)]
+        return '_command', [self.name, bash_name(self.name), type(self.value) is int]
 
 class Option(LeafPattern):
 
@@ -254,15 +243,10 @@ class Option(LeafPattern):
 
     def get_helper_invocation(self):
         if type(self.value) is bool:
-            return '_switch', [self.index, bash_name(self.name)]
+            return '_switch', [self.index, bash_name(self.name), False]
         elif type(self.value) is int:
-            return '_switches', [self.index, bash_name(self.name)]
-        elif type(self.value) is list:
-            return '_options', [self.index, bash_name(self.name)]
-        elif self.value is None:
-            return '_options', [self.index, bash_name(self.name)]
-        else:
-            return '_option', [self.index, bash_name(self.name)]
+            return '_switch', [self.index, bash_name(self.name), False]
+        return '_option', [self.index, bash_name(self.name), type(self.value) is list]
 
 
 class Required(BranchPattern):
@@ -585,13 +569,9 @@ def print_ast(node, prefix=''):
 
 helper_lib = {
     '_argument': '\n'.join(open('lib/leaves/argument.sh').read().split('\n')[1:]),
-    '_arguments': '\n'.join(open('lib/leaves/arguments.sh').read().split('\n')[1:]),
     '_command': '\n'.join(open('lib/leaves/command.sh').read().split('\n')[1:]),
-    '_commands': '\n'.join(open('lib/leaves/commands.sh').read().split('\n')[1:]),
     '_option': '\n'.join(open('lib/leaves/option.sh').read().split('\n')[1:]),
-    '_options': '\n'.join(open('lib/leaves/options.sh').read().split('\n')[1:]),
     '_switch': '\n'.join(open('lib/leaves/switch.sh').read().split('\n')[1:]),
-    '_switches': '\n'.join(open('lib/leaves/switches.sh').read().split('\n')[1:]),
     'required': '\n'.join(open('lib/branches/required.sh').read().split('\n')[1:]),
     'optional': '\n'.join(open('lib/branches/optional.sh').read().split('\n')[1:]),
     'either': '\n'.join(open('lib/branches/either.sh').read().split('\n')[1:]),
