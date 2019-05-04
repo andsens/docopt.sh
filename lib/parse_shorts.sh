@@ -41,7 +41,6 @@ parse_shorts() {
       options_short+=("$short")
       options_long+=('')
       options_argcount+=(0)
-      options_value+=(false)
 #     if tokens.error is DocoptExit:
 #       o = Option(short, None, 0, True)
     # Moved before appending to options

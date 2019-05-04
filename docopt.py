@@ -204,7 +204,7 @@ class BranchPattern(Pattern):
                 counters[child.function_prefix] = counters.get(child.function_prefix, 0) + 1
                 c_fn_name = '%s_%d' % (child.function_prefix, counters[child.function_prefix])
                 c_helper, c_args = child.get_helper_invocation()
-                c_fn = '%s%s(){ printf "\\n%s: %%s" "$_f"; %s %s && printf "match, %%s" "$(print_left)";}' % (prefix+'  ', c_fn_name, c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
+                c_fn = '%s%s(){ printf "\\n%s: "; %s %s && printf "match, %%s" "$(print_left)";}' % (prefix+'  ', c_fn_name, c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
                 functions.append(c_fn)
                 helpers.add(c_helper)
             function_names.append(c_fn_name)
@@ -951,7 +951,6 @@ def docopt(doc, argv=None, help=True, version=None, options_first=False):
     print('options_short=(%s)' % ' '.join([bash_array_value(o.short) for o in sorted_options]))
     print('options_long=(%s)' % ' '.join([bash_array_value(o.long) for o in sorted_options]))
     print('options_argcount=(%s)' % ' '.join([bash_array_value(o.argcount) for o in sorted_options]))
-    print('options_value=(%s)' % ' '.join([bash_array_value(o.value) for o in sorted_options]))
     print('param_names=(%s)' % ' '.join([bash_name(p.name) for p in sorted_params]))
     # print('param_defaults=(%s)' % ' '.join([bash_array_value(p.value) for p in sorted_params]))
     defaults = ["{name}=${{{name}:-{default}}}".format(name=bash_name(p.name), default=bash_value(p.value)) for p in sorted_params]
@@ -977,7 +976,7 @@ helper_lib = {
     '_command': '\n'.join(open('lib/command.sh').read().split('\n')[1:]),
     '_commands': '\n'.join(open('lib/commands.sh').read().split('\n')[1:]),
     '_option': '\n'.join(open('lib/option.sh').read().split('\n')[1:]),
-    '_options': '',
+    '_options': '\n'.join(open('lib/options.sh').read().split('\n')[1:]),
     '_switch': '\n'.join(open('lib/switch.sh').read().split('\n')[1:]),
     '_switches': '\n'.join(open('lib/switches.sh').read().split('\n')[1:]),
     'required': '\n'.join(open('lib/required.sh').read().split('\n')[1:]),

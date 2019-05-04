@@ -60,7 +60,6 @@ parse_long() {
     options_short+=('')
     options_long+=("$long")
     options_argcount+=("$argcount")
-    options_value+=(false)
 #   options.append(o)
 #   if tokens.error is DocoptExit:
 #     o = Option(None, long, argcount, value if argcount else True)

@@ -27,11 +27,15 @@ test() {
   debug_var "options_short" "${options_short[@]}"
   debug_var "options_long" "${options_long[@]}"
   debug_var "parsed_params" "${parsed_params[@]}"
-  debug_var "parsed_values" "${parsed_values[@]}"
   for var in "${param_names[@]}"; do
     if declare -p "$var" | grep -q 'declare -a'; then
       #shellcheck disable=1087
-      debug_var "$var" "$(eval "echo \${$var[*]}")"
+      printf -- "%s" "$var"
+      local size="$(eval "echo \${#$var[@]}")"
+      printf -- " (%d): " "$size"
+      local i=0
+      while [[ $i -lt $size ]]; do printf -- "'%s' " "$(eval "echo \${$var[$i]}")"; ((i++)); done
+      printf "\n"
     else
       debug_var "$var" "$(eval "echo \$$var")"
     fi
