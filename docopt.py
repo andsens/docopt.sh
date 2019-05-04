@@ -607,7 +607,7 @@ helper_lib = {
 def generate_ast_functions(node):
     defaults_helpers = []
     fn_name, functions, helpers, _ = node.get_node_functions()
-    helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'stack', 'main', 'debug'])
+    helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'stack', 'main'])
     print("\n".join([helper_lib[name] for name in helpers]))
     print("\n".join(functions))
     print("root(){ %s;}" % fn_name)
