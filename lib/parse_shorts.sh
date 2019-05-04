@@ -22,7 +22,7 @@ parse_shorts() {
       die "%s is specified ambiguously %d times" "$short" "${#similar[@]}"
     elif [[ ${#similar[@]} -lt 1 ]]; then
       similar_idx=${#options_short[@]}
-      value=(true)
+      value=true
       options_short+=("$short")
       options_long+=('')
       options_argcount+=(0)
