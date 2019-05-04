@@ -2,6 +2,7 @@ Naval Fate.
 
 Usage:
   naval_fate.py ship new [-f...] <name>...
+  naval_fate.py ship new [-f...]
   naval_fate.py ship <name> move <x> <y> [--speed=<kn>]
   naval_fate.py ship shoot <x> <y>
   naval_fate.py ping...
