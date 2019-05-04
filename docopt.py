@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys
 import re
+from shlex import quote
 
 
 __all__ = ['docopt']
@@ -198,11 +199,12 @@ class BranchPattern(Pattern):
                 c_fn_name, c_fns, c_helpers, counters = child.get_node_functions(counters)
                 functions.extend(c_fns)
                 helpers.update(c_helpers)
+                helpers.add(child.helper_name)
             else:
                 counters[child.function_prefix] = counters.get(child.function_prefix, 0) + 1
                 c_fn_name = '%s_%d' % (child.function_prefix, counters[child.function_prefix])
                 c_helper, c_args = child.get_helper_invocation()
-                c_fn = '%s(){ %s "%s";}' % (c_fn_name, c_helper, '" "'.join(c_args))
+                c_fn = '%s(){ %s %s;}' % (c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
                 functions.append(c_fn)
                 helpers.add(c_helper)
             function_names.append(c_fn_name)
@@ -245,13 +247,13 @@ class Argument(LeafPattern):
 
     def get_helper_invocation(self):
         if type(self.value) is list:
-            return 'arguments', self.value
+            return '_arguments', [self.name]
         elif self.value is bool:
-            return 'arguments', ['true' if self.value else 'false']
+            return '_argument', [self.name]
         elif self.value is None:
-            return 'arguments', []
+            return '_argument', [self.name]
         else:
-            return 'argument', [self.value]
+            return '_argument', [self.name]
 
 
 class Command(Argument):
@@ -289,9 +291,9 @@ class Command(Argument):
 
     def get_helper_invocation(self):
         if type(self.value) is int:
-            return 'commands', [str(self.value)]
+            return '_commands', [self.name, bash_name(self.name)]
         else:
-            return 'command', ['true' if self.value else 'false']
+            return '_command', [self.name, bash_name(self.name)]
 
 class Option(LeafPattern):
 
@@ -349,15 +351,15 @@ class Option(LeafPattern):
 
     def get_helper_invocation(self):
         if type(self.value) is bool:
-            return 'switch', ['true' if self.value else 'false']
+            return '_switch', [self.index]
         elif type(self.value) is int:
-            return 'switches', [str(self.value)]
+            return '_switches', [self.index]
         elif type(self.value) is list:
-            return 'options', self.value
+            return '_options', [self.index]
         elif self.value is None:
-            return 'options', []
+            return '_options', [self.index]
         else:
-            return 'option', [self.value]
+            return '_option', [self.index]
 
 
 class Required(BranchPattern):
@@ -927,11 +929,6 @@ def docopt(doc, argv=None, help=True, version=None, options_first=False):
         doc_options = parse_defaults(doc)
         options_shortcut.children = list(set(doc_options) - pattern_options)
 
-    print('options_short=(%s)' % ' '.join(["''" if o.short is None else o.short for o in options]))
-    print('options_long=(%s)' % ' '.join(["''" if o.long is None else o.long for o in options]))
-    print('options_argcount=(%s)' % ' '.join([str(o.argcount) for o in options]))
-    print('options_value=(%s)' % ' '.join([str(o.value).lower() if type(o.value) is bool else o.value for o in options]))
-
 #   parsed_options_short=()
 #   parsed_options_long=()
 #   parsed_options_argcount=()
@@ -940,15 +937,30 @@ def docopt(doc, argv=None, help=True, version=None, options_first=False):
 #   parsed_types=()
 #   argv=${@[@]}
 #   parse_argv
-    argv = parse_argv(Tokens(argv), list(options), options_first)
-    extras(help, version, argv, doc)
-    matched, left, collected = pattern.fix().match(argv)
-    generate_ast_functions(pattern.fix())
-    if matched and left == []:  # better error message if left?
+    # argv = parse_argv(Tokens(argv), list(options), options_first)
+    # extras(help, version, argv, doc)
+    # matched, left, collected = pattern.fix().match(argv)
+    pattern = pattern.fix()
+    sort_order = [Option, Argument, Command]
+    params = set(pattern.flat(*sort_order))
+    sorted_params = sorted(params, key=lambda p: sort_order.index(type(p)))
+    sorted_options = [o for o in sorted_params if type(o) is Option]
+    for i, o in enumerate(sorted_params):
+        o.index = i
+    generate_ast_functions(pattern)
+    print('options_short=(%s)' % ' '.join([bash_array_value(o.short) for o in sorted_options]))
+    print('options_long=(%s)' % ' '.join([bash_array_value(o.long) for o in sorted_options]))
+    print('options_argcount=(%s)' % ' '.join([bash_array_value(o.argcount) for o in sorted_options]))
+    print('options_value=(%s)' % ' '.join([bash_array_value(o.value) for o in sorted_options]))
+    print('param_names=(%s)' % ' '.join([bash_name(p.name) for p in sorted_params]))
+    # print('param_defaults=(%s)' % ' '.join([bash_array_value(p.value) for p in sorted_params]))
+    for p in sorted_params:
+        print("{name}=${{{name}:-{default}}}".format(name=bash_name(p.name), default=bash_value(p.value)))
+    # if matched and left == []:  # better error message if left?
         # err(pattern.flat())
         # err(collected)
         # [print("%s=%s" % (bash_name(a.name), a.value)) for a in (pattern.flat() + collected)]
-        return Dict((a.name, a.value) for a in (pattern.flat() + collected))
+        # return Dict((a.name, a.value) for a in (pattern.flat() + collected))
     # raise DocoptExit()
 
 def print_ast(node, prefix=''):
@@ -960,30 +972,65 @@ def print_ast(node, prefix=''):
             print_ast(child, prefix + '  ')
 
 helper_lib = {
-    'argument': 'argument(){ return;}',
-    'arguments': 'arguments(){ return;}',
-    'command': 'command(){ return;}',
-    'commands': 'commands(){ return;}',
-    'either': 'either(){ return;}',
-    'oneormore': 'oneormore(){ return;}',
-    'option': 'option(){ return;}',
+    '_argument': '',
+    '_arguments': '',
+    '_command': '\n'.join(open('lib/command.sh').read().split('\n')[1:]),
+    '_commands': '',
+    '_option': '',
+    '_options': '',
+    '_switch': '',
+    '_switches': '',
+    'leaf': '\n'.join(open('lib/leaf.sh').read().split('\n')[1:]),
+    'required': '\n'.join(open('lib/required.sh').read().split('\n')[1:]),
     'optional': 'optional(){ return;}',
-    'options': 'options(){ return;}',
-    'required': 'required(){ return;}',
-    'switch': 'switch(){ return;}',
-    'switches': 'switches(){ return;}',
+    'either': '\n'.join(open('lib/either.sh').read().split('\n')[1:]),
+    'oneormore': 'oneormore(){ return;}',
+    'parse_argv': '\n'.join(open('lib/parse_argv.sh').read().split('\n')[1:]),
+    'parse_long': '\n'.join(open('lib/parse_long.sh').read().split('\n')[1:]),
+    'parse_shorts': '\n'.join(open('lib/parse_shorts.sh').read().split('\n')[1:]),
+    'stack': '\n'.join(open('lib/stack.sh').read().split('\n')[1:]),
+    'main': '\n'.join(open('lib/main.sh').read().split('\n')[1:]),
 }
 
 def generate_ast_functions(node):
+    defaults_helpers = []
     fn_name, functions, helpers, _ = node.get_node_functions()
+    helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'stack', 'main'])
     print("\n".join([helper_lib[name] for name in helpers]))
     print("\n".join(functions))
+    print("root(){ %s;}" % fn_name)
 
 def bash_name(name):
     name = name.replace('<', '_')
     name = name.replace('>', '_')
     name = name.replace('-', '_')
     return name
+
+def bash_value(value):
+    if value is None:
+        return ''
+    if type(value) is bool:
+        return 'true' if value else 'false'
+    if type(value) is int:
+        return str(value)
+    if type(value) is str:
+        return quote(value)
+    if type(value) is list:
+        return '(%s)' % ' '.join(bash_value(v) for v in value)
+    raise Exception('Unknown value type %s' % type(value))
+
+def bash_array_value(value):
+    if value is None or value == '':
+        return "''"
+    if type(value) is bool:
+        return 'true' if value else 'false'
+    if type(value) is int:
+        return str(value)
+    if type(value) is str:
+        return quote(value)
+    if type(value) is list:
+        raise Exception('Unable to convert list to bash array value')
+    raise Exception('Unknown value type %s' % type(value))
 
 def err(msg):
     sys.stderr.write(str(msg) + '\n')
