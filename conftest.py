@@ -10,7 +10,8 @@ import subprocess
 
 import shlex
 
-from docopt_sh import bash_name
+from parser import parse_doc
+from generator import generate_parser,generate_invocation,bash_name
 
 import logging
 log = logging.getLogger(__name__)
@@ -48,28 +49,37 @@ class DocoptTestFile(pytest.File):
 
         for name, doc, cases in parse_test(raw):
             name = self.fspath.purebasename
+            if cases:
+                pattern = parse_doc(doc)
+                parser = generate_parser(pattern, 'doc')
+                parser += generate_invocation()
             for case in cases:
-                yield DocoptTestItem("%s(%d)" % (name, index), self, doc, case)
+                yield DocoptTestItem("%s(%d)" % (name, index), self, doc, parser, case)
                 index += 1
 
 
 class DocoptTestItem(pytest.Item):
 
-    def __init__(self, name, parent, doc, case):
+    def __init__(self, name, parent, doc, parser, case):
         super(DocoptTestItem, self).__init__(name, parent)
         self.doc = doc
+        self.parser = parser
         self.prog, self.argv, self.expect = case
 
     def runtest(self):
+        program = 'doc="%s"\n%s' % (self.doc, self.parser)
         try:
-            process = subprocess.run(['./test.sh', '-t', '-'] + shlex.split(self.argv), input=self.doc.encode('utf-8'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.run(
+                ['./output-parsed.sh'] + shlex.split(self.argv),
+                input=program.encode('utf-8'),
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
             process.check_returncode()
             expr = re.compile('^declare (--|-a) ([^=]+)=')
             out = process.stdout.decode('utf-8').strip('\n')
+            result = {}
             if out != '':
                 result = {expr.match(line).group(2): line for line in out.split('\n')}
-            else:
-                result = {}
         except subprocess.CalledProcessError as e:
             result = 'user-error'
         except Exception as e:
