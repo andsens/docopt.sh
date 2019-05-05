@@ -1,13 +1,23 @@
-#!/usr/bin/env python3
-import sys
 import re
-from shlex import quote
-import os
+from bash_helper import bash_name, bash_value
 
 
-__all__ = ['docopt']
-__version__ = '0.6.2'
+def parse_doc(doc):
+    usage_sections = parse_section('usage:', doc)
+    if len(usage_sections) == 0:
+        raise DocoptLanguageError('"usage:" (case-insensitive) not found.')
+    if len(usage_sections) > 1:
+        raise DocoptLanguageError('More than one "usage:" (case-insensitive).')
+    DocoptExit.usage = usage_sections[0]
 
+    options = parse_defaults(doc)
+    pattern = parse_pattern(formal_usage(DocoptExit.usage), options)
+    pattern_options = set(pattern.flat(Option))
+    for options_shortcut in pattern.flat(OptionsShortcut):
+        doc_options = parse_defaults(doc)
+        options_shortcut.children = list(set(doc_options) - pattern_options)
+
+    return pattern.fix()
 
 class DocoptLanguageError(Exception):
 
@@ -140,7 +150,7 @@ class BranchPattern(Pattern):
             return [self]
         return sum([child.flat(*types) for child in self.children], [])
 
-    def get_node_functions(self, counters={}, prefix=''):
+    def get_node_functions(self, counters={}, prefix='', debug=False):
         counters[self.function_prefix] = counters.get(self.function_prefix, 0) + 1
         fn_name = '%s_%d' % (self.function_prefix, counters[self.function_prefix])
         functions = []
@@ -148,7 +158,7 @@ class BranchPattern(Pattern):
         helpers = set()
         for child in self.children:
             if isinstance(child, BranchPattern):
-                c_fn_name, c_fns, c_helpers, counters = child.get_node_functions(counters, prefix+'  ')
+                c_fn_name, c_fns, c_helpers, counters = child.get_node_functions(counters, prefix=prefix+'  ', debug=debug)
                 functions.extend(c_fns)
                 helpers.update(c_helpers)
                 helpers.add(child.helper_name)
@@ -471,30 +481,6 @@ def parse_atom(tokens, options):
     else:
         return [Command(tokens.move())]
 
-def parse_argv(tokens, options, options_first=False):
-    """Parse command-line argument vector.
-
-    If options_first:
-        argv ::= [ long | shorts ]* [ argument ]* [ '--' [ argument ]* ] ;
-    else:
-        argv ::= [ long | shorts | argument ]* [ '--' [ argument ]* ] ;
-
-    """
-    parsed = []
-    while tokens.current() is not None:
-        if tokens.current() == '--':
-            return parsed + [Argument(None, v) for v in tokens]
-        elif tokens.current().startswith('--'):
-            parsed += parse_long(tokens, options)
-        elif tokens.current().startswith('-') and tokens.current() != '-':
-            parsed += parse_shorts(tokens, options)
-        elif options_first:
-            return parsed + [Argument(None, v) for v in tokens]
-        else:
-            parsed.append(Argument(None, tokens.move()))
-    return parsed
-
-
 def parse_defaults(doc):
     defaults = []
     for s in parse_section('options:', doc):
@@ -531,117 +517,3 @@ def extras(help, version, options, doc):
 class Dict(dict):
     def __repr__(self):
         return '{%s}' % ',\n '.join('%r: %r' % i for i in sorted(self.items()))
-
-
-def docopt(doc, argv=None, help=True, version=None, options_first=False):
-    argv = sys.argv[1:] if argv is None else argv
-
-    usage_sections = parse_section('usage:', doc)
-    if len(usage_sections) == 0:
-        raise DocoptLanguageError('"usage:" (case-insensitive) not found.')
-    if len(usage_sections) > 1:
-        raise DocoptLanguageError('More than one "usage:" (case-insensitive).')
-    DocoptExit.usage = usage_sections[0]
-
-    options = parse_defaults(doc)
-    pattern = parse_pattern(formal_usage(DocoptExit.usage), options)
-    pattern_options = set(pattern.flat(Option))
-    for options_shortcut in pattern.flat(OptionsShortcut):
-        doc_options = parse_defaults(doc)
-        options_shortcut.children = list(set(doc_options) - pattern_options)
-
-    pattern = pattern.fix()
-    sort_order = [Option, Argument, Command]
-    params = set(pattern.flat(*sort_order))
-    sorted_params = sorted(params, key=lambda p: sort_order.index(type(p)))
-    sorted_options = [o for o in sorted_params if type(o) is Option]
-    for i, o in enumerate(sorted_params):
-        o.index = i
-    generate_ast_functions(pattern)
-    print('options_short=(%s)' % ' '.join([bash_array_value(o.short) for o in sorted_options]))
-    print('options_long=(%s)' % ' '.join([bash_array_value(o.long) for o in sorted_options]))
-    print('options_argcount=(%s)' % ' '.join([bash_array_value(o.argcount) for o in sorted_options]))
-    print('param_names=(%s)' % ' '.join([bash_name(p.name) for p in sorted_params]))
-    defaults = ["{name}=${{{name}:-{default}}}".format(name=bash_name(p.name), default=bash_value(p.value)) for p in sorted_params]
-    if sorted_params:
-        print('defaults() {')
-        for p in sorted_params:
-            if type(p.value) is list:
-                print("  [[ -z ${{{name}+x}} ]] && {name}={default}".format(name=bash_name(p.name), default=bash_value(p.value)))
-            else:
-                print("  {name}=${{{name}:-{default}}}".format(name=bash_name(p.name), default=bash_value(p.value)))
-        print('}')
-
-
-def print_ast(node, prefix=''):
-    if isinstance(node, LeafPattern):
-        err(prefix + type(node).__name__ + ' (%s)' % node.name)
-    else:
-        err(prefix + type(node).__name__)
-        for child in node.children:
-            print_ast(child, prefix + '  ')
-
-helper_lib = {
-    '_command': '\n'.join(open('lib/leaves/command.sh').read().split('\n')[1:]).strip('\n'),
-    '_switch': '\n'.join(open('lib/leaves/switch.sh').read().split('\n')[1:]).strip('\n'),
-    '_value': '\n'.join(open('lib/leaves/value.sh').read().split('\n')[1:]).strip('\n'),
-    'required': '\n'.join(open('lib/branches/required.sh').read().split('\n')[1:]).strip('\n'),
-    'optional': '\n'.join(open('lib/branches/optional.sh').read().split('\n')[1:]).strip('\n'),
-    'either': '\n'.join(open('lib/branches/either.sh').read().split('\n')[1:]).strip('\n'),
-    'oneormore': '\n'.join(open('lib/branches/oneormore.sh').read().split('\n')[1:]).strip('\n'),
-    'parse_argv': '\n'.join(open('lib/parse_argv.sh').read().split('\n')[1:]).strip('\n'),
-    'parse_long': '\n'.join(open('lib/parse_long.sh').read().split('\n')[1:]).strip('\n'),
-    'parse_shorts': '\n'.join(open('lib/parse_shorts.sh').read().split('\n')[1:]).strip('\n'),
-    'main': '\n'.join(open('lib/main.sh').read().split('\n')[1:]).strip('\n'),
-    'debug': '\n'.join(open('lib/debug.sh').read().split('\n')[1:]).strip('\n'),
-}
-
-def generate_ast_functions(node):
-    defaults_helpers = []
-    fn_name, functions, helpers, _ = node.get_node_functions()
-    helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'main'])
-    if debug:
-        helpers.add('debug')
-    [print(helper_lib[name]) for name in helpers]
-    print("\n".join(functions))
-    print("root(){ %s;}" % fn_name)
-
-def bash_name(name):
-    name = name.replace('<', '_')
-    name = name.replace('>', '_')
-    name = name.replace('-', '_')
-    name = name.replace(' ', '_')
-    return '_' + name
-
-def bash_value(value):
-    if value is None:
-        return ''
-    if type(value) is bool:
-        return 'true' if value else 'false'
-    if type(value) is int:
-        return str(value)
-    if type(value) is str:
-        return quote(value)
-    if type(value) is list:
-        return '(%s)' % ' '.join(bash_value(v) for v in value)
-    raise Exception('Unknown value type %s' % type(value))
-
-def bash_array_value(value):
-    if value is None or value == '':
-        return "''"
-    if type(value) is bool:
-        return 'true' if value else 'false'
-    if type(value) is int:
-        return str(value)
-    if type(value) is str:
-        return quote(value)
-    if type(value) is list:
-        raise Exception('Unable to convert list to bash array value')
-    raise Exception('Unknown value type %s' % type(value))
-
-def err(msg):
-    sys.stderr.write(str(msg) + '\n')
-
-if __name__ == '__main__':
-    debug = os.getenv('debug') == 'true'
-    docopt(sys.stdin.read())

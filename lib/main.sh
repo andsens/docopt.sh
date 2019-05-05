@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 docopt() {
+  check_doc_hash || return 1
   for var in "${param_names[@]}"; do
     if declare -p "$var" &>/dev/null; then
       printf "Variable naming collision: %s\nUse a different prefix or rename your arguments." "$var"
@@ -16,7 +17,7 @@ docopt() {
   local i=0
   while [[ $i -lt ${#parsed_params[@]} ]]; do left+=("$i"); ((i++)); done
   params_set=()
-  $bashprint && set -x
+  [[ $bashprint == true ]] && set -x
   if ! root; then
     return 1
   fi

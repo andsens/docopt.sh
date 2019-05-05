@@ -29,6 +29,11 @@ setup(
     keywords='option arguments parsing getopt',
     url='http://docopt.org',
     py_modules=['docopt_sh'],
+    entry_points={
+        'console_scripts': [
+            'docopt.sh = docopt_sh.__main__:main'
+        ]
+    },
     long_description=open('README.rst').read(),
     classifiers=[
         'Topic :: Utilities',
@@ -36,6 +41,9 @@ setup(
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'License :: OSI Approved :: MIT License',
+    ],
+    require=[
+        'docopt'
     ],
     tests_require=[
         'pytest',
