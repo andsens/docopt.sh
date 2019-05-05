@@ -5,7 +5,7 @@ _switch() {
   for i in "${!left[@]}"; do
     local l=${left[$i]}
     if [[ ${parsed_params[$l]} == "$1" ]]; then
-      splice_left "$i"
+      left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       $test_match && return 0
       if [[ $3 == true ]]; then
         eval "(($2++))"

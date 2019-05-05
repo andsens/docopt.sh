@@ -5,7 +5,7 @@ _argument() {
   for i in "${!left[@]}"; do
     local l=${left[$i]}
     if [[ ${parsed_params[$l]} == 'a' ]]; then
-      splice_left "$i"
+      left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       $test_match && return 0
       local value=$(printf -- "%q" "${parsed_values[$l]}")
       if [[ $3 == true ]]; then

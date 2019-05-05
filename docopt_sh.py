@@ -593,7 +593,6 @@ helper_lib = {
     'parse_argv': '\n'.join(open('lib/parse_argv.sh').read().split('\n')[1:]),
     'parse_long': '\n'.join(open('lib/parse_long.sh').read().split('\n')[1:]),
     'parse_shorts': '\n'.join(open('lib/parse_shorts.sh').read().split('\n')[1:]),
-    'stack': '\n'.join(open('lib/stack.sh').read().split('\n')[1:]),
     'main': '\n'.join(open('lib/main.sh').read().split('\n')[1:]),
     'debug': '\n'.join(open('lib/debug.sh').read().split('\n')[1:]),
 }
@@ -601,7 +600,7 @@ helper_lib = {
 def generate_ast_functions(node):
     defaults_helpers = []
     fn_name, functions, helpers, _ = node.get_node_functions()
-    helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'stack', 'main'])
+    helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'main'])
     if debug:
         helpers.add('debug')
     print("\n".join([helper_lib[name] for name in helpers]))

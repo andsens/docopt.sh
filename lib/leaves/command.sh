@@ -8,7 +8,7 @@ _command() {
       if [[ ${parsed_values[$l]} != "$1" ]]; then
         return 1
       fi
-      splice_left "$i"
+      left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       $test_match && return 0
       if [[ $3 == true ]]; then
         eval "(($2++))"
