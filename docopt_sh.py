@@ -582,19 +582,19 @@ def print_ast(node, prefix=''):
             print_ast(child, prefix + '  ')
 
 helper_lib = {
-    '_argument': '\n'.join(open('lib/leaves/argument.sh').read().split('\n')[1:]),
-    '_command': '\n'.join(open('lib/leaves/command.sh').read().split('\n')[1:]),
-    '_option': '\n'.join(open('lib/leaves/option.sh').read().split('\n')[1:]),
-    '_switch': '\n'.join(open('lib/leaves/switch.sh').read().split('\n')[1:]),
-    'required': '\n'.join(open('lib/branches/required.sh').read().split('\n')[1:]),
-    'optional': '\n'.join(open('lib/branches/optional.sh').read().split('\n')[1:]),
-    'either': '\n'.join(open('lib/branches/either.sh').read().split('\n')[1:]),
-    'oneormore': '\n'.join(open('lib/branches/oneormore.sh').read().split('\n')[1:]),
-    'parse_argv': '\n'.join(open('lib/parse_argv.sh').read().split('\n')[1:]),
-    'parse_long': '\n'.join(open('lib/parse_long.sh').read().split('\n')[1:]),
-    'parse_shorts': '\n'.join(open('lib/parse_shorts.sh').read().split('\n')[1:]),
-    'main': '\n'.join(open('lib/main.sh').read().split('\n')[1:]),
-    'debug': '\n'.join(open('lib/debug.sh').read().split('\n')[1:]),
+    '_argument': '\n'.join(open('lib/leaves/argument.sh').read().split('\n')[1:]).strip('\n'),
+    '_command': '\n'.join(open('lib/leaves/command.sh').read().split('\n')[1:]).strip('\n'),
+    '_option': '\n'.join(open('lib/leaves/option.sh').read().split('\n')[1:]).strip('\n'),
+    '_switch': '\n'.join(open('lib/leaves/switch.sh').read().split('\n')[1:]).strip('\n'),
+    'required': '\n'.join(open('lib/branches/required.sh').read().split('\n')[1:]).strip('\n'),
+    'optional': '\n'.join(open('lib/branches/optional.sh').read().split('\n')[1:]).strip('\n'),
+    'either': '\n'.join(open('lib/branches/either.sh').read().split('\n')[1:]).strip('\n'),
+    'oneormore': '\n'.join(open('lib/branches/oneormore.sh').read().split('\n')[1:]).strip('\n'),
+    'parse_argv': '\n'.join(open('lib/parse_argv.sh').read().split('\n')[1:]).strip('\n'),
+    'parse_long': '\n'.join(open('lib/parse_long.sh').read().split('\n')[1:]).strip('\n'),
+    'parse_shorts': '\n'.join(open('lib/parse_shorts.sh').read().split('\n')[1:]).strip('\n'),
+    'main': '\n'.join(open('lib/main.sh').read().split('\n')[1:]).strip('\n'),
+    'debug': '\n'.join(open('lib/debug.sh').read().split('\n')[1:]).strip('\n'),
 }
 
 def generate_ast_functions(node):
@@ -603,7 +603,7 @@ def generate_ast_functions(node):
     helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'main'])
     if debug:
         helpers.add('debug')
-    print("\n".join([helper_lib[name] for name in helpers]))
+    [print(helper_lib[name]) for name in helpers]
     print("\n".join(functions))
     print("root(){ %s;}" % fn_name)
 
