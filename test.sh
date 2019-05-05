@@ -2,7 +2,7 @@
 
 # def docopt(doc, argv=None, help=True, version=None, options_first=False):
 test() {
-  debug=false
+  export debug=false
   if [[ $1 == '-d' ]]; then
     debug=true
     shift
@@ -32,8 +32,8 @@ test() {
 
   docopt "$@"
   ok=$?
-
   if $debug; then
+    printf "\n"
     debug_var "options_short" "${options_short[@]}"
     debug_var "options_long" "${options_long[@]}"
     debug_var "parsed_params" "${parsed_params[@]}"

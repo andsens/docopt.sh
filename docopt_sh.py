@@ -2,6 +2,7 @@
 import sys
 import re
 from shlex import quote
+import os
 
 
 __all__ = ['docopt']
@@ -156,10 +157,15 @@ class BranchPattern(Pattern):
                 c_fn_name = '%s_%d' % (child.function_prefix, counters[child.function_prefix])
                 c_helper, c_args = child.get_helper_invocation()
                 c_fn = '%s(){ %s %s;}' % (c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
+                if debug:
+                    c_fn = '%s%s(){ printf "\\n%s%s: "; %s %s && printf "match, %%s" "$(print_left)";}' % (prefix+'  ', c_fn_name, prefix+'  ', c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
                 functions.append(c_fn)
                 helpers.add(c_helper)
             function_names.append(c_fn_name)
-        functions.insert(0, '%s(){ %s %s;}' % (fn_name, self.helper_name, ' '.join(function_names)))
+        if debug:
+            functions.insert(0, '%s%s(){ printf "%s%s\\n"; %s %s;}' % (prefix, fn_name, prefix, fn_name, self.helper_name, ' '.join(function_names)))
+        else:
+            functions.insert(0, '%s(){ %s %s;}' % (fn_name, self.helper_name, ' '.join(function_names)))
         return fn_name, functions, helpers, counters
 
 
@@ -588,6 +594,8 @@ def generate_ast_functions(node):
     defaults_helpers = []
     fn_name, functions, helpers, _ = node.get_node_functions()
     helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'stack', 'main'])
+    if debug:
+        helpers.add('debug')
     print("\n".join([helper_lib[name] for name in helpers]))
     print("\n".join(functions))
     print("root(){ %s;}" % fn_name)
@@ -628,4 +636,5 @@ def err(msg):
     sys.stderr.write(str(msg) + '\n')
 
 if __name__ == '__main__':
+    debug = os.getenv('debug') == 'true'
     docopt(sys.stdin.read())
