@@ -18,12 +18,14 @@ docopt() {
   params_set=()
   [[ $bashprint == true ]] && set -x
   if ! root; then
-    return 1
+    docopt_help
+    exit 1
   fi
   set +x
   type defaults &>/dev/null && defaults
   if [[ ${#left[@]} -gt 0 ]]; then
-    return 1
+    docopt_help
+    exit 1
   fi
   return 0
 }

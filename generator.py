@@ -10,13 +10,13 @@ def generate_parser(pattern, docname, debug=False):
     for i, o in enumerate(sorted_params):
         o.index = i
 
-    functions = generate_ast_functions(pattern, debug=debug)
+    ast_functions = generate_ast_functions(pattern, debug=debug)
+    help_fn = render_template('lib/help.sh', {"{{doc}}": '$' + docname})
     parameter_details = '\n'.join([
         'options_short=(%s)' % ' '.join([bash_array_value(o.short) for o in sorted_options]),
         'options_long=(%s)' % ' '.join([bash_array_value(o.long) for o in sorted_options]),
         'options_argcount=(%s)' % ' '.join([bash_array_value(o.argcount) for o in sorted_options]),
         'param_names=(%s)' % ' '.join([bash_name(p.name) for p in sorted_params]),
-        'docname=%s' % docname,
     ])
     if sorted_params:
         defaults = 'defaults() {\n'
@@ -26,7 +26,7 @@ def generate_parser(pattern, docname, debug=False):
             else:
                 defaults += "  {name}=${{{name}:-{default}}}\n".format(name=bash_name(p.name), default=bash_value(p.value))
         defaults += '}'
-    return '\n'.join([functions, parameter_details, defaults]) + '\n'
+    return '\n'.join([ast_functions, help_fn, parameter_details, defaults]) + '\n'
 
 def generate_doc_check(parser, doc, docname):
     digest = hashlib.sha256(doc.encode('utf-8')).hexdigest()
@@ -36,10 +36,10 @@ if [[ $current_doc_hash != "{digest}" ]]; then
   exit 1;
 fi
 unset current_doc_hash
-}}\n'''.format(docname=docname, digest=digest)
+'''.format(docname=docname, digest=digest)
 
-def generate_invocation(parser, docname):
-    return 'docopt "$@"\n'.format(docname=docname)
+def generate_invocation(parser):
+    return 'docopt "$@"\n'
 
 def print_ast(node, prefix=''):
     if isinstance(node, LeafPattern):
@@ -75,3 +75,10 @@ def generate_ast_functions(node, debug=False):
 
 def err(msg):
     sys.stderr.write(str(msg) + '\n')
+
+def render_template(file, variables):
+    with open(file, 'r') as h:
+        contents = h.read()
+        for name, replacement in variables.items():
+            contents = contents.replace(name, replacement)
+    return contents
