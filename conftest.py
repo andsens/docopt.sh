@@ -10,6 +10,8 @@ import subprocess
 
 import shlex
 
+from docopt_sh import bash_name, bash_value
+
 import logging
 log = logging.getLogger(__name__)
 
@@ -30,6 +32,8 @@ def parse_test(raw):
         for case in body.split('$')[1:]:
             argv, _, expect = case.strip().partition('\n')
             expect = json.loads(expect)
+            if type(expect) is dict:
+                expect = {bash_name(k): bash_value(v) for k, v in expect.items()}
             prog, _, argv = argv.strip().partition(' ')
             cases.append((prog, argv, expect))
 
@@ -58,13 +62,18 @@ class DocoptTestItem(pytest.Item):
 
     def runtest(self):
         try:
-            process = subprocess.run(['./test.sh', '-'] + shlex.split(self.argv), input=self.doc.encode('utf-8'), stdout=subprocess.PIPE)
+            process = subprocess.run(['./test.sh', '-'] + shlex.split(self.argv), input=self.doc.encode('utf-8'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             process.check_returncode()
-            result = str(process.stdout)
+            result = {}
+            for line in process.stdout.decode('utf-8').strip('\n').split('\n'):
+                keyval = line.split(': ', maxsplit=1)
+                result[str(keyval[0])] = keyval[1] if len(keyval) == 2 else ''
         except subprocess.CalledProcessError as e:
             result = 'user-error'
 
         if self.expect != result:
+            if(len(process.stderr)):
+                log.error(process.stderr.decode('utf-8'))
             raise DocoptTestException(self, result)
 
     def repr_failure(self, excinfo):

@@ -627,4 +627,5 @@ def bash_array_value(value):
 def err(msg):
     sys.stderr.write(str(msg) + '\n')
 
-docopt(sys.stdin.read())
+if __name__ == '__main__':
+    docopt(sys.stdin.read())

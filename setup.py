@@ -20,7 +20,7 @@ class PyTestCommand(TestCommand):
 
 
 setup(
-    name='docopt',
+    name='docopt-sh',
     version=__version__,
     author='Anders Ingemann',
     author_email='anders@ingemann.de',

@@ -24,7 +24,7 @@ test() {
   # local version=''
   options_first=false
   printf "#!/usr/bin/env bash\n\n" > parser.sh
-  if ! ./docopt.py <<<"$doc" >> parser.sh; then
+  if ! ./docopt_sh.py <<<"$doc" >> parser.sh; then
     return 1
   fi
   source parser.sh
