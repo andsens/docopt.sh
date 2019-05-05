@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 
 docopt() {
+  for var in "${param_names[@]}"; do
+    if declare -p "$var" &>/dev/null; then
+      printf "Variable naming collision: %s\nUse a different prefix or rename your arguments." "$var"
+      return 1
+    fi
+  done
   parsed_params=()
   parsed_values=()
   argv=("$@")
