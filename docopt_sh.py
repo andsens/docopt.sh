@@ -612,7 +612,7 @@ def bash_name(name):
     name = name.replace('<', '_')
     name = name.replace('>', '_')
     name = name.replace('-', '_')
-    return name
+    return '_' + name
 
 def bash_value(value):
     if value is None:
