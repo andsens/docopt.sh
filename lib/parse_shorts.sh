@@ -4,10 +4,10 @@ parse_shorts() {
   token=${argv[0]}
   argv=("${argv[@]:1}")
   [[ $token == -* && $token != --* ]] || assert_fail
-  local left=${token#-}
-  while [[ -n $left ]]; do
-    short="-${left:0:1}"
-    left="${left:1}"
+  local remaining=${token#-}
+  while [[ -n $remaining ]]; do
+    short="-${remaining:0:1}"
+    remaining="${remaining:1}"
     local i=0
     local similar=()
     local similar_idx=false
@@ -29,15 +29,15 @@ parse_shorts() {
     else
       value=false
       if [[ ${options_argcount[$similar_idx]} -ne 0 ]]; then
-        if [[ $left == '' ]]; then
+        if [[ $remaining == '' ]]; then
           if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
             die "%s requires argument" "$short"
           fi
           value=${argv[0]}
           argv=("${argv[@]:1}")
         else
-          value=$left
-          left=''
+          value=$remaining
+          remaining=''
         fi
       fi
       if [[ $value == false ]]; then
