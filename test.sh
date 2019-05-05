@@ -15,7 +15,11 @@ test() {
   local program=$1
   shift
   local doc
-  doc=$(cat "usage/$program.txt")
+  if [[ $program == '-' ]]; then
+    doc=$(cat)
+  else
+    doc=$(cat "usage/$program.txt")
+  fi
   # local help=true
   # local version=''
   options_first=false
@@ -36,9 +40,10 @@ test() {
   if [[ $ok -eq 0 ]]; then
     for var in "${param_names[@]}"; do
       if declare -p "$var" | grep -q 'declare -a'; then
-        #shellcheck disable=1087
         printf -- "%s" "$var"
-        local size="$(eval "echo \${#$var[@]}")"
+        local size
+        # shellcheck disable=SC1087
+        size="$(eval "echo \${#$var[@]}")"
         printf -- " (%d): " "$size"
         local i=0
         while [[ $i -lt $size ]]; do printf -- "'%s' " "$(eval "echo \${$var[$i]}")"; ((i++)); done
