@@ -251,7 +251,7 @@ class Option(LeafPattern):
         if type(self.value) is bool:
             return '_switch', [self.index, bash_name(self.name), False]
         elif type(self.value) is int:
-            return '_switch', [self.index, bash_name(self.name), False]
+            return '_switch', [self.index, bash_name(self.name), True]
         return '_option', [self.index, bash_name(self.name), type(self.value) is list]
 
 
