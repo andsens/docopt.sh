@@ -46,7 +46,7 @@ def docopt_sh(params):
     parser = generate_parser(pattern, docname, debug=params['--debug'])
     if not params['--no-doc-check']:
         parser += generate_doc_check(parser, doc, docname)
-    parser += generate_invocation(parser)
+    parser += generate_invocation()
     patched_script = insert_parser(script, lines, parser, params)
     if params['SCRIPT'] is None:
         sys.stdout.write(patched_script)

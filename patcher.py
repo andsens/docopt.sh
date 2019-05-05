@@ -2,9 +2,9 @@ import re
 from parser import DocoptLanguageError
 
 def find_doc(script, docname):
-    matches = list(re.finditer(r'%s="((\\"|[^"])+Usage:(\\"|[^"])+)"' % re.escape(docname), script, re.MULTILINE | re.IGNORECASE))
+    matches = list(re.finditer(r'%s="((\\"|[^"])*Usage:(\\"|[^"])+)"' % re.escape(docname), script, re.MULTILINE | re.IGNORECASE))
     if len(matches) == 0:
-        raise DocoptLanguageError('"%=" (case-insensitive) not found.' % docname)
+        raise DocoptLanguageError('"%s=" (case-insensitive) not found.' % docname)
     if len(matches) > 1:
         raise DocoptLanguageError('More than one "%s=" (case-insensitive).' % docname)
     doc = matches[0].group(1)

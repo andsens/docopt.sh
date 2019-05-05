@@ -18,6 +18,7 @@ def generate_parser(pattern, docname, debug=False):
         'options_argcount=(%s)' % ' '.join([bash_array_value(o.argcount) for o in sorted_options]),
         'param_names=(%s)' % ' '.join([bash_name(p.name) for p in sorted_params]),
     ])
+    defaults = ''
     if sorted_params:
         defaults = 'defaults() {\n'
         for p in sorted_params:
@@ -38,7 +39,7 @@ fi
 unset current_doc_hash
 '''.format(docname=docname, digest=digest)
 
-def generate_invocation(parser):
+def generate_invocation():
     return 'docopt "$@"\n'
 
 helper_lib = {
