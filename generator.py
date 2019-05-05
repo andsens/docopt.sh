@@ -41,14 +41,6 @@ unset current_doc_hash
 def generate_invocation(parser):
     return 'docopt "$@"\n'
 
-def print_ast(node, prefix=''):
-    if isinstance(node, LeafPattern):
-        err(prefix + type(node).__name__ + ' (%s)' % node.name)
-    else:
-        err(prefix + type(node).__name__)
-        for child in node.children:
-            print_ast(child, prefix + '  ')
-
 helper_lib = {
     '_command': '\n'.join(open('lib/leaves/command.sh').read().split('\n')[1:]).strip('\n'),
     '_switch': '\n'.join(open('lib/leaves/switch.sh').read().split('\n')[1:]).strip('\n'),
@@ -72,9 +64,6 @@ def generate_ast_functions(node, debug=False):
         helpers.add('debug')
     root = "root(){ %s;}" % fn_name
     return '\n'.join([helper_lib[name] for name in helpers] + functions + [root])
-
-def err(msg):
-    sys.stderr.write(str(msg) + '\n')
 
 def render_template(file, variables):
     with open(file, 'r') as h:
