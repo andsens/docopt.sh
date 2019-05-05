@@ -25,10 +25,14 @@ test() {
   # local version=''
   options_first=false
   printf "#!/usr/bin/env bash\n\n" > parser.sh
-  if ! ./docopt_sh.py <<<"$doc" >> parser.sh; then
-    return 1
+  if $debug; then
+    if ! ./docopt_sh.py <<<"$doc" >> parser.sh; then
+      return 1
+    fi
+    source parser.sh
+  else
+    eval "$(./docopt_sh.py <<<"$doc")"
   fi
-  source parser.sh
 
   docopt "$@"
   ok=$?
@@ -45,10 +49,15 @@ test() {
         local size
         # shellcheck disable=SC1087
         size="$(eval "echo \${#$var[@]}")"
-        printf -- " (%d): " "$size"
+        $debug && printf -- " (%d)" "$size"
+        printf ": ("
         local i=0
-        while [[ $i -lt $size ]]; do printf -- "'%s' " "$(eval "echo \${$var[$i]}")"; ((i++)); done
-        printf "\n"
+        while [[ $i -lt $size ]]; do
+          printf -- "'%s'" "$(eval "echo \${$var[$i]}")"
+          ((i++))
+          [[ $i -ne $size ]] && printf " "
+        done
+        printf ")\n"
       else
         debug_var "$var" "$(eval "echo \$$var")"
       fi

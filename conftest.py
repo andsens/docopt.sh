@@ -10,7 +10,7 @@ import subprocess
 
 import shlex
 
-from docopt_sh import bash_name, bash_value
+from docopt_sh import bash_name
 
 import logging
 log = logging.getLogger(__name__)
@@ -93,3 +93,17 @@ class DocoptTestItem(pytest.Item):
 
 class DocoptTestException(Exception):
     pass
+
+
+def bash_value(value):
+    if value is None:
+        return ''
+    if type(value) is bool:
+        return 'true' if value else 'false'
+    if type(value) is int:
+        return str(value)
+    if type(value) is str:
+        return shlex.quote(value)
+    if type(value) is list:
+        return '(%s)' % ' '.join("'%s'" % bash_value(v) for v in value)
+    raise Exception('Unknown value type %s' % type(value))
