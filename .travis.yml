@@ -1,0 +1,18 @@
+language: python
+
+addons:
+  apt:
+    packages:
+    - python3-pip
+
+before_script:
+  - pip3 install docopt
+
+script:
+- bash --version
+- python3 --version
+- pytest
+
+notifications:
+  email:
+    on_success: never
