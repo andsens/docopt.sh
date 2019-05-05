@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 docopt() {
-  check_doc_hash || return 1
   for var in "${param_names[@]}"; do
     if declare -p "$var" &>/dev/null; then
       printf "Variable naming collision: %s\nUse a different prefix or rename your arguments." "$var"

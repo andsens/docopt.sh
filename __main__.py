@@ -13,7 +13,7 @@ __version__ = '0.0.0'
 __doc__ = """
 docopt.sh
   Bash argument parser generator.
-  This program looks for a "doc" variable in SCRIPT.sh
+  This program looks for a "doc" variable in SCRIPT
   and appends a matching parser to it.
 
 Usage:

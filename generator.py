@@ -30,17 +30,16 @@ def generate_parser(pattern, docname, debug=False):
 
 def generate_doc_check(parser, doc, docname):
     digest = hashlib.sha256(doc.encode('utf-8')).hexdigest()
-    return '''check_doc_hash() {{
-  local current
-  current=$(printf "%s" "${docname}" | shasum -a 256 | cut -f 1 -d " ")
-  if [[ $current != "{digest}" ]]; then
-    printf "The current usage doc (%s) does not match what the parser was generated with ({digest})\n" "$current" >&2
-    return 1;
-  fi
+    return '''current_doc_hash=$(printf "%s" "${docname}" | shasum -a 256 | cut -f 1 -d " ")
+if [[ $current_doc_hash != "{digest}" ]]; then
+  printf "The current usage doc (%s) does not match what the parser was generated with ({digest})\n" "$current_doc_hash" >&2
+  exit 1;
+fi
+unset current_doc_hash
 }}\n'''.format(docname=docname, digest=digest)
 
-def generate_invocation(parser):
-    return 'docopt "$@"\n'
+def generate_invocation(parser, docname):
+    return 'docopt "$@"\n'.format(docname=docname)
 
 def print_ast(node, prefix=''):
     if isinstance(node, LeafPattern):
