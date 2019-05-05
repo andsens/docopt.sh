@@ -3,14 +3,17 @@
 # def docopt(doc, argv=None, help=True, version=None, options_first=False):
 test() {
   export debug=false
+  test=false
+  bashprint=false
   if [[ $1 == '-d' ]]; then
     debug=true
     shift
-  fi
-  bashprint=false
-  if [[ $1 == '-dd' ]]; then
+  elif [[ $1 == '-dd' ]]; then
     debug=true
     bashprint=true
+    shift
+  elif [[ $1 == '-t' ]]; then
+    test=true
     shift
   fi
   local program=$1
@@ -43,25 +46,29 @@ test() {
     debug_var "parsed_params" "${parsed_params[@]}"
   fi
   if [[ $ok -eq 0 ]]; then
-    for var in "${param_names[@]}"; do
-      if declare -p "$var" | grep -q 'declare -a'; then
-        printf -- "%s" "$var"
-        local size
-        # shellcheck disable=SC1087
-        size="$(eval "echo \${#$var[@]}")"
-        $debug && printf -- " (%d)" "$size"
-        printf ": ("
-        local i=0
-        while [[ $i -lt $size ]]; do
-          printf -- "'%s'" "$(eval "echo \${$var[$i]}")"
-          ((i++))
-          [[ $i -ne $size ]] && printf " "
-        done
-        printf ")\n"
-      else
-        debug_var "$var" "$(eval "echo \$$var")"
-      fi
-    done
+    if $test; then
+      for var in "${param_names[@]}"; do declare -p "$var"; done
+    else
+      for var in "${param_names[@]}"; do
+        if declare -p "$var" | grep -q 'declare -a'; then
+          printf -- "%s" "$var"
+          local size
+          # shellcheck disable=SC1087
+          size="$(eval "echo \${#$var[@]}")"
+          $debug && printf -- " (%d)" "$size"
+          printf ": ("
+          local i=0
+          while [[ $i -lt $size ]]; do
+            printf -- "'%s'" "$(eval "echo \${$var[$i]}")"
+            ((i++))
+            [[ $i -ne $size ]] && printf " "
+          done
+          printf ")\n"
+        else
+          debug_var "$var" "$(eval "echo \$$var")"
+        fi
+      done
+    fi
   fi
   $debug && debug_var "left" "${left[@]}"
   return $ok

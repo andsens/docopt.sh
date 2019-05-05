@@ -14,7 +14,7 @@ docopt() {
     return 1
   fi
   set +x
-  type defaults 2>/dev/null && defaults
+  type defaults &>/dev/null && defaults
   if [[ ${#left[@]} -gt 0 ]]; then
     return 1
   fi

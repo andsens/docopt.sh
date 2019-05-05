@@ -33,7 +33,7 @@ def parse_test(raw):
             argv, _, expect = case.strip().partition('\n')
             expect = json.loads(expect)
             if type(expect) is dict:
-                expect = {bash_name(k): bash_value(v) for k, v in expect.items()}
+                expect = {bash_name(k): bash_decl(bash_name(k), v) for k, v in expect.items()}
             prog, _, argv = argv.strip().partition(' ')
             cases.append((prog, argv, expect))
 
@@ -62,14 +62,20 @@ class DocoptTestItem(pytest.Item):
 
     def runtest(self):
         try:
-            process = subprocess.run(['./test.sh', '-'] + shlex.split(self.argv), input=self.doc.encode('utf-8'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            process = subprocess.run(['./test.sh', '-t', '-'] + shlex.split(self.argv), input=self.doc.encode('utf-8'), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             process.check_returncode()
-            result = {}
-            for line in process.stdout.decode('utf-8').strip('\n').split('\n'):
-                keyval = line.split(': ', maxsplit=1)
-                result[str(keyval[0])] = keyval[1] if len(keyval) == 2 else ''
+            expr = re.compile('^declare (--|-a) ([^=]+)=')
+            out = process.stdout.decode('utf-8').strip('\n')
+            if out != '':
+                result = {expr.match(line).group(2): line for line in out.split('\n')}
+            else:
+                result = {}
         except subprocess.CalledProcessError as e:
             result = 'user-error'
+        except Exception as e:
+            log.error(self.doc)
+            log.error(process.stdout.decode('utf-8'))
+            log.exception(e)
 
         if self.expect != result:
             if(len(process.stderr)):
@@ -95,15 +101,24 @@ class DocoptTestException(Exception):
     pass
 
 
-def bash_value(value):
-    if value is None:
-        return ''
-    if type(value) is bool:
-        return 'true' if value else 'false'
-    if type(value) is int:
-        return str(value)
-    if type(value) is str:
-        return shlex.quote(value)
+def bash_decl(name, value):
+    if value is None or type(value) in (bool, int, str):
+        return 'declare -- {name}={value}'.format(name=name, value=bash_decl_value(value))
     if type(value) is list:
-        return '(%s)' % ' '.join("'%s'" % bash_value(v) for v in value)
+        return 'declare -a {name}={value}'.format(name=name, value=bash_decl_value(value))
     raise Exception('Unknown value type %s' % type(value))
+
+def bash_decl_value(value):
+    if value is None:
+        return '""'
+    if type(value) is bool:
+        return '"true"' if value else '"false"'
+    if type(value) is int:
+        return '"{value}"'.format(value=value)
+    if type(value) is str:
+        return '"{value}"'.format(value=shlex.quote(value).strip("'"))
+    if type(value) is list:
+        return '({value})'.format(value=' '.join('[{i}]={value}'.format(i=i, value=bash_decl_value(v)) for i, v in enumerate(value)))
+
+def declare_quote(value):
+    return value.replace('\\', '\\\\').replace('"', '\\"')
