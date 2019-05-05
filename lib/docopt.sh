@@ -6,7 +6,7 @@ docopt() {
   docopt_extras
   local i=0
   while [[ $i -lt ${#parsed_params[@]} ]]; do left+=("$i"); ((i++)); done
-  if ! root; then
+  if ! {{root_fn}}; then
     docopt_help
     exit 1
   fi
@@ -15,5 +15,6 @@ docopt() {
     docopt_help
     exit 1
   fi
+  docopt_teardown
   return 0
 }

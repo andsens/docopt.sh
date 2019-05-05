@@ -10,8 +10,9 @@ def generate_parser(pattern, docname, debug=False):
     for i, o in enumerate(sorted_params):
         o.index = i
 
+    root_fn, ast_functions = generate_ast_functions(pattern, debug=debug)
     all_functions = [
-        generate_ast_functions(pattern, debug=debug),
+        ast_functions,
         render_template('lib/help.sh', {"{{doc}}": '$' + docname}),
         render_template('lib/setup.sh', {
             '{{options_short}}': ' '.join([bash_array_value(o.short) for o in sorted_options]),
@@ -19,11 +20,15 @@ def generate_parser(pattern, docname, debug=False):
             '{{options_argcount}}': ' '.join([bash_array_value(o.argcount) for o in sorted_options]),
             '{{param_names}}': ' '.join([bash_name(p.name) for p in sorted_params]),
         }),
+        render_template('lib/docopt.sh', {"{{root_fn}}": root_fn}),
     ]
     if sorted_params:
         default_values = generate_default_values(sorted_params)
         all_functions.append(render_template('lib/defaults.sh', {'{{defaults}}': '\n'.join(default_values)}))
     return '\n'.join(all_functions) + '\n'
+
+def generate_teardown():
+    return render_template('lib/teardown.sh'),
 
 def generate_doc_check(parser, doc, docname):
     digest = hashlib.sha256(doc.encode('utf-8')).hexdigest()
@@ -42,18 +47,16 @@ helper_lib = {
     'parse_long': 'lib/parse_long.sh',
     'parse_shorts': 'lib/parse_shorts.sh',
     'extras': 'lib/extras.sh',
-    'main': 'lib/main.sh',
     'debug': 'lib/debug.sh',
 }
 
 def generate_ast_functions(node, debug=False):
     defaults_helpers = []
     fn_name, functions, helpers, _ = node.get_node_functions(debug=debug)
-    helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'extras', 'main'])
+    helpers.update(['parse_argv', 'parse_long', 'parse_shorts', 'extras'])
     if debug:
         helpers.add('debug')
-    root = "root(){ %s;}" % fn_name
-    return '\n'.join([render_template(helper_lib[name]) for name in helpers] + functions + [root])
+    return fn_name, '\n'.join([render_template(helper_lib[name]) for name in helpers] + functions)
 
 def generate_default_values(params):
     for p in params:

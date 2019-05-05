@@ -25,6 +25,7 @@ Options:
   -c --no-doc-check   Don't add a test to check if the parser is up to date
                       with the usage doc
   -o --only-parser    Only output the parser to stdout
+  -t --no-teardown    Do not tear down functions or variables after parsing
   -d --debug          Whether to enable debugging mode (embedded in the parser)
   -h --help           This help message
   -v --version        Version of this program
@@ -45,6 +46,8 @@ def docopt_sh(params):
     doc, lines = find_doc(script, docname)
     pattern = parse_doc(doc)
     parser = generate_parser(pattern, docname, debug=params['--debug'])
+    if not params['--no-teardown']:
+        parser += generate_teardown(parser, doc, docname)
     if not params['--no-doc-check']:
         parser += generate_doc_check(parser, doc, docname)
     if params['--only-parser']:
