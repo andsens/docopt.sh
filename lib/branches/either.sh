@@ -2,11 +2,12 @@
 
 either() {
   local initial_left=("${left[@]}")
-  # shellcheck disable=SC2154
-  local reset_from=${#params_set[@]}
   local best_match
   local previous_best
   local pattern
+  local unset_test_match=true
+  $test_match && unset_test_match=false
+  test_match=true
   for pattern in "$@"; do
     if $pattern; then
       if [[ -z $previous_best || ${#left[@]} -lt $previous_best ]]; then
@@ -15,13 +16,12 @@ either() {
       fi
     fi
     left=("${initial_left[@]}")
-    unset_params "${params_set[@]:$reset_from}"
   done
+  $unset_test_match && test_match=false
   if [[ -n $best_match ]]; then
     $best_match
     return 0
   fi
   left=("${initial_left[@]}")
-  unset_params "${params_set[@]:$reset_from}"
   return 1
 }

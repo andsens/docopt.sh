@@ -9,7 +9,7 @@ _command() {
         return 1
       fi
       splice_left "$i"
-      params_set+=("$2")
+      $test_match && return 0
       if [[ $3 == true ]]; then
         eval "(($2++))"
       else

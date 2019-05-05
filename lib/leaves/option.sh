@@ -6,7 +6,7 @@ _option() {
     local l=${left[$i]}
     if [[ ${parsed_params[$l]} == "$1" ]]; then
       splice_left "$i"
-      params_set+=("$2")
+      $test_match && return 0
       local value=$(printf -- "%q" "${parsed_values[$l]}")
       if [[ $3 == true ]]; then
         eval "$2+=($value)"

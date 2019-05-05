@@ -12,6 +12,7 @@ docopt() {
   argv=("$@")
   parse_argv
   left=()
+  test_match=false
   local i=0
   while [[ $i -lt ${#parsed_params[@]} ]]; do left+=("$i"); ((i++)); done
   params_set=()
