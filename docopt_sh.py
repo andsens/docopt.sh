@@ -163,7 +163,7 @@ class BranchPattern(Pattern):
                 helpers.add(c_helper)
             function_names.append(c_fn_name)
         if debug:
-            functions.insert(0, '%s%s(){ printf "%s%s\\n"; %s %s;}' % (prefix, fn_name, prefix, fn_name, self.helper_name, ' '.join(function_names)))
+            functions.insert(0, '%s%s(){ printf "\\n%s%s"; %s %s;}' % (prefix, fn_name, prefix, fn_name, self.helper_name, ' '.join(function_names)))
         else:
             functions.insert(0, '%s(){ %s %s;}' % (fn_name, self.helper_name, ' '.join(function_names)))
         return fn_name, functions, helpers, counters
