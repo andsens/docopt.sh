@@ -27,8 +27,8 @@ test() {
   # local help=true
   # local version=''
   options_first=false
-  printf "#!/usr/bin/env bash\n\n" > parser.sh
   if $debug; then
+    printf "#!/usr/bin/env bash\n\n" > parser.sh
     if ! ./docopt_sh.py <<<"$doc" >> parser.sh; then
       return 1
     fi
