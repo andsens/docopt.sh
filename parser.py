@@ -114,26 +114,6 @@ class LeafPattern(Pattern):
     def flat(self, *types):
         return [self] if not types or type(self) in types else []
 
-    def match(self, left, collected=None):
-        collected = [] if collected is None else collected
-        pos, match = self.single_match(left)
-        if match is None:
-            return False, left, collected
-        left_ = left[:pos] + left[pos + 1:]
-        same_name = [a for a in collected if a.name == self.name]
-        if type(self.value) in (int, list):
-            if type(self.value) is int:
-                increment = 1
-            else:
-                increment = ([match.value] if type(match.value) is str
-                             else match.value)
-            if not same_name:
-                match.value = increment
-                return True, left_, collected + [match]
-            same_name[0].value += increment
-            return True, left_, collected
-        return True, left_, collected + [match]
-
 class BranchPattern(Pattern):
 
     """Branch/inner node of a pattern tree."""
@@ -183,12 +163,6 @@ class Argument(LeafPattern):
 
     function_prefix = 'arg'
 
-    def single_match(self, left):
-        for n, pattern in enumerate(left):
-            if type(pattern) is Argument:
-                return n, Argument(self.name, pattern.value)
-        return None, None
-
     @classmethod
     def parse(class_, source):
         name = re.findall('(<\S*?>)', source)[0]
@@ -204,15 +178,6 @@ class Command(Argument):
 
     def __init__(self, name, value=False):
         self.name, self.value = name, value
-
-    def single_match(self, left):
-        for n, pattern in enumerate(left):
-            if type(pattern) is Argument:
-                if pattern.value == self.name:
-                    return n, Command(self.name, True)
-                else:
-                    break
-        return None, None
 
     def get_helper_invocation(self):
         return '_command', [bash_name(self.name), type(self.value) is int, self.name]
@@ -243,12 +208,6 @@ class Option(LeafPattern):
             value = matched[0] if matched else None
         return class_(short, long, argcount, value)
 
-    def single_match(self, left):
-        for n, pattern in enumerate(left):
-            if self.name == pattern.name:
-                return n, pattern
-        return None, None
-
     @property
     def name(self):
         return self.long or self.short
@@ -270,26 +229,10 @@ class Required(BranchPattern):
     function_prefix = 'req'
     helper_name = 'required'
 
-    def match(self, left, collected=None):
-        collected = [] if collected is None else collected
-        l = left
-        c = collected
-        for pattern in self.children:
-            matched, l, c = pattern.match(l, c)
-            if not matched:
-                return False, left, collected
-        return True, l, c
-
 class Optional(BranchPattern):
 
     function_prefix = 'optional'
     helper_name = 'optional'
-
-    def match(self, left, collected=None):
-        collected = [] if collected is None else collected
-        for pattern in self.children:
-            m, left, collected = pattern.match(left, collected)
-        return True, left, collected
 
 class OptionsShortcut(Optional):
 
@@ -301,40 +244,10 @@ class OneOrMore(BranchPattern):
     function_prefix = 'oneormore'
     helper_name = 'oneormore'
 
-    def match(self, left, collected=None):
-        assert len(self.children) == 1
-        collected = [] if collected is None else collected
-        l = left
-        c = collected
-        l_ = None
-        matched = True
-        times = 0
-        while matched:
-            # could it be that something didn't match but changed l or c?
-            matched, l, c = self.children[0].match(l, c)
-            times += 1 if matched else 0
-            if l_ == l:
-                break
-            l_ = l
-        if times >= 1:
-            return True, l, c
-        return False, left, collected
-
 class Either(BranchPattern):
 
     function_prefix = 'either'
     helper_name = 'either'
-
-    def match(self, left, collected=None):
-        collected = [] if collected is None else collected
-        outcomes = []
-        for pattern in self.children:
-            matched, _, _ = outcome = pattern.match(left, collected)
-            if matched:
-                outcomes.append(outcome)
-        if outcomes:
-            return min(outcomes, key=lambda outcome: len(outcome[1]))
-        return False, left, collected
 
 
 class Tokens(list):
