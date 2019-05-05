@@ -11,6 +11,7 @@ docopt() {
   parsed_values=()
   argv=("$@")
   parse_argv
+  docopt_extras
   left=()
   test_match=false
   local i=0

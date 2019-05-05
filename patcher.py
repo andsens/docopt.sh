@@ -28,8 +28,6 @@ def find_doc(script, docname):
     else:
       if parser_begin is not None:
         raise DocoptLanguageError('Parser begin guard found, but no end guard detected')
-      else:
-        parser_begin = parser_end = doc_end
 
     return doc, (doc_end, parser_begin, parser_end)
 
@@ -39,9 +37,13 @@ def insert_parser(script, lines, parser, params):
     guard_begin = "# docopt parser below, refresh this parser with `%s`\n" % format(command)
     guard_end = "# docopt parser above, refresh this parser with `%s`" % format(command)
     patched_script = script[0:doc_end]
+    doc_spacer = ''
+    if parser_begin is None:
+        parser_begin = parser_end = doc_end
+        doc_spacer = "\n"
     return \
       script[0:parser_begin] + \
-      "\n" + \
+      doc_spacer + \
       guard_begin + \
       parser + \
       guard_end + \
