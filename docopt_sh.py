@@ -564,13 +564,13 @@ def docopt(doc, argv=None, help=True, version=None, options_first=False):
     print('param_names=(%s)' % ' '.join([bash_name(p.name) for p in sorted_params]))
     defaults = ["{name}=${{{name}:-{default}}}".format(name=bash_name(p.name), default=bash_value(p.value)) for p in sorted_params]
     if sorted_params:
-        print('defaults() {\n')
+        print('defaults() {')
         for p in sorted_params:
             if type(p.value) is list:
-                print("[[ -z ${{{name}+x}} ]] && {name}={default}\n".format(name=bash_name(p.name), default=bash_value(p.value)))
+                print("  [[ -z ${{{name}+x}} ]] && {name}={default}".format(name=bash_name(p.name), default=bash_value(p.value)))
             else:
-                print("{name}=${{{name}:-{default}}}\n".format(name=bash_name(p.name), default=bash_value(p.value)))
-        print('}\n')
+                print("  {name}=${{{name}:-{default}}}".format(name=bash_name(p.name), default=bash_value(p.value)))
+        print('}')
 
 
 def print_ast(node, prefix=''):
