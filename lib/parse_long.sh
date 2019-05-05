@@ -23,6 +23,7 @@ parse_long() {
     ((i++))
   done
   if [[ ${#similar[@]} -eq 0 ]]; then
+    i=0
     for o in "${options_long[@]}"; do
       if [[ $o == $long* ]]; then
         similar+=("$long")
@@ -49,7 +50,7 @@ parse_long() {
   else
     if [[ ${options_argcount[$similar_idx]} -eq 0 ]]; then
       if [[ $value != false ]]; then
-        die "%s must not have an argument" "$long"
+        die "%s must not have an argument" "${options_long[$similar_idx]}"
       fi
     else
       if [[ $value == false ]]; then
