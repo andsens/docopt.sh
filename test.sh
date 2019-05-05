@@ -9,6 +9,7 @@ test() {
   fi
   bashprint=false
   if [[ $1 == '-dd' ]]; then
+    debug=true
     bashprint=true
     shift
   fi
