@@ -6,7 +6,7 @@ import os
 import docopt
 from patcher import find_doc, insert_parser
 from parser import parse_doc
-from generator import generate_parser, generate_doc_check, generate_invocation
+from generator import generate_parser, generate_doc_check
 
 __all__ = ['docopt_sh']
 __version__ = '0.0.0'
@@ -24,6 +24,7 @@ Options:
   -p --prefix=PREFIX  Naming prefix for the argument variables [default: ]
   -c --no-doc-check   Don't add a test to check if the parser is up to date
                       with the usage doc
+  -o --only-parser    Only output the parser to stdout
   -d --debug          Whether to enable debugging mode (embedded in the parser)
   -h --help           This help message
   -v --version        Version of this program
@@ -46,13 +47,15 @@ def docopt_sh(params):
     parser = generate_parser(pattern, docname, debug=params['--debug'])
     if not params['--no-doc-check']:
         parser += generate_doc_check(parser, doc, docname)
-    parser += generate_invocation()
-    patched_script = insert_parser(script, lines, parser, params)
-    if params['SCRIPT'] is None:
-        sys.stdout.write(patched_script)
+    if params['--only-parser']:
+        sys.stdout.write(parser)
     else:
-        with open(params['SCRIPT'], 'w') as h:
-            h.write(patched_script)
+      patched_script = insert_parser(script, lines, parser, params)
+      if params['SCRIPT'] is None:
+          sys.stdout.write(patched_script)
+      else:
+          with open(params['SCRIPT'], 'w') as h:
+              h.write(patched_script)
 
 def main():
     params = docopt.docopt(__doc__)

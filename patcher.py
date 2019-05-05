@@ -1,5 +1,8 @@
 import re
 from parser import DocoptLanguageError
+import logging
+
+log = logging.getLogger(__name__)
 
 def find_doc(script, docname):
     matches = list(re.finditer(r'%s="((\\"|[^"])*Usage:(\\"|[^"])+)"' % re.escape(docname), script, re.MULTILINE | re.IGNORECASE))
@@ -28,6 +31,12 @@ def find_doc(script, docname):
     else:
       if parser_begin is not None:
         raise DocoptLanguageError('Parser begin guard found, but no end guard detected')
+
+    matches = list(re.finditer(r'docopt\s+"\$\@"', script))
+    if len(matches) > 1:
+        log.warn('Multiple invocations of docopt found, check your script to make sure this is correct.')
+    if len(matches) == 0:
+        log.warn('No invocations of docopt found, check your script to make sure this is correct.\ndocopt.sh is invoked with `docopt "$@"`')
 
     return doc, (doc_end, parser_begin, parser_end)
 

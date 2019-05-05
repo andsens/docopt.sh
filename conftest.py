@@ -11,7 +11,7 @@ import subprocess
 import shlex
 
 from parser import parse_doc
-from generator import generate_parser,generate_invocation,bash_name
+from generator import generate_parser,bash_name
 
 import logging
 log = logging.getLogger(__name__)
@@ -52,7 +52,6 @@ class DocoptTestFile(pytest.File):
             if cases:
                 pattern = parse_doc(doc)
                 parser = generate_parser(pattern, 'doc')
-                parser += generate_invocation()
             for case in cases:
                 yield DocoptTestItem("%s(%d)" % (name, index), self, doc, parser, case)
                 index += 1

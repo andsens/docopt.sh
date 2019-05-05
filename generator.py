@@ -10,52 +10,40 @@ def generate_parser(pattern, docname, debug=False):
     for i, o in enumerate(sorted_params):
         o.index = i
 
-    ast_functions = generate_ast_functions(pattern, debug=debug)
-    help_fn = render_template('lib/help.sh', {"{{doc}}": '$' + docname})
-    parameter_details = '\n'.join([
-        'options_short=(%s)' % ' '.join([bash_array_value(o.short) for o in sorted_options]),
-        'options_long=(%s)' % ' '.join([bash_array_value(o.long) for o in sorted_options]),
-        'options_argcount=(%s)' % ' '.join([bash_array_value(o.argcount) for o in sorted_options]),
-        'param_names=(%s)' % ' '.join([bash_name(p.name) for p in sorted_params]),
-    ])
-    defaults = ''
+    all_functions = [
+        generate_ast_functions(pattern, debug=debug),
+        render_template('lib/help.sh', {"{{doc}}": '$' + docname}),
+        render_template('lib/setup.sh', {
+            '{{options_short}}': ' '.join([bash_array_value(o.short) for o in sorted_options]),
+            '{{options_long}}': ' '.join([bash_array_value(o.long) for o in sorted_options]),
+            '{{options_argcount}}': ' '.join([bash_array_value(o.argcount) for o in sorted_options]),
+            '{{param_names}}': ' '.join([bash_name(p.name) for p in sorted_params]),
+        }),
+    ]
     if sorted_params:
-        defaults = 'defaults() {\n'
-        for p in sorted_params:
-            if type(p.value) is list:
-                defaults += "  [[ -z ${{{name}+x}} ]] && {name}={default}\n".format(name=bash_name(p.name), default=bash_value(p.value))
-            else:
-                defaults += "  {name}=${{{name}:-{default}}}\n".format(name=bash_name(p.name), default=bash_value(p.value))
-        defaults += '}'
-    return '\n'.join([ast_functions, help_fn, parameter_details, defaults]) + '\n'
+        default_values = generate_default_values(sorted_params)
+        all_functions.append(render_template('lib/defaults.sh', {'{{defaults}}': '\n'.join(default_values)}))
+    return '\n'.join(all_functions) + '\n'
 
 def generate_doc_check(parser, doc, docname):
     digest = hashlib.sha256(doc.encode('utf-8')).hexdigest()
-    return '''current_doc_hash=$(printf "%s" "${docname}" | shasum -a 256 | cut -f 1 -d " ")
-if [[ $current_doc_hash != "{digest}" ]]; then
-  printf "The current usage doc (%s) does not match what the parser was generated with ({digest})\n" "$current_doc_hash" >&2
-  exit 1;
-fi
-unset current_doc_hash
-'''.format(docname=docname, digest=digest)
-
-def generate_invocation():
-    return 'docopt "$@"\n'
+    docopt_check = render_template('lib/check_hash.sh', {'{{docname}}': docname, '{{digest}}': digest})
+    return docopt_check + '\n' + 'docopt_check' +'\n'
 
 helper_lib = {
-    '_command': '\n'.join(open('lib/leaves/command.sh').read().split('\n')[1:]).strip('\n'),
-    '_switch': '\n'.join(open('lib/leaves/switch.sh').read().split('\n')[1:]).strip('\n'),
-    '_value': '\n'.join(open('lib/leaves/value.sh').read().split('\n')[1:]).strip('\n'),
-    'required': '\n'.join(open('lib/branches/required.sh').read().split('\n')[1:]).strip('\n'),
-    'optional': '\n'.join(open('lib/branches/optional.sh').read().split('\n')[1:]).strip('\n'),
-    'either': '\n'.join(open('lib/branches/either.sh').read().split('\n')[1:]).strip('\n'),
-    'oneormore': '\n'.join(open('lib/branches/oneormore.sh').read().split('\n')[1:]).strip('\n'),
-    'parse_argv': '\n'.join(open('lib/parse_argv.sh').read().split('\n')[1:]).strip('\n'),
-    'parse_long': '\n'.join(open('lib/parse_long.sh').read().split('\n')[1:]).strip('\n'),
-    'parse_shorts': '\n'.join(open('lib/parse_shorts.sh').read().split('\n')[1:]).strip('\n'),
-    'extras': '\n'.join(open('lib/extras.sh').read().split('\n')[1:]).strip('\n'),
-    'main': '\n'.join(open('lib/main.sh').read().split('\n')[1:]).strip('\n'),
-    'debug': '\n'.join(open('lib/debug.sh').read().split('\n')[1:]).strip('\n'),
+    '_command': 'lib/leaves/command.sh',
+    '_switch': 'lib/leaves/switch.sh',
+    '_value': 'lib/leaves/value.sh',
+    'required': 'lib/branches/required.sh',
+    'optional': 'lib/branches/optional.sh',
+    'either': 'lib/branches/either.sh',
+    'oneormore': 'lib/branches/oneormore.sh',
+    'parse_argv': 'lib/parse_argv.sh',
+    'parse_long': 'lib/parse_long.sh',
+    'parse_shorts': 'lib/parse_shorts.sh',
+    'extras': 'lib/extras.sh',
+    'main': 'lib/main.sh',
+    'debug': 'lib/debug.sh',
 }
 
 def generate_ast_functions(node, debug=False):
@@ -65,11 +53,20 @@ def generate_ast_functions(node, debug=False):
     if debug:
         helpers.add('debug')
     root = "root(){ %s;}" % fn_name
-    return '\n'.join([helper_lib[name] for name in helpers] + functions + [root])
+    return '\n'.join([render_template(helper_lib[name]) for name in helpers] + functions + [root])
 
-def render_template(file, variables):
+def generate_default_values(params):
+    for p in params:
+        if type(p.value) is list:
+            yield "  [[ -z ${{{name}+x}} ]] && {name}={default}".format(name=bash_name(p.name), default=bash_value(p.value))
+        else:
+            yield "  {name}=${{{name}:-{default}}}".format(name=bash_name(p.name), default=bash_value(p.value))
+
+def render_template(file, variables={}):
     with open(file, 'r') as h:
         contents = h.read()
+        contents = contents.lstrip('#!/usr/bin/env bash')
+        contents = contents.strip('\n')
         for name, replacement in variables.items():
             contents = contents.replace(name, replacement)
     return contents

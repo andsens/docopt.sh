@@ -11,7 +11,8 @@ _value() {
     if [[ ${parsed_params[$l]} == "$needle" ]]; then
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       $test_match && return 0
-      local value=$(printf -- "%q" "${parsed_values[$l]}")
+      local value
+      value=$(printf -- "%q" "${parsed_values[$l]}")
       if [[ $2 == true ]]; then
         eval "$1+=($value)"
       else
