@@ -205,7 +205,7 @@ class Command(Argument):
         return None, None
 
     def get_helper_invocation(self):
-        return '_command', [self.name, bash_name(self.name), type(self.value) is int]
+        return '_command', [bash_name(self.name), type(self.value) is int, self.name]
 
 class Option(LeafPattern):
 
@@ -249,9 +249,9 @@ class Option(LeafPattern):
 
     def get_helper_invocation(self):
         if type(self.value) is bool:
-            return '_switch', [self.index, bash_name(self.name), False]
+            return '_switch', [bash_name(self.name), False, self.index]
         elif type(self.value) is int:
-            return '_switch', [self.index, bash_name(self.name), True]
+            return '_switch', [bash_name(self.name), True, self.index]
         return '_value', [bash_name(self.name), type(self.value) is list, self.index]
 
 

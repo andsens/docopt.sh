@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# $1=variable name
+# $2=is it a list?
+# $3=option idx to find in the options list (or 'a' for 'argument')
 _value() {
   local i
   local needle=${3:-'a'}
