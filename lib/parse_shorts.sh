@@ -19,7 +19,7 @@ parse_shorts() {
       ((i++))
     done
     if [[ ${#similar[@]} -gt 1 ]]; then
-      die "%s is specified ambiguously %d times" "$short" "${#similar[@]}"
+      docopt_error "$(printf "%s is specified ambiguously %d times" "$short" "${#similar[@]}")"
     elif [[ ${#similar[@]} -lt 1 ]]; then
       similar_idx=${#options_short[@]}
       value=true
@@ -31,7 +31,7 @@ parse_shorts() {
       if [[ ${options_argcount[$similar_idx]} -ne 0 ]]; then
         if [[ $remaining == '' ]]; then
           if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
-            die "%s requires argument" "$short"
+            docopt_error "$(printf "%s requires argument" "$short")"
           fi
           value=${argv[0]}
           argv=("${argv[@]:1}")

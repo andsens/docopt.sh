@@ -33,7 +33,7 @@ parse_long() {
     done
   fi
   if [[ ${#similar[@]} -gt 1 ]]; then
-    die "%s is not a unique prefix: %s?" "$long" "${similar[*]}"
+    docopt_error "$(printf "%s is not a unique prefix: %s?" "$long" "${similar[*]}")"
   elif [[ ${#similar[@]} -lt 1 ]]; then
     if [[ $eq == '=' ]]; then
       argcount=1
@@ -50,12 +50,12 @@ parse_long() {
   else
     if [[ ${options_argcount[$similar_idx]} -eq 0 ]]; then
       if [[ $value != false ]]; then
-        die "%s must not have an argument" "${options_long[$similar_idx]}"
+        docopt_error "$(printf "%s must not have an argument" "${options_long[$similar_idx]}")"
       fi
     else
       if [[ $value == false ]]; then
         if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
-          die "%s requires argument" "$long"
+          docopt_error "$(printf "%s requires argument" "$long")"
         fi
         value=${argv[0]}
         argv=("${argv[@]:1}")
