@@ -1,5 +1,5 @@
 import re
-from bash_helper import bash_name, bash_value
+from docopt_sh.bash_helper import bash_name, bash_value
 
 
 def parse_doc(doc):

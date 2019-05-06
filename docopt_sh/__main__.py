@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 import sys
 import re
-from shlex import quote
 import os
 import docopt
-from patcher import find_doc, insert_parser
-from parser import parse_doc
-from generator import generate_parser, generate_doc_check, generate_teardown
+from docopt_sh.patcher import find_doc, insert_parser
+from docopt_sh.parser import parse_doc
+from docopt_sh.generator import generate_parser, generate_doc_check, generate_teardown
 
 __all__ = ['docopt_sh']
 __version__ = '0.0.0'
@@ -19,19 +18,26 @@ docopt.sh
 Usage:
   docopt.sh [options] [SCRIPT]
 
-Options:
+Parser generation options:
   -p --prefix=PREFIX  Naming prefix for the argument variables [default: ]
-  -c --no-doc-check   Don't add a test to check if the parser is up to date
-                      with the usage doc
-  -o --only-parser    Only output the parser to stdout
+  -c --no-doc-check   Disable check for whether if the parser matches the doc
+  -n --no-help        Disable automatic help on -h or --help
+  -f --options-first  Require that options precede positional arguments
   -t --no-teardown    Do not tear down functions or variables after parsing
+
+Other options:
+  -o --only-parser    Only output the parser to stdout
   -d --debug          Whether to enable debugging mode (embedded in the parser)
   -h --help           This help message
   -v --version        Version of this program
 
-Note:
+
+Notes:
   You can pass the script on stdin as well,
   docopt.sh will then output the modified script to stdout.
+
+  If the script has a $version defined before the variable usage doc variable
+  --version will automatically output the value of that variable.
 """
 
 

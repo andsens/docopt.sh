@@ -1,5 +1,5 @@
-from parser import Option, Argument, Command
-from bash_helper import bash_name, bash_value, bash_array_value
+from docopt_sh.parser import Option, Argument, Command
+from docopt_sh.bash_helper import bash_name, bash_value, bash_array_value
 import hashlib
 
 def generate_parser(pattern, docname, debug=False):

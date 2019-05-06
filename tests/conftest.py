@@ -10,36 +10,15 @@ import subprocess
 
 import shlex
 
-from parser import parse_doc
-from generator import generate_parser,bash_name
+from docopt_sh.parser import parse_doc
+from docopt_sh.generator import generate_parser,bash_name
 
 import logging
 log = logging.getLogger(__name__)
 
 def pytest_collect_file(path, parent):
-    if path.ext == ".docopt" and path.basename.startswith("test"):
+    if path.basename == "usecases.txt":
         return DocoptTestFile(path, parent)
-
-
-def parse_test(raw):
-    raw = re.compile('#.*$', re.M).sub('', raw).strip()
-    if raw.startswith('"""'):
-        raw = raw[3:]
-
-    for fixture in raw.split('r"""'):
-        name = ''
-        doc, _, body = fixture.partition('"""')
-        cases = []
-        for case in body.split('$')[1:]:
-            argv, _, expect = case.strip().partition('\n')
-            expect = json.loads(expect)
-            if type(expect) is dict:
-                expect = {bash_name(k): bash_decl(bash_name(k), v) for k, v in expect.items()}
-            prog, _, argv = argv.strip().partition(' ')
-            cases.append((prog, argv, expect))
-
-        yield name, doc, cases
-
 
 class DocoptTestFile(pytest.File):
 
@@ -47,7 +26,7 @@ class DocoptTestFile(pytest.File):
         raw = self.fspath.open().read()
         index = 1
 
-        for name, doc, cases in parse_test(raw):
+        for name, doc, cases in self._parse_test(raw):
             name = self.fspath.purebasename
             if cases:
                 pattern = parse_doc(doc)
@@ -55,6 +34,25 @@ class DocoptTestFile(pytest.File):
             for case in cases:
                 yield DocoptTestItem("%s(%d)" % (name, index), self, doc, parser, case)
                 index += 1
+
+    def _parse_test(self, raw):
+        raw = re.compile('#.*$', re.M).sub('', raw).strip()
+        if raw.startswith('"""'):
+            raw = raw[3:]
+
+        for fixture in raw.split('r"""'):
+            name = ''
+            doc, _, body = fixture.partition('"""')
+            cases = []
+            for case in body.split('$')[1:]:
+                argv, _, expect = case.strip().partition('\n')
+                expect = json.loads(expect)
+                if type(expect) is dict:
+                    expect = {bash_name(k): bash_decl(bash_name(k), v) for k, v in expect.items()}
+                prog, _, argv = argv.strip().partition(' ')
+                cases.append((prog, argv, expect))
+
+            yield name, doc, cases
 
 
 class DocoptTestItem(pytest.Item):

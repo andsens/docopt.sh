@@ -1,5 +1,5 @@
 import re
-from parser import DocoptLanguageError
+from docopt_sh.parser import DocoptLanguageError
 import logging
 
 log = logging.getLogger(__name__)
