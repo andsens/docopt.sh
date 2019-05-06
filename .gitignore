@@ -1,1 +1,4 @@
+/build
+/dist
 /parser.sh
+/docopt_sh.egg-info

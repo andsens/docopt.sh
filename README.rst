@@ -1,4 +1,5 @@
+# docopt.sh
 
-Taglines:
-Bash argument parser
-Bash argument parser generator
+A bash argument parser generator
+
+Early alpha, do not use

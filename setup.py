@@ -1,5 +1,5 @@
 import sys
-from setuptools import setup
+from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 from docopt_sh import __version__
@@ -20,16 +20,15 @@ class PyTestCommand(TestCommand):
 
 
 setup(
-    name='docopt.sh',
-    packages=['docopt_sh'],
+    name='docopt-sh',
+    packages=find_packages(),
     version=__version__,
     author='Anders Ingemann',
     author_email='anders@ingemann.de',
     description='Bash argument parser',
     license='MIT',
     keywords='option arguments parsing getopt',
-    url='http://docopt.org',
-    py_modules=['docopt_sh'],
+    url='https://github.com/andsens/docopt.sh',
     entry_points={
         'console_scripts': [
             'docopt.sh = docopt_sh.__main__:main'
