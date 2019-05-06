@@ -6,7 +6,7 @@ import os
 import docopt
 from patcher import find_doc, insert_parser
 from parser import parse_doc
-from generator import generate_parser, generate_doc_check
+from generator import generate_parser, generate_doc_check, generate_teardown
 
 __all__ = ['docopt_sh']
 __version__ = '0.0.0'
@@ -47,7 +47,7 @@ def docopt_sh(params):
     pattern = parse_doc(doc)
     parser = generate_parser(pattern, docname, debug=params['--debug'])
     if not params['--no-teardown']:
-        parser += generate_teardown(parser, doc, docname)
+        parser += generate_teardown()
     if not params['--no-doc-check']:
         parser += generate_doc_check(parser, doc, docname)
     if params['--only-parser']:

@@ -28,7 +28,7 @@ def generate_parser(pattern, docname, debug=False):
     return '\n'.join(all_functions) + '\n'
 
 def generate_teardown():
-    return render_template('lib/teardown.sh'),
+    return render_template('lib/teardown.sh') + '\n'
 
 def generate_doc_check(parser, doc, docname):
     digest = hashlib.sha256(doc.encode('utf-8')).hexdigest()
