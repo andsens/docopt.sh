@@ -4,13 +4,14 @@ import logging
 
 log = logging.getLogger(__name__)
 
-def find_doc(script, docname):
-    matches = list(re.finditer(r'%s="((\\"|[^"])*Usage:(\\"|[^"])+)"' % re.escape(docname), script, re.MULTILINE | re.IGNORECASE))
+def find_doc(script):
+    matches = list(re.finditer(r'([a-zA-Z_][a-zA-Z_0-9]*)="((\\"|[^"])*Usage:(\\"|[^"])+)"', script, re.MULTILINE | re.IGNORECASE))
     if len(matches) == 0:
-        raise DocoptLanguageError('"%s=" (case-insensitive) not found.' % docname)
+        raise DocoptLanguageError('Variable containing usage doc not found.')
     if len(matches) > 1:
-        raise DocoptLanguageError('More than one "%s=" (case-insensitive).' % docname)
-    doc = matches[0].group(1)
+        raise DocoptLanguageError('More than one variable contain usage doc found.')
+    docname = matches[0].group(1)
+    doc = matches[0].group(2)
     doc_end = matches[0].end(0)
 
     parser_begin = None
@@ -38,7 +39,7 @@ def find_doc(script, docname):
     if len(matches) == 0:
         log.warn('No invocations of docopt found, check your script to make sure this is correct.\ndocopt.sh is invoked with `docopt "$@"`')
 
-    return doc, (doc_end, parser_begin, parser_end)
+    return doc, docname, (doc_end, parser_begin, parser_end)
 
 def insert_parser(script, lines, parser, params):
     doc_end, parser_begin, parser_end = lines
@@ -62,8 +63,6 @@ def generate_refresh_command(params):
     command = 'docopt.sh'
     if params['--debug']:
         command += ' --debug'
-    if params['--docname'] != 'doc':
-        command += ' --docname=' + params['--docname']
     if params['--prefix'] != '':
         command += ' --prefix=' + params['--prefix']
     if params['SCRIPT'] is not None:

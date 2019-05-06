@@ -20,7 +20,6 @@ Usage:
   docopt.sh [options] [SCRIPT]
 
 Options:
-  -d --docname=NAME   Variable name to look for in the script [default: doc]
   -p --prefix=PREFIX  Naming prefix for the argument variables [default: ]
   -c --no-doc-check   Don't add a test to check if the parser is up to date
                       with the usage doc
@@ -42,8 +41,7 @@ def docopt_sh(params):
     else:
         with open(params['SCRIPT'], 'r') as h:
             script = h.read()
-    docname = params['--docname']
-    doc, lines = find_doc(script, docname)
+    doc, docname, lines = find_doc(script)
     pattern = parse_doc(doc)
     parser = generate_parser(pattern, docname, debug=params['--debug'])
     if not params['--no-teardown']:
