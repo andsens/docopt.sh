@@ -2,7 +2,7 @@ import sys
 from setuptools import setup
 from setuptools.command.test import test as TestCommand
 
-from docopt import __version__
+from docopt_sh import __version__
 
 
 class PyTestCommand(TestCommand):
@@ -21,6 +21,7 @@ class PyTestCommand(TestCommand):
 
 setup(
     name='docopt.sh',
+    packages=['docopt_sh'],
     version=__version__,
     author='Anders Ingemann',
     author_email='anders@ingemann.de',

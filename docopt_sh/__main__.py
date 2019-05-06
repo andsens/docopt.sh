@@ -7,8 +7,6 @@ from docopt_sh.patcher import find_doc, insert_parser
 from docopt_sh.parser import parse_doc
 from docopt_sh.generator import generate_parser, generate_doc_check, generate_teardown
 
-__all__ = ['docopt_sh']
-__version__ = '0.0.0'
 __doc__ = """
 docopt.sh
   Bash argument parser generator.
