@@ -15,6 +15,6 @@ docopt() {
     docopt_help
     exit 1
   fi
-  docopt_teardown
+  type docopt_teardown &>/dev/null && docopt_teardown
   return 0
 }

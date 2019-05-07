@@ -1,17 +1,11 @@
 import re
-try:
-    import json
-except ImportError:
-    import simplejson as json
-
+import json
 import pytest
-
 import subprocess
-
 import shlex
-
 from docopt_sh.parser import parse_doc
 from docopt_sh.generator import generate_parser,bash_name
+from . import bash_run_script,bash_decl,bash_decl_value,declare_quote
 
 import logging
 log = logging.getLogger(__name__)
@@ -61,13 +55,14 @@ class DocoptUsecaseTest(pytest.Item):
         self.prog, self.argv, self.expect = case
 
     def runtest(self):
-        program = 'doc="%s"\n%s' % (self.doc, self.parser)
+        program = '''
+doc="{doc}"
+{parser}
+docopt "$@"
+for var in "${{param_names[@]}}"; do declare -p "$var"; done
+'''.format(doc=self.doc, parser=self.parser)
         try:
-            process = subprocess.run(
-                ['./output-parsed.sh'] + shlex.split(self.argv),
-                input=program.encode('utf-8'),
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
+            process = bash_run_script(program, shlex.split(self.argv))
             process.check_returncode()
             expr = re.compile('^declare (--|-a) ([^=]+)=')
             out = process.stdout.decode('utf-8').strip('\n')
@@ -77,12 +72,11 @@ class DocoptUsecaseTest(pytest.Item):
         except subprocess.CalledProcessError as e:
             result = 'user-error'
         except Exception as e:
-            log.error(self.doc)
-            log.error(process.stdout.decode('utf-8'))
             log.exception(e)
 
         if self.expect != result:
             if(len(process.stderr)):
+                log.error(self.doc)
                 log.error(process.stderr.decode('utf-8'))
             raise DocoptUsecaseTestException(self, result)
 
@@ -104,25 +98,3 @@ class DocoptUsecaseTest(pytest.Item):
 class DocoptUsecaseTestException(Exception):
     pass
 
-
-def bash_decl(name, value):
-    if value is None or type(value) in (bool, int, str):
-        return 'declare -- {name}={value}'.format(name=name, value=bash_decl_value(value))
-    if type(value) is list:
-        return 'declare -a {name}={value}'.format(name=name, value=bash_decl_value(value))
-    raise Exception('Unknown value type %s' % type(value))
-
-def bash_decl_value(value):
-    if value is None:
-        return '""'
-    if type(value) is bool:
-        return '"true"' if value else '"false"'
-    if type(value) is int:
-        return '"{value}"'.format(value=value)
-    if type(value) is str:
-        return '"{value}"'.format(value=shlex.quote(value).strip("'"))
-    if type(value) is list:
-        return '({value})'.format(value=' '.join('[{i}]={value}'.format(i=i, value=bash_decl_value(v)) for i, v in enumerate(value)))
-
-def declare_quote(value):
-    return value.replace('\\', '\\\\').replace('"', '\\"')
