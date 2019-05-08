@@ -22,6 +22,7 @@ Parser generation options:
   --no-help        Disable automatic help on -h or --help
   --options-first  Require that options precede positional arguments
   --no-teardown    Do not tear down functions or variables after parsing
+  --no-version     Do not add --version despite $version being present
 
 Other options:
   --only-parser    Only output the parser to stdout
@@ -45,9 +46,10 @@ def docopt_sh(params):
     else:
         with open(params['SCRIPT'], 'r') as h:
             script = h.read()
-    doc, docname, lines = find_doc(script)
+    doc, docname, version_present, lines = find_doc(script)
     pattern = parse_doc(doc)
-    parser = generate_parser(pattern, docname, debug=params['--debug'])
+    add_version = not params['--no-version'] and version_present
+    parser = generate_parser(pattern, docname, add_version=add_version, debug=params['--debug'])
     if not params['--no-teardown']:
         parser += generate_teardown()
     if not params['--no-doc-check']:

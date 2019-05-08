@@ -12,7 +12,6 @@ docopt_setup() {
   test_match=false
   docopt_options_first=${docopt_options_first:-false}
   docopt_help=${docopt_help:-true}
-  docopt_version=${docopt_version:-}
   for var in "${param_names[@]}"; do
     if declare -p "$var" &>/dev/null; then
       printf "Variable naming collision: %s\nUse a different prefix or rename your arguments." "$var"

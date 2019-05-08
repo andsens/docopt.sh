@@ -11,11 +11,11 @@ docopt_extras() {
       fi
     done
   fi
-  if [[ -n $docopt_version ]]; then
+  if {{add_version}}; then
     for idx in "${parsed_params[@]}"; do
       [[ $idx == 'a' ]] && continue
       if [[ ${options_long[$idx]} == "--version" ]]; then
-        printf "%s\n" "$docopt_version"
+        printf "%s\n" "$version"
         exit 0
       fi
     done

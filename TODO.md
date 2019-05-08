@@ -6,3 +6,4 @@ Has usage to ensure parser is up to date
 Replace double == with single =
 Respect help better & show short usage
 Add version of docopt.sh to hash & inform user whether update made any changes
+Account for presence of version variable in hash

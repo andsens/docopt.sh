@@ -12,6 +12,7 @@ def find_doc(script):
         raise DocoptLanguageError('More than one variable contain usage doc found.')
     docname = matches[0].group(1)
     doc = matches[0].group(2)
+    doc_start = matches[0].end(0)
     doc_end = matches[0].end(0)
 
     parser_begin = None
@@ -39,7 +40,10 @@ def find_doc(script):
     if len(matches) == 0:
         log.warn('No invocations of docopt found, check your script to make sure this is correct.\ndocopt.sh is invoked with `docopt "$@"`')
 
-    return doc, docname, (doc_end, parser_begin, parser_end)
+    matches = list(re.finditer(r'^version=', script, re.MULTILINE))
+    version_present = len(matches) >= 1
+
+    return doc, docname, version_present, (doc_end, parser_begin, parser_end)
 
 def insert_parser(script, lines, parser, params):
     doc_end, parser_begin, parser_end = lines
