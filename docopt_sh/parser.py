@@ -122,8 +122,7 @@ class BranchPattern(Pattern):
         self.children = list(children)
 
     def __repr__(self):
-        return '%s(%s)' % (self.__class__.__name__,
-                           ', '.join(repr(a) for a in self.children))
+        return '%s(%s)' % (self.__class__.__name__, ', '.join(repr(a) for a in self.children))
 
     def flat(self, *types):
         if type(self) in types:
@@ -213,8 +212,7 @@ class Option(LeafPattern):
         return self.long or self.short
 
     def __repr__(self):
-        return 'Option(%r, %r, %r, %r)' % (self.short, self.long,
-                                           self.argcount, self.value)
+        return 'Option(%r, %r, %r, %r)' % (self.short, self.long, self.argcount, self.value)
 
     def get_helper_invocation(self):
         if type(self.value) is bool:
@@ -278,8 +276,7 @@ def parse_long(tokens, options):
     if tokens.error is DocoptExit and similar == []:  # if no exact match
         similar = [o for o in options if o.long and o.long.startswith(long)]
     if len(similar) > 1:  # might be simply specified ambiguously 2+ times?
-        raise tokens.error('%s is not a unique prefix: %s?' %
-                           (long, ', '.join(o.long for o in similar)))
+        raise tokens.error('%s is not a unique prefix: %s?' % (long, ', '.join(o.long for o in similar)))
     elif len(similar) < 1:
         argcount = 1 if eq == '=' else 0
         o = Option(None, long, argcount)
@@ -312,16 +309,14 @@ def parse_shorts(tokens, options):
         short, left = '-' + left[0], left[1:]
         similar = [o for o in options if o.short == short]
         if len(similar) > 1:
-            raise tokens.error('%s is specified ambiguously %d times' %
-                               (short, len(similar)))
+            raise tokens.error('%s is specified ambiguously %d times' % (short, len(similar)))
         elif len(similar) < 1:
             o = Option(short, None, 0)
             options.append(o)
             if tokens.error is DocoptExit:
                 o = Option(short, None, 0, True)
         else:  # why copying is necessary here?
-            o = Option(short, similar[0].long,
-                       similar[0].argcount, similar[0].value)
+            o = Option(short, similar[0].long, similar[0].argcount, similar[0].value)
             value = None
             if o.argcount != 0:
                 if left == '':
@@ -407,8 +402,7 @@ def parse_defaults(doc):
 
 
 def parse_section(name, source):
-    pattern = re.compile('^([^\n]*' + name + '[^\n]*\n?(?:[ \t].*?(?:\n|$))*)',
-                         re.IGNORECASE | re.MULTILINE)
+    pattern = re.compile('^([^\n]*' + name + '[^\n]*\n?(?:[ \t].*?(?:\n|$))*)', re.IGNORECASE | re.MULTILINE)
     return [s.strip() for s in pattern.findall(source)]
 
 
