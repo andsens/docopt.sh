@@ -2,7 +2,7 @@ from docopt_sh.parser import Option, Argument, Command
 from docopt_sh.bash_helper import bash_name, bash_value, bash_array_value
 import hashlib
 
-def generate_parser(pattern, docname, add_version=False, debug=False):
+def generate_parser(pattern, docname, add_version=False, add_help=False, debug=False):
   sort_order = [Option, Argument, Command]
   params = set(pattern.flat(*sort_order))
   sorted_params = sorted(params, key=lambda p: sort_order.index(type(p)))
@@ -20,7 +20,10 @@ def generate_parser(pattern, docname, add_version=False, debug=False):
       '{{options_argcount}}': ' '.join([bash_array_value(o.argcount) for o in sorted_options]),
       '{{param_names}}': ' '.join([bash_name(p.name) for p in sorted_params]),
     }),
-    render_template('lib/extras.sh', {"{{add_version}}": bash_value(add_version)}),
+    render_template('lib/extras.sh', {
+      "{{add_help}}": bash_value(add_help),
+      "{{add_version}}": bash_value(add_version),
+    }),
     render_template('lib/docopt.sh', {"{{root_fn}}": root_fn}),
   ]
   if sorted_params:

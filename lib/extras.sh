@@ -2,7 +2,7 @@
 
 docopt_extras() {
   local idx
-  if $docopt_help; then
+  if {{add_help}}; then
     for idx in "${parsed_params[@]}"; do
       [[ $idx == 'a' ]] && continue
       if [[ ${options_short[$idx]} == "-h" || ${options_long[$idx]} == "--help" ]]; then

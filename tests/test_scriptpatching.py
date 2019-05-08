@@ -18,6 +18,12 @@ def test_help(monkeypatch, capsys):
     assert code == 0
     assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
 
+def test_no_help(monkeypatch, capsys):
+  with patched_script(monkeypatch, capsys, 'echo_ship_name.sh', ['--no-help']) as run:
+    code, out, err = run('--help')
+    assert code == 1
+    assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
+
 def test_wrong_usage(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
     code, out, err = run('--bad-opt')
