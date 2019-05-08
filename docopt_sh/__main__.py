@@ -41,32 +41,32 @@ Notes:
 
 
 def docopt_sh(params):
+  if params['SCRIPT'] is None:
+    script = sys.stdin.read()
+  else:
+    with open(params['SCRIPT'], 'r') as h:
+      script = h.read()
+  doc, docname, version_present, lines = find_doc(script)
+  pattern = parse_doc(doc)
+  add_version = not params['--no-version'] and version_present
+  parser = generate_parser(pattern, docname, add_version=add_version, debug=params['--debug'])
+  if not params['--no-teardown']:
+    parser += generate_teardown()
+  if not params['--no-doc-check']:
+    parser += generate_doc_check(parser, doc, docname)
+  if params['--only-parser']:
+    sys.stdout.write(parser)
+  else:
+    patched_script = insert_parser(script, lines, parser, params)
     if params['SCRIPT'] is None:
-        script = sys.stdin.read()
+      sys.stdout.write(patched_script)
     else:
-        with open(params['SCRIPT'], 'r') as h:
-            script = h.read()
-    doc, docname, version_present, lines = find_doc(script)
-    pattern = parse_doc(doc)
-    add_version = not params['--no-version'] and version_present
-    parser = generate_parser(pattern, docname, add_version=add_version, debug=params['--debug'])
-    if not params['--no-teardown']:
-        parser += generate_teardown()
-    if not params['--no-doc-check']:
-        parser += generate_doc_check(parser, doc, docname)
-    if params['--only-parser']:
-        sys.stdout.write(parser)
-    else:
-        patched_script = insert_parser(script, lines, parser, params)
-        if params['SCRIPT'] is None:
-            sys.stdout.write(patched_script)
-        else:
-            with open(params['SCRIPT'], 'w') as h:
-                h.write(patched_script)
+      with open(params['SCRIPT'], 'w') as h:
+        h.write(patched_script)
 
 def main():
-    params = docopt.docopt(__doc__)
-    docopt_sh(params)
+  params = docopt.docopt(__doc__)
+  docopt_sh(params)
 
 if __name__ == '__main__':
-    main()
+  main()
