@@ -17,17 +17,17 @@ Usage:
   docopt.sh [options] [SCRIPT]
 
 Parser generation options:
-  -p --prefix=PREFIX  Naming prefix for the argument variables [default: ]
-  -c --no-doc-check   Disable check for whether if the parser matches the doc
-  -n --no-help        Disable automatic help on -h or --help
-  -f --options-first  Require that options precede positional arguments
-  -t --no-teardown    Do not tear down functions or variables after parsing
+  --prefix=PREFIX  Naming prefix for the argument variables [default: ]
+  --no-doc-check   Disable check for whether if the parser matches the doc
+  --no-help        Disable automatic help on -h or --help
+  --options-first  Require that options precede positional arguments
+  --no-teardown    Do not tear down functions or variables after parsing
 
 Other options:
-  -o --only-parser    Only output the parser to stdout
-  -d --debug          Whether to enable debugging mode (embedded in the parser)
-  -h --help           This help message
-  -v --version        Version of this program
+  --only-parser    Only output the parser to stdout
+  -d --debug       Whether to enable debugging mode (embedded in the parser)
+  -h --help        This help message
+  --version        Version of this program
 
 
 Notes:
