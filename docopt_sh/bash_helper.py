@@ -1,12 +1,12 @@
 from shlex import quote
 
 
-def bash_name(name):
+def bash_name(name, prefix=''):
   name = name.replace('<', '_')
   name = name.replace('>', '_')
   name = name.replace('-', '_')
   name = name.replace(' ', '_')
-  return '_' + name
+  return prefix + name
 
 def bash_value(value):
   if value is None:

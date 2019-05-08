@@ -17,7 +17,7 @@ Usage:
   docopt.sh [options] [SCRIPT]
 
 Parser generation options:
-  --prefix=PREFIX  Naming prefix for the argument variables [default: ]
+  --prefix=PREFIX  Parameter variable name prefix [default: ]
   --no-doc-check   Disable check for whether if the parser matches the doc
   --no-help        Disable automatic help on -h or --help
   --options-first  Require that options precede positional arguments
@@ -51,6 +51,7 @@ def docopt_sh(params):
   add_version = not params['--no-version'] and version_present
   parser = generate_parser(
     pattern, docname,
+    name_prefix=params['--prefix'],
     add_help=not params['--no-help'],
     add_version=add_version,
     options_first=params['--options-first'],

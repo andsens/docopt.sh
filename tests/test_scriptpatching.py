@@ -91,7 +91,7 @@ def test_only_parser(monkeypatch, capsys):
 doc="{doc}"
 {parser}
 docopt "$@"
-echo $((__x_ + __y_))
+echo $((_x_ + _y_))
 '''.format(doc=doc, parser=parser)
   captured = invoke_docopt(monkeypatch, capsys, stdin=StringIO(program))
   code, out, err = bash_eval_script(captured.out, ['ship', 'shoot', '3', '1'])
@@ -104,8 +104,8 @@ def test_teardown(monkeypatch, capsys):
   program = '''
 doc="{doc}"
 docopt "$@"
-echo ${{parsed_params[0]}}
-echo ${{parsed_values[0]}}
+echo ${{parsed_params[@]}}
+echo ${{parsed_values[@]}}
 '''.format(doc=doc)
   program = invoke_docopt(monkeypatch, capsys=capsys, stdin=StringIO(program)).out
   code, out, err = bash_eval_script(program, ['ship', 'shoot', '3', '1'])
@@ -126,3 +126,9 @@ echo ${{parsed_values[@]}}
   code, out, err = bash_eval_script(program, ['ship', 'shoot', '3', '1'])
   assert code == 0
   assert out == 'a a a a\nship shoot 3 1\n'
+
+def test_prefix(monkeypatch, capsys):
+  with patched_script(monkeypatch, capsys, 'output_internals.sh', ['--prefix', 'docopt_', '--no-teardown']) as run:
+    code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
+    assert code == 0
+    assert 'docopt_shoot' in out

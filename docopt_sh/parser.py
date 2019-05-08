@@ -161,6 +161,7 @@ class BranchPattern(Pattern):
 class Argument(LeafPattern):
 
   function_prefix = 'arg'
+  name_prefix = ''
 
   @classmethod
   def parse(class_, source):
@@ -169,21 +170,23 @@ class Argument(LeafPattern):
     return class_(name, value[0] if value else None)
 
   def get_helper_invocation(self):
-    return '_value', [bash_name(self.name), type(self.value) is list]
+    return '_value', [bash_name(self.name, self.name_prefix), type(self.value) is list]
 
 class Command(Argument):
 
   function_prefix = 'cmd'
+  name_prefix = ''
 
   def __init__(self, name, value=False):
     self.name, self.value = name, value
 
   def get_helper_invocation(self):
-    return '_command', [bash_name(self.name), type(self.value) is int, self.name]
+    return '_command', [bash_name(self.name, self.name_prefix), type(self.value) is int, self.name]
 
 class Option(LeafPattern):
 
   function_prefix = 'opt'
+  name_prefix = ''
 
   def __init__(self, short=None, long=None, argcount=0, value=False):
     assert argcount in (0, 1)
@@ -216,10 +219,10 @@ class Option(LeafPattern):
 
   def get_helper_invocation(self):
     if type(self.value) is bool:
-      return '_switch', [bash_name(self.name), False, self.index]
+      return '_switch', [bash_name(self.name, self.name_prefix), False, self.index]
     elif type(self.value) is int:
-      return '_switch', [bash_name(self.name), True, self.index]
-    return '_value', [bash_name(self.name), type(self.value) is list, self.index]
+      return '_switch', [bash_name(self.name, self.name_prefix), True, self.index]
+    return '_value', [bash_name(self.name, self.name_prefix), type(self.value) is list, self.index]
 
 
 class Required(BranchPattern):

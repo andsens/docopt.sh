@@ -2,13 +2,14 @@ from docopt_sh.parser import Option, Argument, Command
 from docopt_sh.bash_helper import bash_name, bash_value, bash_array_value
 import hashlib
 
-def generate_parser(pattern, docname, add_help=False, add_version=False, options_first=False, debug=False):
+def generate_parser(pattern, docname, name_prefix='', add_help=False, add_version=False, options_first=False, debug=False):
   sort_order = [Option, Argument, Command]
   params = set(pattern.flat(*sort_order))
   sorted_params = sorted(params, key=lambda p: sort_order.index(type(p)))
   sorted_options = [o for o in sorted_params if type(o) is Option]
-  for i, o in enumerate(sorted_params):
-    o.index = i
+  for i, p in enumerate(sorted_params):
+    p.index = i
+    p.name_prefix = name_prefix
 
   root_fn, ast_functions = generate_ast_functions(pattern, debug=debug)
   all_functions = [
@@ -18,7 +19,7 @@ def generate_parser(pattern, docname, add_help=False, add_version=False, options
       '{{options_short}}': ' '.join([bash_array_value(o.short) for o in sorted_options]),
       '{{options_long}}': ' '.join([bash_array_value(o.long) for o in sorted_options]),
       '{{options_argcount}}': ' '.join([bash_array_value(o.argcount) for o in sorted_options]),
-      '{{param_names}}': ' '.join([bash_name(p.name) for p in sorted_params]),
+      '{{param_names}}': ' '.join([bash_name(p.name, name_prefix) for p in sorted_params]),
     }),
     render_template('lib/parse_argv.sh', {"{{options_first}}": bash_value(options_first)}),
     render_template('lib/extras.sh', {
@@ -28,7 +29,7 @@ def generate_parser(pattern, docname, add_help=False, add_version=False, options
     render_template('lib/docopt.sh', {"{{root_fn}}": root_fn}),
   ]
   if sorted_params:
-    default_values = generate_default_values(sorted_params)
+    default_values = generate_default_values(sorted_params, name_prefix)
     all_functions.append(render_template('lib/defaults.sh', {'{{defaults}}': '\n'.join(default_values)}))
   return '\n'.join(all_functions) + '\n'
 
@@ -62,12 +63,12 @@ def generate_ast_functions(node, debug=False):
     helpers.add('debug')
   return fn_name, '\n'.join([render_template(helper_lib[name]) for name in helpers] + functions)
 
-def generate_default_values(params):
+def generate_default_values(params, name_prefix=''):
   for p in params:
     if type(p.value) is list:
-      yield "  [[ -z ${{{name}+x}} ]] && {name}={default}".format(name=bash_name(p.name), default=bash_value(p.value))
+      yield "  [[ -z ${{{name}+x}} ]] && {name}={default}".format(name=bash_name(p.name, name_prefix), default=bash_value(p.value))
     else:
-      yield "  {name}=${{{name}:-{default}}}".format(name=bash_name(p.name), default=bash_value(p.value))
+      yield "  {name}=${{{name}:-{default}}}".format(name=bash_name(p.name, name_prefix), default=bash_value(p.value))
 
 def render_template(file, variables={}):
   with open(file, 'r') as h:

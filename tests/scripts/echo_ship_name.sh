@@ -7,6 +7,6 @@ doc="Usage: echo_ship_name.sh ship new <name>...
 
 docopt "$@"
 
-if $_ship && $_new; then
-  echo $__name_
+if $ship && $new; then
+  echo $_name_
 fi

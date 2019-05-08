@@ -21,7 +21,7 @@ class DocoptUsecaseTestFile(pytest.File):
       name = self.fspath.purebasename
       if cases:
         pattern = parse_doc(doc)
-        parser = generate_parser(pattern, 'doc')
+        parser = generate_parser(pattern, 'doc', name_prefix='_')
       for case in cases:
         yield DocoptUsecaseTest("%s(%d)" % (name, index), self, doc, parser, case)
         index += 1
@@ -39,7 +39,7 @@ class DocoptUsecaseTestFile(pytest.File):
         argv, _, expect = case.strip().partition('\n')
         expect = json.loads(expect)
         if type(expect) is dict:
-          expect = {bash_name(k): bash_decl(bash_name(k), v) for k, v in expect.items()}
+          expect = {bash_name(k, prefix='_'): bash_decl(bash_name(k, prefix='_'), v) for k, v in expect.items()}
         prog, _, argv = argv.strip().partition(' ')
         cases.append((prog, argv, expect))
 
@@ -69,6 +69,7 @@ for var in "${{param_names[@]}}"; do declare -p "$var"; done
         result = {}
         if out != '':
           result = {expr.match(line).group(2): line for line in out.split('\n')}
+        log.error(out)
       else:
         result = 'user-error'
     except Exception as e:
