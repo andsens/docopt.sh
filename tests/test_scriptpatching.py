@@ -54,6 +54,25 @@ def test_options_first_fail(monkeypatch, capsys):
     assert code == 1
     assert out.startswith('Naval Fate.')
 
+def test_teardown(monkeypatch, capsys):
+  with patched_script(monkeypatch, capsys, 'output_internals.sh') as run:
+    code, out, err = run('ship', 'shoot', '3', '1')
+    assert err == ''
+    assert code == 0
+    assert out == '\n\n\n'
+
+def test_no_teardown(monkeypatch, capsys):
+  with patched_script(monkeypatch, capsys, 'output_internals.sh', ['--no-teardown']) as run:
+    code, out, err = run('ship', 'shoot', '3', '1')
+    assert code == 0
+    assert '\n'.join(out.split('\n')[1:]) == 'a a a a\nship shoot 3 1\n'
+
+def test_prefix(monkeypatch, capsys):
+  with patched_script(monkeypatch, capsys, 'output_internals.sh', ['--prefix', 'docopt_', '--no-teardown']) as run:
+    code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
+    assert code == 0
+    assert 'docopt_shoot' in out
+
 def test_patch_file(monkeypatch):
   with temp_script('echo_ship_name.sh') as (script, run):
     invoke_docopt(monkeypatch, params=[script.name])
@@ -97,38 +116,3 @@ echo $((_x_ + _y_))
   code, out, err = bash_eval_script(captured.out, ['ship', 'shoot', '3', '1'])
   assert code == 0
   assert out == '4\n'
-
-def test_teardown(monkeypatch, capsys):
-  with open('tests/scripts/naval_fate.sh') as h:
-    doc = get_doc(h.read())[0]
-  program = '''
-doc="{doc}"
-docopt "$@"
-echo ${{parsed_params[@]}}
-echo ${{parsed_values[@]}}
-'''.format(doc=doc)
-  program = invoke_docopt(monkeypatch, capsys=capsys, stdin=StringIO(program)).out
-  code, out, err = bash_eval_script(program, ['ship', 'shoot', '3', '1'])
-  assert err == ''
-  assert code == 0
-  assert out == '\n\n'
-
-def test_no_teardown(monkeypatch, capsys):
-  with open('tests/scripts/naval_fate.sh') as h:
-    doc = get_doc(h.read())[0]
-  program = '''
-doc="{doc}"
-docopt "$@"
-echo ${{parsed_params[@]}}
-echo ${{parsed_values[@]}}
-'''.format(doc=doc)
-  program = invoke_docopt(monkeypatch, capsys=capsys, params=['--no-teardown'], stdin=StringIO(program)).out
-  code, out, err = bash_eval_script(program, ['ship', 'shoot', '3', '1'])
-  assert code == 0
-  assert out == 'a a a a\nship shoot 3 1\n'
-
-def test_prefix(monkeypatch, capsys):
-  with patched_script(monkeypatch, capsys, 'output_internals.sh', ['--prefix', 'docopt_', '--no-teardown']) as run:
-    code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
-    assert code == 0
-    assert 'docopt_shoot' in out
