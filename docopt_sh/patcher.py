@@ -4,17 +4,8 @@ import logging
 
 log = logging.getLogger(__name__)
 
-def find_doc(script):
-  matches = list(re.finditer(r'([a-zA-Z_][a-zA-Z_0-9]*)="((\\"|[^"])*Usage:(\\"|[^"])+)"', script, re.MULTILINE | re.IGNORECASE))
-  if len(matches) == 0:
-    raise DocoptLanguageError('Variable containing usage doc not found.')
-  if len(matches) > 1:
-    raise DocoptLanguageError('More than one variable contain usage doc found.')
-  docname = matches[0].group(1)
-  doc = matches[0].group(2)
-  doc_start = matches[0].end(0)
-  doc_end = matches[0].end(0)
-
+def get_script_locations(script):
+  doc, docname, doc_start, doc_end = get_doc(script)
   parser_begin = None
   matches = list(re.finditer(r'# docopt parser below', script))
   if len(matches) > 1:
@@ -44,6 +35,18 @@ def find_doc(script):
   version_present = len(matches) >= 1
 
   return doc, docname, version_present, (doc_end, parser_begin, parser_end)
+
+def get_doc(script):
+  matches = list(re.finditer(r'([a-zA-Z_][a-zA-Z_0-9]*)="((\\"|[^"])*Usage:(\\"|[^"])+)"', script, re.MULTILINE | re.IGNORECASE))
+  if len(matches) == 0:
+    raise DocoptLanguageError('Variable containing usage doc not found.')
+  if len(matches) > 1:
+    raise DocoptLanguageError('More than one variable contain usage doc found.')
+  docname = matches[0].group(1)
+  doc = matches[0].group(2)
+  doc_start = matches[0].end(0)
+  doc_end = matches[0].end(0)
+  return doc, docname, doc_start, doc_end
 
 def insert_parser(script, lines, parser, params):
   doc_end, parser_begin, parser_end = lines

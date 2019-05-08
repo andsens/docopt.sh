@@ -80,3 +80,23 @@ def test_no_doc_check(monkeypatch):
       h.write(contents)
     code, out, err = run(['ship', 'new', 'Olympia'])
     assert out == 'Olympia\n'
+
+def test_only_parser(monkeypatch, capsys):
+  from docopt_sh.patcher import get_doc
+  from . import bash_eval_script
+  from io import StringIO
+  with open('tests/scripts/naval_fate.sh') as h:
+    script = h.read()
+    doc = get_doc(script)[0]
+    h.seek(0)
+    parser = invoke_docopt(monkeypatch, capsys=capsys, params=['--only-parser'], stdin=h).out
+    program = '''
+doc="{doc}"
+{parser}
+docopt "$@"
+echo $((__x_ + __y_))
+'''.format(doc=doc, parser=parser)
+    captured = invoke_docopt(monkeypatch, capsys, stdin=StringIO(program))
+    code, out, err = bash_eval_script(captured.out, ['ship', 'shoot', '3', '1'])
+    assert code == 0
+    assert out == '4\n'

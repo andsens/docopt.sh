@@ -62,15 +62,15 @@ docopt "$@"
 for var in "${{param_names[@]}}"; do declare -p "$var"; done
 '''.format(doc=self.doc, parser=self.parser)
     try:
-      process = bash_eval_script(program, shlex.split(self.argv))
-      process.check_returncode()
-      expr = re.compile('^declare (--|-a) ([^=]+)=')
-      out = process.stdout.decode('utf-8').strip('\n')
-      result = {}
-      if out != '':
-        result = {expr.match(line).group(2): line for line in out.split('\n')}
-    except subprocess.CalledProcessError as e:
-      result = 'user-error'
+      code, out, err = bash_eval_script(program, shlex.split(self.argv))
+      if code == 0:
+        expr = re.compile('^declare (--|-a) ([^=]+)=')
+        out = out.strip('\n')
+        result = {}
+        if out != '':
+          result = {expr.match(line).group(2): line for line in out.split('\n')}
+      else:
+        result = 'user-error'
     except Exception as e:
       log.exception(e)
 

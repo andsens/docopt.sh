@@ -7,11 +7,12 @@ from docopt_sh.__main__ import main as docopt_sh_main
 
 def bash_eval_script(script, argv):
   argv = ' '.join(map(shlex.quote, argv))
-  return subprocess.run(
+  process = subprocess.run(
     ['bash', '-c', 'set - %s; eval "$(cat)"' % argv],
     input=script.encode('utf-8'),
     stdout=subprocess.PIPE, stderr=subprocess.PIPE
   )
+  return process.returncode, process.stdout.decode('utf-8'), process.stderr.decode('utf-8')
 
 def bash_decl(name, value):
   if value is None or type(value) in (bool, int, str):
@@ -41,8 +42,7 @@ def patched_script(monkeypatch, capsys, name, docopt_params=[]):
     with open(os.path.join('tests/scripts', name)) as script:
       def run(*argv):
         captured = invoke_docopt(m, capsys, stdin=script, params=docopt_params)
-        process = bash_eval_script(captured.out, argv)
-        return process.returncode, process.stdout.decode('utf-8'), process.stderr.decode('utf-8')
+        return bash_eval_script(captured.out, argv)
       yield run
 
 @contextmanager

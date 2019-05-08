@@ -3,7 +3,7 @@ import sys
 import re
 import os
 import docopt
-from docopt_sh.patcher import find_doc, insert_parser
+from docopt_sh.patcher import get_script_locations, insert_parser
 from docopt_sh.parser import parse_doc
 from docopt_sh.generator import generate_parser, generate_doc_check, generate_teardown
 
@@ -46,7 +46,7 @@ def docopt_sh(params):
   else:
     with open(params['SCRIPT'], 'r') as h:
       script = h.read()
-  doc, docname, version_present, lines = find_doc(script)
+  doc, docname, version_present, lines = get_script_locations(script)
   pattern = parse_doc(doc)
   add_version = not params['--no-version'] and version_present
   parser = generate_parser(
