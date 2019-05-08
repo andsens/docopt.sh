@@ -28,11 +28,11 @@ def find_doc(script):
         raise DocoptLanguageError('Multiple docopt parser end guards found')
     if len(matches) == 1:
         if parser_begin is None:
-          raise DocoptLanguageError('Parser end guard found, but no begin guard detected')
+            raise DocoptLanguageError('Parser end guard found, but no begin guard detected')
         parser_end = matches[0].end(0)
     else:
-      if parser_begin is not None:
-        raise DocoptLanguageError('Parser begin guard found, but no end guard detected')
+        if parser_begin is not None:
+            raise DocoptLanguageError('Parser begin guard found, but no end guard detected')
 
     matches = list(re.finditer(r'docopt\s+"\$\@"', script))
     if len(matches) > 1:
@@ -56,12 +56,12 @@ def insert_parser(script, lines, parser, params):
         parser_begin = parser_end = doc_end
         doc_spacer = "\n"
     return \
-      script[0:parser_begin] + \
-      doc_spacer + \
-      guard_begin + \
-      parser + \
-      guard_end + \
-      script[parser_end:]
+        script[0:parser_begin] + \
+        doc_spacer + \
+        guard_begin + \
+        parser + \
+        guard_end + \
+        script[parser_end:]
 
 def generate_refresh_command(params):
     command = 'docopt.sh'

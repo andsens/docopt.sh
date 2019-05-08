@@ -327,7 +327,7 @@ def parse_shorts(tokens, options):
                     value = left
                     left = ''
             if tokens.error is DocoptExit:
-                  o.value = value if value is not None else True
+                o.value = value if value is not None else True
         parsed.append(o)
     return parsed
 

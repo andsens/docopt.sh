@@ -57,12 +57,12 @@ def docopt_sh(params):
     if params['--only-parser']:
         sys.stdout.write(parser)
     else:
-      patched_script = insert_parser(script, lines, parser, params)
-      if params['SCRIPT'] is None:
-          sys.stdout.write(patched_script)
-      else:
-          with open(params['SCRIPT'], 'w') as h:
-              h.write(patched_script)
+        patched_script = insert_parser(script, lines, parser, params)
+        if params['SCRIPT'] is None:
+            sys.stdout.write(patched_script)
+        else:
+            with open(params['SCRIPT'], 'w') as h:
+                h.write(patched_script)
 
 def main():
     params = docopt.docopt(__doc__)
