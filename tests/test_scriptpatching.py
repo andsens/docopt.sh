@@ -18,7 +18,7 @@ def test_help(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
     code, out, err = run('--help')
     assert code == 0
-    assert out == 'Usage: naval_fate.py ship new <name>...\n'
+    assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
 
 def test_wrong_usage(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
@@ -28,7 +28,7 @@ def test_wrong_usage(monkeypatch, capsys):
 def test_no_version(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh', ['--no-version']) as run:
     code, out, err = run('--version')
-    assert out == 'Usage: naval_fate.py ship new <name>...\n'
+    assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
 
 def test_patch_file(monkeypatch):
   with temp_script('echo_ship_name.sh') as (script, run):
