@@ -7,3 +7,6 @@ Replace double == with single =
 Respect help better & show short usage
 Add version of docopt.sh to hash & inform user whether update made any changes
 Account for presence of version variable in hash
+Don't wait for stdin when it is a tty
+Check for version up until docopt invocation (if there is any, otherwise just the whole script)
+Check that docopt invocation is after usage doc
