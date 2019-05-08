@@ -1,5 +1,6 @@
 import subprocess
 import shlex
+import sys
 from contextlib import contextmanager
 import os
 from docopt_sh.__main__ import main as docopt_sh_main
@@ -35,11 +36,12 @@ def declare_quote(value):
   return value.replace('\\', '\\\\').replace('"', '\\"')
 
 @contextmanager
-def patched_script(monkeypatch, capsys, name):
+def patched_script(monkeypatch, capsys, name, docopt_params=[]):
   with monkeypatch.context() as m:
     with open(os.path.join('tests/scripts', name)) as script:
       def run(*argv):
         m.setattr('sys.stdin', script)
+        m.setattr(sys, 'argv', ['docopt.sh'] + docopt_params)
         docopt_sh_main()
         captured = capsys.readouterr()
         return bash_run_script(captured.out, argv)
