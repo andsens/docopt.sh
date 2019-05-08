@@ -2,8 +2,7 @@
 
 version='0.1.5'
 
-doc="Usage:
-  naval_fate.py ship new <name>...
+doc="Usage: naval_fate.py ship new <name>...
 "
 
 docopt "$@"
