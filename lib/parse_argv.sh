@@ -12,7 +12,7 @@ parse_argv() {
       parse_long
     elif [[ ${argv[0]} == -* && ${argv[0]} != "-" ]]; then
       parse_shorts
-    elif $docopt_options_first; then
+    elif {{options_first}}; then
       for arg in "${argv[@]}"; do
         parsed_params+=('a')
         parsed_values+=("$arg")

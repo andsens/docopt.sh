@@ -2,7 +2,7 @@ from docopt_sh.parser import Option, Argument, Command
 from docopt_sh.bash_helper import bash_name, bash_value, bash_array_value
 import hashlib
 
-def generate_parser(pattern, docname, add_version=False, add_help=False, debug=False):
+def generate_parser(pattern, docname, add_help=False, add_version=False, options_first=False, debug=False):
   sort_order = [Option, Argument, Command]
   params = set(pattern.flat(*sort_order))
   sorted_params = sorted(params, key=lambda p: sort_order.index(type(p)))
@@ -20,6 +20,7 @@ def generate_parser(pattern, docname, add_version=False, add_help=False, debug=F
       '{{options_argcount}}': ' '.join([bash_array_value(o.argcount) for o in sorted_options]),
       '{{param_names}}': ' '.join([bash_name(p.name) for p in sorted_params]),
     }),
+    render_template('lib/parse_argv.sh', {"{{options_first}}": bash_value(options_first)}),
     render_template('lib/extras.sh', {
       "{{add_help}}": bash_value(add_help),
       "{{add_version}}": bash_value(add_version),
@@ -56,7 +57,7 @@ helper_lib = {
 def generate_ast_functions(node, debug=False):
   defaults_helpers = []
   fn_name, functions, helpers, _ = node.get_node_functions(debug=debug)
-  helpers.update(['parse_argv', 'parse_long', 'parse_shorts'])
+  helpers.update(['parse_shorts', 'parse_long'])
   if debug:
     helpers.add('debug')
   return fn_name, '\n'.join([render_template(helper_lib[name]) for name in helpers] + functions)

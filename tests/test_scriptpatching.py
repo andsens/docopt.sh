@@ -6,11 +6,10 @@ def test_arg(monkeypatch, capsys):
     assert code == 0
     assert out == 'Britannica\n'
 
-def test_version(monkeypatch, capsys):
+def test_wrong_usage(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
-    code, out, err = run('--version')
-    assert code == 0
-    assert out == '0.1.5\n'
+    code, out, err = run('--bad-opt')
+    assert code != 0
 
 def test_help(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
@@ -24,15 +23,33 @@ def test_no_help(monkeypatch, capsys):
     assert code == 1
     assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
 
-def test_wrong_usage(monkeypatch, capsys):
+def test_version(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
-    code, out, err = run('--bad-opt')
-    assert code != 0
+    code, out, err = run('--version')
+    assert code == 0
+    assert out == '0.1.5\n'
 
 def test_no_version(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh', ['--no-version']) as run:
     code, out, err = run('--version')
     assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
+
+def test_options_anywhere(monkeypatch, capsys):
+  with patched_script(monkeypatch, capsys, 'naval_fate.sh') as run:
+    code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
+    assert out == 'The Titanic is now moving to 1,4 at 6 knots.\n'
+
+def test_options_first(monkeypatch, capsys):
+  with patched_script(monkeypatch, capsys, 'naval_fate.sh', ['--options-first']) as run:
+    code, out, err = run('--speed', '6', 'ship', 'Titanic', 'move', '1', '4')
+    assert code == 0
+    assert out == 'The Titanic is now moving to 1,4 at 6 knots.\n'
+
+def test_options_first_fail(monkeypatch, capsys):
+  with patched_script(monkeypatch, capsys, 'naval_fate.sh', ['--options-first']) as run:
+    code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
+    assert code == 1
+    assert out.startswith('Naval Fate.')
 
 def test_patch_file(monkeypatch):
   with temp_script('echo_ship_name.sh') as (script, run):

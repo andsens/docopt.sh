@@ -49,7 +49,13 @@ def docopt_sh(params):
   doc, docname, version_present, lines = find_doc(script)
   pattern = parse_doc(doc)
   add_version = not params['--no-version'] and version_present
-  parser = generate_parser(pattern, docname, add_version=add_version, add_help=not params['--no-help'], debug=params['--debug'])
+  parser = generate_parser(
+    pattern, docname,
+    add_help=not params['--no-help'],
+    add_version=add_version,
+    options_first=params['--options-first'],
+    debug=params['--debug']
+  )
   if not params['--no-teardown']:
     parser += generate_teardown()
   if not params['--no-doc-check']:
