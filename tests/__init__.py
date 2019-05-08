@@ -1,11 +1,11 @@
 import subprocess
 import shlex
-import sys
-from contextlib import contextmanager
+from tempfile import NamedTemporaryFile
 import os
+from contextlib import contextmanager
 from docopt_sh.__main__ import main as docopt_sh_main
 
-def bash_run_script(script, argv):
+def bash_eval_script(script, argv):
   argv = ' '.join(map(shlex.quote, argv))
   return subprocess.run(
     ['bash', '-c', 'set - %s; eval "$(cat)"' % argv],
@@ -40,9 +40,35 @@ def patched_script(monkeypatch, capsys, name, docopt_params=[]):
   with monkeypatch.context() as m:
     with open(os.path.join('tests/scripts', name)) as script:
       def run(*argv):
-        m.setattr('sys.stdin', script)
-        m.setattr(sys, 'argv', ['docopt.sh'] + docopt_params)
-        docopt_sh_main()
-        captured = capsys.readouterr()
-        return bash_run_script(captured.out, argv)
+        captured = invoke_docopt(m, capsys, stdin=script, params=docopt_params)
+        process = bash_eval_script(captured.out, argv)
+        return process.returncode, process.stdout.decode('utf-8'), process.stderr.decode('utf-8')
       yield run
+
+@contextmanager
+def temp_script(name):
+  with open(os.path.join('tests/scripts', name)) as h:
+    script = h.read()
+  file = NamedTemporaryFile(mode='w', delete=False)
+  try:
+    file.write(script)
+    file.close()
+    def run(args):
+      process = subprocess.run(
+        ['bash', file.name] + args,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE
+      )
+      return process.returncode, process.stdout.decode('utf-8'), process.stderr.decode('utf-8')
+    yield file, run
+  finally:
+    os.unlink(file.name)
+
+def invoke_docopt(monkeypatch, capsys=None, params=[], stdin=None):
+  with monkeypatch.context() as m:
+    if stdin is not None:
+      m.setattr('sys.stdin', stdin)
+    m.setattr('sys.argv', ['docopt.sh'] + params)
+    docopt_sh_main()
+    if capsys is not None:
+      return capsys.readouterr()
+    return None

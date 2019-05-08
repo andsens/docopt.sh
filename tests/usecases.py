@@ -5,7 +5,7 @@ import subprocess
 import shlex
 from docopt_sh.parser import parse_doc
 from docopt_sh.generator import generate_parser,bash_name
-from . import bash_run_script,bash_decl,bash_decl_value,declare_quote
+from . import bash_eval_script,bash_decl,bash_decl_value,declare_quote
 
 import logging
 log = logging.getLogger(__name__)
@@ -62,7 +62,7 @@ docopt "$@"
 for var in "${{param_names[@]}}"; do declare -p "$var"; done
 '''.format(doc=self.doc, parser=self.parser)
     try:
-      process = bash_run_script(program, shlex.split(self.argv))
+      process = bash_eval_script(program, shlex.split(self.argv))
       process.check_returncode()
       expr = re.compile('^declare (--|-a) ([^=]+)=')
       out = process.stdout.decode('utf-8').strip('\n')
