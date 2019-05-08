@@ -1,5 +1,3 @@
-import os
-import sys
 from . import patched_script, invoke_docopt, temp_script
 
 def test_arg(monkeypatch, capsys):
@@ -33,5 +31,29 @@ def test_no_version(monkeypatch, capsys):
 def test_patch_file(monkeypatch):
   with temp_script('echo_ship_name.sh') as (script, run):
     invoke_docopt(monkeypatch, params=[script.name])
+    code, out, err = run(['ship', 'new', 'Olympia'])
+    assert out == 'Olympia\n'
+
+def test_doc_check(monkeypatch):
+  import re
+  with temp_script('echo_ship_name.sh') as (script, run):
+    invoke_docopt(monkeypatch, params=[script.name])
+    with open(script.name, 'r') as h:
+      contents = h.read()
+    contents = contents.replace('ship new <name>', 'ship delete <name>')
+    with open(script.name, 'w') as h:
+      h.write(contents)
+    code, out, err = run(['ship', 'new', 'Olympia'])
+    assert re.match('^The current usage doc \([^)]+\) does not match what the parser was generated with \([^)]+\)\n$', err) is not None
+
+def test_no_doc_check(monkeypatch):
+  import re
+  with temp_script('echo_ship_name.sh') as (script, run):
+    invoke_docopt(monkeypatch, params=['--no-doc-check', script.name])
+    with open(script.name, 'r') as h:
+      contents = h.read()
+    contents = contents.replace('ship new <name>', 'ship delete <name>')
+    with open(script.name, 'w') as h:
+      h.write(contents)
     code, out, err = run(['ship', 'new', 'Olympia'])
     assert out == 'Olympia\n'
