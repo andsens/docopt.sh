@@ -28,6 +28,11 @@ def test_wrong_usage(monkeypatch, capsys):
     process = run('--bad-opt')
     assert process.returncode != 0
 
+def test_no_version(monkeypatch, capsys):
+  with patched_script(monkeypatch, capsys, 'echo_ship_name.sh', ['--no-version']) as run:
+    process = run('--version')
+    assert process.stdout.decode('utf-8') == 'Usage: naval_fate.py ship new <name>...\n'
+
 def test_patch_file(monkeypatch):
   with open('tests/scripts/echo_ship_name.sh') as h:
     script = h.read()
