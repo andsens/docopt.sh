@@ -20,122 +20,45 @@ Options:
   --drifting    Drifting mine.
 "
 # docopt parser below, refresh this parser with `docopt.sh naval_fate.sh`
-req_1() {
-required either_1
-}
-either_1() {
-either req_2 req_3 req_4 req_5 req_7 req_8
-}
-req_2() {
-required cmd_1 cmd_2 oneormore_1
-}
-cmd_1() {
-_command ship false ship
-}
-cmd_2() {
-_command new false new
-}
-oneormore_1() {
-oneormore arg_1
-}
-arg_1() {
-_value _name_ true
-}
-req_3() {
-required cmd_3 arg_2 cmd_4 arg_3 arg_4 optional_1
-}
-cmd_3() {
-_command ship false ship
-}
-arg_2() {
-_value _name_ true
-}
-cmd_4() {
-_command move false move
-}
-arg_3() {
-_value _x_ false
-}
-arg_4() {
-_value _y_ false
-}
-optional_1() {
-optional opt_1
-}
-opt_1() {
-_value __speed false 3
-}
-req_4() {
-required cmd_5 cmd_6 arg_5 arg_6
-}
-cmd_5() {
-_command ship false ship
-}
-cmd_6() {
-_command shoot false shoot
-}
-arg_5() {
-_value _x_ false
-}
-arg_6() {
-_value _y_ false
-}
-req_5() {
-required cmd_7 req_6 arg_7 arg_8 optional_2
-}
-cmd_7() {
-_command mine false mine
-}
-req_6() {
-required either_2
-}
-either_2() {
-either cmd_8 cmd_9
-}
-cmd_8() {
-_command set false set
-}
-cmd_9() {
-_command rmove false rmove
-}
-arg_7() {
-_value _x_ false
-}
-arg_8() {
-_value _y_ false
-}
-optional_2() {
-optional either_3
-}
-either_3() {
-either opt_2 opt_3
-}
-opt_2() {
-_switch __moored false 4
-}
-opt_3() {
-_switch __drifting false 1
-}
-req_7() {
-required either_4
-}
-either_4() {
-either opt_4 opt_5
-}
-opt_4() {
-_switch __help false 0
-}
-opt_5() {
-_switch __help false 0
-}
-req_8() {
-required opt_6
-}
-opt_6() {
-_switch __version false 2
-}
-_command() {
-local i
+req_1() { required either_1; }
+either_1() { either req_2 req_3 req_4 req_5 req_7 req_8; }
+req_2() { required cmd_1 cmd_2 oneormore_1; }
+cmd_1() { _command ship false ship; }
+cmd_2() { _command new false new; }
+oneormore_1() { oneormore arg_1; }
+arg_1() { _value _name_ true; }
+req_3() { required cmd_3 arg_2 cmd_4 arg_3 arg_4 optional_1; }
+cmd_3() { _command ship false ship; }
+arg_2() { _value _name_ true; }
+cmd_4() { _command move false move; }
+arg_3() { _value _x_ false; }
+arg_4() { _value _y_ false; }
+optional_1() { optional opt_1; }
+opt_1() { _value __speed false 1; }
+req_4() { required cmd_5 cmd_6 arg_5 arg_6; }
+cmd_5() { _command ship false ship; }
+cmd_6() { _command shoot false shoot; }
+arg_5() { _value _x_ false; }
+arg_6() { _value _y_ false; }
+req_5() { required cmd_7 req_6 arg_7 arg_8 optional_2; }
+cmd_7() { _command mine false mine; }
+req_6() { required either_2; }
+either_2() { either cmd_8 cmd_9; }
+cmd_8() { _command set false set; }
+cmd_9() { _command rmove false rmove; }
+arg_7() { _value _x_ false; }
+arg_8() { _value _y_ false; }
+optional_2() { optional either_3; }
+either_3() { either opt_2 opt_3; }
+opt_2() { _switch __moored false 0; }
+opt_3() { _switch __drifting false 3; }
+req_7() { required either_4; }
+either_4() { either opt_4 opt_5; }
+opt_4() { _switch __help false 4; }
+opt_5() { _switch __help false 4; }
+req_8() { required opt_6; }
+opt_6() { _switch __version false 2; }
+_command() { local i
 for i in "${!left[@]}"; do
   local l=${left[$i]}
   if [[ ${parsed_params[$l]} == 'a' ]]; then
@@ -152,10 +75,8 @@ for i in "${!left[@]}"; do
     return 0
   fi
 done
-return 1
-}
-either() {
-local initial_left=("${left[@]}")
+return 1; }
+either() { local initial_left=("${left[@]}")
 local best_match
 local previous_best
 local pattern
@@ -177,10 +98,8 @@ if [[ -n $best_match ]]; then
   return 0
 fi
 left=("${initial_left[@]}")
-return 1
-}
-oneormore() {
-local times=0
+return 1; }
+oneormore() { local times=0
 # shellcheck disable=SC2154
 local previous_left=${#left[@]}
 while $1; do
@@ -196,17 +115,13 @@ done
 if [[ $times -ge 1 ]]; then
   return 0
 fi
-return 1
-}
-optional() {
-local pattern
+return 1; }
+optional() { local pattern
 for pattern in "$@"; do
   $pattern
 done
-return 0
-}
-required() {
-local initial_left=("${left[@]}")
+return 0; }
+required() { local initial_left=("${left[@]}")
 local pattern
 local unset_test_match=true
 $test_match && unset_test_match=false
@@ -223,10 +138,8 @@ if $unset_test_match; then
   left=("${initial_left[@]}")
   for pattern in "$@"; do $pattern; done
 fi
-return 0
-}
-_switch() {
-local i
+return 0; }
+_switch() { local i
 for i in "${!left[@]}"; do
   local l=${left[$i]}
   if [[ ${parsed_params[$l]} == "$3" ]]; then
@@ -240,10 +153,8 @@ for i in "${!left[@]}"; do
     return 0
   fi
 done
-return 1
-}
-_value() {
-local i
+return 1; }
+_value() { local i
 local needle=${3:-'a'}
 for i in "${!left[@]}"; do
   local l=${left[$i]}
@@ -260,10 +171,8 @@ for i in "${!left[@]}"; do
     return 0
   fi
 done
-return 1
-}
-parse_shorts() {
-token=${argv[0]}
+return 1; }
+parse_shorts() { token=${argv[0]}
 argv=("${argv[@]:1}")
 [[ $token == -* && $token != --* ]] || assert_fail
 local remaining=${token#-}
@@ -281,7 +190,7 @@ while [[ -n $remaining ]]; do
     ((i++))
   done
   if [[ ${#similar[@]} -gt 1 ]]; then
-    docopt_error "$(printf "%s is specified ambiguously %d times" "$short" "${#similar[@]}")"
+    error "$(printf "%s is specified ambiguously %d times" "$short" "${#similar[@]}")"
   elif [[ ${#similar[@]} -lt 1 ]]; then
     similar_idx=${#options_short[@]}
     value=true
@@ -293,7 +202,7 @@ while [[ -n $remaining ]]; do
     if [[ ${options_argcount[$similar_idx]} -ne 0 ]]; then
       if [[ $remaining == '' ]]; then
         if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
-          docopt_error "$(printf "%s requires argument" "$short")"
+          error "$(printf "%s requires argument" "$short")"
         fi
         value=${argv[0]}
         argv=("${argv[@]:1}")
@@ -308,10 +217,8 @@ while [[ -n $remaining ]]; do
   fi
   parsed_params+=("$similar_idx")
   parsed_values+=("$value")
-done
-}
-parse_long() {
-token=${argv[0]}
+done; }
+parse_long() { token=${argv[0]}
 long=${token%%=*}
 value=${token#*=}
 argv=("${argv[@]:1}")
@@ -343,7 +250,7 @@ if [[ ${#similar[@]} -eq 0 ]]; then
   done
 fi
 if [[ ${#similar[@]} -gt 1 ]]; then
-  docopt_error "$(printf "%s is not a unique prefix: %s?" "$long" "${similar[*]}")"
+  error "$(printf "%s is not a unique prefix: %s?" "$long" "${similar[*]}")"
 elif [[ ${#similar[@]} -lt 1 ]]; then
   if [[ $eq == '=' ]]; then
     argcount=1
@@ -360,12 +267,12 @@ elif [[ ${#similar[@]} -lt 1 ]]; then
 else
   if [[ ${options_argcount[$similar_idx]} -eq 0 ]]; then
     if [[ $value != false ]]; then
-      docopt_error "$(printf "%s must not have an argument" "${options_long[$similar_idx]}")"
+      error "$(printf "%s must not have an argument" "${options_long[$similar_idx]}")"
     fi
   else
     if [[ $value == false ]]; then
       if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
-        docopt_error "$(printf "%s requires argument" "$long")"
+        error "$(printf "%s requires argument" "$long")"
       fi
       value=${argv[0]}
       argv=("${argv[@]:1}")
@@ -376,10 +283,8 @@ else
   fi
 fi
 parsed_params+=("$similar_idx")
-parsed_values+=("$value")
-}
-parse_argv() {
-while [[ ${#argv[@]} -gt 0 ]]; do
+parsed_values+=("$value"); }
+parse_argv() { while [[ ${#argv[@]} -gt 0 ]]; do
   if [[ ${argv[0]} == "--" ]]; then
     for arg in "${argv[@]}"; do
       parsed_params+=('a')
@@ -392,25 +297,16 @@ while [[ ${#argv[@]} -gt 0 ]]; do
     parse_shorts
 
   else
-    for arg in "${argv[@]}"; do
-      parsed_params+=('a')
-      parsed_values+=("$arg")
-    done
-    return
+    parsed_params+=('a')
+    parsed_values+=("${argv[0]}")
+    argv=("${argv[@]:1}")
 
   fi
-done
-}
-help() {
-printf -- "%s" "$doc"
-}
-error() {
-printf "%s
-" "$1"
-exit 1
-}
-extras() {
-for idx in "${parsed_params[@]}"; do
+done; }
+help() { printf -- "%s" "$doc"; }
+error() { printf "%s\n" "$1"
+exit 1; }
+extras() { for idx in "${parsed_params[@]}"; do
   [[ $idx == 'a' ]] && continue
   if [[ ${options_short[$idx]} == "-h" || ${options_long[$idx]} == "--help" ]]; then
     help
@@ -421,59 +317,47 @@ done
 for idx in "${parsed_params[@]}"; do
   [[ $idx == 'a' ]] && continue
   if [[ ${options_long[$idx]} == "--version" ]]; then
-    printf "%s
-" "$version"
+    printf "%s\n" "$version"
     exit 0
   fi
-done
-}
-setup() {
-argv=("$@")
-options_short=(-h '' '' '' '')
-options_long=(--help --drifting --version --speed --moored)
-options_argcount=(0 0 0 1 0)
-param_names=(__help __drifting __version __speed __moored _name_ _y_ _x_ set new shoot rmove mine move ship)
+done; }
+setup() { argv=("$@")
+options_short=('' '' '' '' -h)
+options_long=(--moored --speed --version --drifting --help)
+options_argcount=(0 1 0 0 0)
+param_names=(__moored __speed __version __drifting __help _x_ _name_ _y_ new ship shoot rmove move mine set)
 parsed_params=()
 parsed_values=()
 left=()
 test_match=false
-for var in "${param_names[@]}"; do unset "$var"; done
-}
-teardown() {
-unset argv options_short options_long options_argcount param_names \
+for var in "${param_names[@]}"; do unset "$var"; done; }
+teardown() { unset argv options_short options_long options_argcount param_names \
 parsed_params parsed_values left test_match
 unset -f either oneormore optional required _command _switch _value \
 check defaults extras help error docopt \
-parse_argv parse_long parse_shorts setup teardown
-}
-check() {
-local current_doc_hash
+parse_argv parse_long parse_shorts setup teardown; }
+check() { local current_doc_hash
 current_doc_hash=$(printf "%s" "$doc" | shasum -a 256 | cut -f 1 -d " ")
 if [[ $current_doc_hash != "82d3bc0f206c1d975c30cbf14b013fbd085ea37a428f2dd77869175920c7dfe6" ]]; then
-  printf "The current usage doc (%s) does not match what the parser was generated with ({digest})
-" "$current_doc_hash" >&2
+  printf "The current usage doc (%s) does not match what the parser was generated with ({digest})\n" "$current_doc_hash" >&2
   exit 1;
-fi
-}
-defaults() {
-__help=${__help:-false}
-__drifting=${__drifting:-false}
-__version=${__version:-false}
+fi; }
+defaults() { __moored=${__moored:-false}
 __speed=${__speed:-10}
-__moored=${__moored:-false}
+__version=${__version:-false}
+__drifting=${__drifting:-false}
+__help=${__help:-false}
+_x_=${_x_:-}
 [[ -z ${_name_+x} ]] && _name_=()
 _y_=${_y_:-}
-_x_=${_x_:-}
-set=${set:-false}
 new=${new:-false}
+ship=${ship:-false}
 shoot=${shoot:-false}
 rmove=${rmove:-false}
-mine=${mine:-false}
 move=${move:-false}
-ship=${ship:-false}
-}
-docopt() {
-type check &>/dev/null && check
+mine=${mine:-false}
+set=${set:-false}; }
+docopt() { type check &>/dev/null && check
 setup "$@"
 parse_argv
 extras
@@ -489,8 +373,7 @@ if [[ ${#left[@]} -gt 0 ]]; then
   exit 1
 fi
 type teardown &>/dev/null && teardown
-return 0
-}
+return 0; }
 # docopt parser above, refresh this parser with `docopt.sh naval_fate.sh`
 
 docopt "$@"

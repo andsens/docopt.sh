@@ -7,7 +7,7 @@ class Error(Function):
 
   def __str__(self):
     script = '''
-printf "%s\n" "$1"
+printf "%s\\n" "$1"
 exit 1
 '''
     return self.fn_wrap(script)

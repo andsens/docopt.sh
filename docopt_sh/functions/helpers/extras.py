@@ -28,7 +28,7 @@ done
 for idx in "${parsed_params[@]}"; do
   [[ $idx == 'a' ]] && continue
   if [[ ${options_long[$idx]} == "--version" ]]; then
-    printf "%s\n" "$version"
+    printf "%s\\n" "$version"
     exit 0
   fi
 done
