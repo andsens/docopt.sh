@@ -1,3 +1,0 @@
-usage: prog [-o <o>]...
-
-options: -o <o>  [default: x y]

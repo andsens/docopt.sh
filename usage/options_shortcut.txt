@@ -1,9 +1,0 @@
-Usage: prog [options]
-
-global options: --foo
-local options: --baz
-               --bar
-other options:
- --egg
- --spam
--not-an-option-

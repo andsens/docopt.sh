@@ -1,4 +1,0 @@
-Command with switch
-
-Usage:
-  test.sh -s run

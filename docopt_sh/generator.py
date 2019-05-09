@@ -1,80 +1,34 @@
-from docopt_sh.parser import Option, Argument, Command
-from docopt_sh.bash_helper import bash_name, bash_value, bash_array_value
-import hashlib
+from .parser import Option, Argument, Command
+from .functions import helpers
+from .functions import tree
 
-def generate_parser(pattern, docname, name_prefix='', add_help=False, add_version=False, options_first=False, debug=False):
+def generate_parser(pattern, doc, docname, version_present, params):
   sort_order = [Option, Argument, Command]
-  params = set(pattern.flat(*sort_order))
-  sorted_params = sorted(params, key=lambda p: sort_order.index(type(p)))
-  sorted_options = [o for o in sorted_params if type(o) is Option]
+  sorted_params = sorted(set(pattern.flat(*sort_order)), key=lambda p: sort_order.index(type(p)))
   for i, p in enumerate(sorted_params):
     p.index = i
-    p.name_prefix = name_prefix
+    p.name_prefix = params['--prefix']
 
-  root_fn, ast_functions = generate_ast_functions(pattern, debug=debug)
-  all_functions = [
-    ast_functions,
-    render_template('lib/help.sh', {"{{doc}}": '$' + docname}),
-    render_template('lib/setup.sh', {
-      '{{options_short}}': ' '.join([bash_array_value(o.short) for o in sorted_options]),
-      '{{options_long}}': ' '.join([bash_array_value(o.long) for o in sorted_options]),
-      '{{options_argcount}}': ' '.join([bash_array_value(o.argcount) for o in sorted_options]),
-      '{{param_names}}': ' '.join([bash_name(p.name, name_prefix) for p in sorted_params]),
-    }),
-    render_template('lib/parse_argv.sh', {"{{options_first}}": bash_value(options_first)}),
-    render_template('lib/extras.sh', {
-      "{{add_help}}": bash_value(add_help),
-      "{{add_version}}": bash_value(add_version),
-    }),
-    render_template('lib/docopt.sh', {"{{root_fn}}": root_fn}),
+  root_fn, node_functions, _ = pattern.get_node_functions()
+  all_functions = node_functions + [
+    tree.Command(),
+    tree.Either(),
+    tree.OneOrMore(),
+    tree.Optional(),
+    tree.Required(),
+    tree.Switch(),
+    tree.Value(),
+    helpers.ParseShorts(),
+    helpers.ParseLong(),
+    helpers.ParseArgv(options_first=params['--options-first']),
+    helpers.Help(docname=docname),
+    helpers.Error(),
+    helpers.Extras(add_help=not params['--no-help'], no_version=params['--no-version'], version_present=version_present),
+    helpers.Setup(sorted_params=sorted_params, name_prefix=params['--prefix']),
+    helpers.Teardown(no_teardown=params['--no-teardown']),
+    helpers.Check(doc=doc, docname=docname, no_doc_check=params['--no-doc-check']),
+    helpers.Defaults(sorted_params=sorted_params, name_prefix=params['--prefix']),
+    helpers.Main(root_fn=root_fn),
   ]
-  if sorted_params:
-    default_values = generate_default_values(sorted_params, name_prefix)
-    all_functions.append(render_template('lib/defaults.sh', {'{{defaults}}': '\n'.join(default_values)}))
-  return '\n'.join(all_functions) + '\n'
-
-def generate_teardown():
-  return render_template('lib/teardown.sh') + '\n'
-
-def generate_doc_check(parser, doc, docname):
-  digest = hashlib.sha256(doc.encode('utf-8')).hexdigest()
-  docopt_check = render_template('lib/check_hash.sh', {'{{docname}}': docname, '{{digest}}': digest})
-  return docopt_check + '\n' + 'docopt_check' +'\n'
-
-helper_lib = {
-  '_command': 'lib/leaves/command.sh',
-  '_switch': 'lib/leaves/switch.sh',
-  '_value': 'lib/leaves/value.sh',
-  'required': 'lib/branches/required.sh',
-  'optional': 'lib/branches/optional.sh',
-  'either': 'lib/branches/either.sh',
-  'oneormore': 'lib/branches/oneormore.sh',
-  'parse_argv': 'lib/parse_argv.sh',
-  'parse_long': 'lib/parse_long.sh',
-  'parse_shorts': 'lib/parse_shorts.sh',
-  'debug': 'lib/debug.sh',
-}
-
-def generate_ast_functions(node, debug=False):
-  defaults_helpers = []
-  fn_name, functions, helpers, _ = node.get_node_functions(debug=debug)
-  helpers.update(['parse_shorts', 'parse_long'])
-  if debug:
-    helpers.add('debug')
-  return fn_name, '\n'.join([render_template(helper_lib[name]) for name in helpers] + functions)
-
-def generate_default_values(params, name_prefix=''):
-  for p in params:
-    if type(p.value) is list:
-      yield "  [[ -z ${{{name}+x}} ]] && {name}={default}".format(name=bash_name(p.name, name_prefix), default=bash_value(p.value))
-    else:
-      yield "  {name}=${{{name}:-{default}}}".format(name=bash_name(p.name, name_prefix), default=bash_value(p.value))
-
-def render_template(file, variables={}):
-  with open(file, 'r') as h:
-    contents = h.read()
-    contents = contents.lstrip('#!/usr/bin/env bash')
-    contents = contents.strip('\n')
-    for name, replacement in variables.items():
-      contents = contents.replace(name, replacement)
-  return contents
+  rendered_functions = [str(function) for function in all_functions if function.include()]
+  return '\n'.join(rendered_functions) + '\n'

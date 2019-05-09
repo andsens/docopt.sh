@@ -5,7 +5,7 @@ import os
 import docopt
 from docopt_sh.patcher import get_script_locations, insert_parser
 from docopt_sh.parser import parse_doc
-from docopt_sh.generator import generate_parser, generate_doc_check, generate_teardown
+from docopt_sh.generator import generate_parser
 
 __doc__ = """
 docopt.sh
@@ -48,19 +48,7 @@ def docopt_sh(params):
       script = h.read()
   doc, docname, version_present, lines = get_script_locations(script)
   pattern = parse_doc(doc)
-  add_version = not params['--no-version'] and version_present
-  parser = generate_parser(
-    pattern, docname,
-    name_prefix=params['--prefix'],
-    add_help=not params['--no-help'],
-    add_version=add_version,
-    options_first=params['--options-first'],
-    debug=params['--debug']
-  )
-  if not params['--no-teardown']:
-    parser += generate_teardown()
-  if not params['--no-doc-check']:
-    parser += generate_doc_check(parser, doc, docname)
+  parser = generate_parser(pattern, doc, docname, version_present, params)
   if params['--only-parser']:
     sys.stdout.write(parser)
   else:

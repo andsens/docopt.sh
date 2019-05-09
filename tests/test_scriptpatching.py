@@ -52,7 +52,7 @@ def test_options_first_fail(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'naval_fate.sh', ['--options-first']) as run:
     code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
     assert code == 1
-    assert out.startswith('Naval Fate.')
+    assert out[:11] == 'Naval Fate.'
 
 def test_teardown(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'output_internals.sh') as run:

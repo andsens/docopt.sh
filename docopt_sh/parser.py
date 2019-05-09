@@ -1,5 +1,6 @@
 import re
-from docopt_sh.bash_helper import bash_name, bash_value
+from .bash_helper import bash_name, bash_value
+from .functions.tree.node import Node
 
 
 def parse_doc(doc):
@@ -129,33 +130,22 @@ class BranchPattern(Pattern):
       return [self]
     return sum([child.flat(*types) for child in self.children], [])
 
-  def get_node_functions(self, counters={}, prefix='', debug=False):
+  def get_node_functions(self, counters={}):
     counters[self.function_prefix] = counters.get(self.function_prefix, 0) + 1
     fn_name = '%s_%d' % (self.function_prefix, counters[self.function_prefix])
     functions = []
     function_names = []
-    helpers = set()
     for child in self.children:
       if isinstance(child, BranchPattern):
-        c_fn_name, c_fns, c_helpers, counters = child.get_node_functions(counters, prefix=prefix+'  ', debug=debug)
-        functions.extend(c_fns)
-        helpers.update(c_helpers)
-        helpers.add(child.helper_name)
+        c_fn_name, c_fns, counters = child.get_node_functions(counters)
+        functions += c_fns
       else:
         counters[child.function_prefix] = counters.get(child.function_prefix, 0) + 1
         c_fn_name = '%s_%d' % (child.function_prefix, counters[child.function_prefix])
-        c_helper, c_args = child.get_helper_invocation()
-        c_fn = '%s(){ %s %s;}' % (c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
-        if debug:
-          c_fn = '%s%s(){ printf "\\n%s%s: "; %s %s && printf "match, %%s" "$(print_left)";}' % (prefix+'  ', c_fn_name, prefix+'  ', c_fn_name, c_helper, ' '.join(bash_value(arg) for arg in c_args))
-        functions.append(c_fn)
-        helpers.add(c_helper)
+        functions.append(child.get_helper_invocation(c_fn_name))
       function_names.append(c_fn_name)
-    if debug:
-      functions.insert(0, '%s%s(){ printf "\\n%s%s"; %s %s;}' % (prefix, fn_name, prefix, fn_name, self.helper_name, ' '.join(function_names)))
-    else:
-      functions.insert(0, '%s(){ %s %s;}' % (fn_name, self.helper_name, ' '.join(function_names)))
-    return fn_name, functions, helpers, counters
+    functions.insert(0, self.get_helper_invocation(fn_name, function_names))
+    return fn_name, functions, counters
 
 
 class Argument(LeafPattern):
@@ -169,8 +159,8 @@ class Argument(LeafPattern):
     value = re.findall('\[default: (.*)\]', source, flags=re.I)
     return class_(name, value[0] if value else None)
 
-  def get_helper_invocation(self):
-    return '_value', [bash_name(self.name, self.name_prefix), type(self.value) is list]
+  def get_helper_invocation(self, function_name):
+    return Node(function_name, '_value', [bash_name(self.name, self.name_prefix), type(self.value) is list])
 
 class Command(Argument):
 
@@ -180,8 +170,8 @@ class Command(Argument):
   def __init__(self, name, value=False):
     self.name, self.value = name, value
 
-  def get_helper_invocation(self):
-    return '_command', [bash_name(self.name, self.name_prefix), type(self.value) is int, self.name]
+  def get_helper_invocation(self, function_name):
+    return Node(function_name, '_command', [bash_name(self.name, self.name_prefix), type(self.value) is int, self.name])
 
 class Option(LeafPattern):
 
@@ -217,23 +207,27 @@ class Option(LeafPattern):
   def __repr__(self):
     return 'Option(%r, %r, %r, %r)' % (self.short, self.long, self.argcount, self.value)
 
-  def get_helper_invocation(self):
+  def get_helper_invocation(self, function_name):
     if type(self.value) is bool:
-      return '_switch', [bash_name(self.name, self.name_prefix), False, self.index]
+      return Node(function_name, '_switch', [bash_name(self.name, self.name_prefix), False, self.index])
     elif type(self.value) is int:
-      return '_switch', [bash_name(self.name, self.name_prefix), True, self.index]
-    return '_value', [bash_name(self.name, self.name_prefix), type(self.value) is list, self.index]
+      return Node(function_name, '_switch', [bash_name(self.name, self.name_prefix), True, self.index])
+    return Node(function_name, '_value', [bash_name(self.name, self.name_prefix), type(self.value) is list, self.index])
 
 
 class Required(BranchPattern):
 
   function_prefix = 'req'
-  helper_name = 'required'
+
+  def get_helper_invocation(self, function_name, children):
+    return Node(function_name, 'required', children)
 
 class Optional(BranchPattern):
 
   function_prefix = 'optional'
-  helper_name = 'optional'
+
+  def get_helper_invocation(self, function_name, children):
+    return Node(function_name, 'optional', children)
 
 class OptionsShortcut(Optional):
 
@@ -243,12 +237,16 @@ class OptionsShortcut(Optional):
 class OneOrMore(BranchPattern):
 
   function_prefix = 'oneormore'
-  helper_name = 'oneormore'
+
+  def get_helper_invocation(self, function_name, children):
+    return Node(function_name, 'oneormore', children)
 
 class Either(BranchPattern):
 
   function_prefix = 'either'
-  helper_name = 'either'
+
+  def get_helper_invocation(self, function_name, children):
+    return Node(function_name, 'either', children)
 
 
 class Tokens(list):

@@ -1,4 +1,0 @@
-Command.
-
-Usage:
-  test.sh -s...
