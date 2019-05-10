@@ -8,7 +8,7 @@ Usage:
   naval_fate.py ship new <name>...
   naval_fate.py ship <name> move <x> <y> [--speed=<kn>]
   naval_fate.py ship shoot <x> <y>
-  naval_fate.py mine (set|rmove) <x> <y> [--moored|--drifting]
+  naval_fate.py mine (set|remove) <x> <y> [--moored|--drifting]
   naval_fate.py -h | --help
   naval_fate.py --version
 
@@ -45,7 +45,7 @@ cmd_7() { _command mine false mine; }
 req_6() { required either_2; }
 either_2() { either cmd_8 cmd_9; }
 cmd_8() { _command set false set; }
-cmd_9() { _command rmove false rmove; }
+cmd_9() { _command remove false remove; }
 arg_7() { _value _x_ false; }
 arg_8() { _value _y_ false; }
 optional_2() { optional either_3; }
@@ -325,7 +325,7 @@ setup() { argv=("$@")
 options_short=('' -h '' '' '')
 options_long=(--drifting --help --moored --speed --version)
 options_argcount=(0 0 0 1 0)
-param_names=(__drifting __help __moored __speed __version _name_ _x_ _y_ mine move new rmove set ship shoot)
+param_names=(__drifting __help __moored __speed __version _name_ _x_ _y_ mine move new remove set ship shoot)
 parsed_params=()
 parsed_values=()
 left=()
@@ -338,7 +338,7 @@ check defaults extras help error docopt \
 parse_argv parse_long parse_shorts setup teardown; }
 check() { local current_doc_hash
 current_doc_hash=$(printf "%s" "$doc" | shasum -a 256 | cut -f 1 -d " ")
-if [[ $current_doc_hash != "82d3bc0f206c1d975c30cbf14b013fbd085ea37a428f2dd77869175920c7dfe6" ]]; then
+if [[ $current_doc_hash != "10b94532526dfeb4b51b46eb6d0b2bc294030ff82237dbecd100b72caa7c1fc1" ]]; then
   printf "The current usage doc (%s) does not match what the parser was generated with ({digest})\n" "$current_doc_hash" >&2
   exit 1;
 fi; }
@@ -353,7 +353,7 @@ _y_=${_y_:-}
 mine=${mine:-false}
 move=${move:-false}
 new=${new:-false}
-rmove=${rmove:-false}
+remove=${remove:-false}
 set=${set:-false}
 ship=${ship:-false}
 shoot=${shoot:-false}; }
