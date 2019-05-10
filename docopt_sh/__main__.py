@@ -3,8 +3,7 @@ import sys
 import re
 import os
 import docopt
-from docopt_sh.patcher import get_script_locations, insert_parser
-from docopt_sh.parser import parse_doc
+from docopt_sh.script import Script
 from docopt_sh.generator import generate_parser
 
 __doc__ = """
@@ -35,29 +34,38 @@ Notes:
   You can pass the script on stdin as well,
   docopt.sh will then output the modified script to stdout.
 
-  If the script has a $version defined before the variable usage doc variable
+  If the script has a $version defined anywhere before the invocation of docopt
   --version will automatically output the value of that variable.
 """
 
 
 def docopt_sh(params):
   if params['SCRIPT'] is None:
-    script = sys.stdin.read()
+    script = Script(sys.stdin.read())
   else:
     with open(params['SCRIPT'], 'r') as h:
-      script = h.read()
-  doc, docname, version_present, lines = get_script_locations(script)
-  pattern = parse_doc(doc)
-  parser = generate_parser(pattern, doc, docname, version_present, params)
+      script = Script(h.read(), params['SCRIPT'])
+  parser = generate_parser(script, params)
   if params['--only-parser']:
     sys.stdout.write(parser)
   else:
-    patched_script = insert_parser(script, lines, parser, params)
+    refresh_command = generate_refresh_command(params)
+    patched_script = script.insert_parser(parser, refresh_command)
     if params['SCRIPT'] is None:
-      sys.stdout.write(patched_script)
+      sys.stdout.write(str(patched_script))
     else:
       with open(params['SCRIPT'], 'w') as h:
-        h.write(patched_script)
+        h.write(str(patched_script))
+
+def generate_refresh_command(params):
+  command = 'docopt.sh'
+  if params['--debug']:
+    command += ' --debug'
+  if params['--prefix'] != '':
+    command += ' --prefix=' + params['--prefix']
+  if params['SCRIPT'] is not None:
+    command += ' ' + params['SCRIPT']
+  return command
 
 def main():
   params = docopt.docopt(__doc__)

@@ -11,3 +11,4 @@ Check that docopt invocation is after usage doc
 Prefix names with docopt
 Check for docopt_* function/variable name collision, test it
 Convert test_match into parameter
+--add-version    Add --version despite no $version being present

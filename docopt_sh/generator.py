@@ -1,8 +1,9 @@
-from .parser import Option, Argument, Command
+from .parser import parse_doc, Option, Argument, Command
 from .functions import helpers
 from .functions import tree
 
-def generate_parser(pattern, doc, docname, version_present, params):
+def generate_parser(script, params):
+  pattern = parse_doc(script.doc.value)
   sort_order = [Option, Argument, Command]
   sorted_params = sorted(set(pattern.flat(*sort_order)), key=lambda p: sort_order.index(type(p)))
   for i, p in enumerate(sorted_params):
@@ -21,12 +22,12 @@ def generate_parser(pattern, doc, docname, version_present, params):
     helpers.ParseShorts(),
     helpers.ParseLong(),
     helpers.ParseArgv(options_first=params['--options-first']),
-    helpers.Help(docname=docname),
+    helpers.Help(docname=script.doc.name),
     helpers.Error(),
-    helpers.Extras(add_help=not params['--no-help'], no_version=params['--no-version'], version_present=version_present),
+    helpers.Extras(add_help=not params['--no-help'], no_version=params['--no-version'], version_present=script.version.present),
     helpers.Setup(sorted_params=sorted_params, name_prefix=params['--prefix']),
     helpers.Teardown(no_teardown=params['--no-teardown']),
-    helpers.Check(doc=doc, docname=docname, no_doc_check=params['--no-doc-check']),
+    helpers.Check(doc=script.doc.value, docname=script.doc.name, no_doc_check=params['--no-doc-check']),
     helpers.Defaults(sorted_params=sorted_params, name_prefix=params['--prefix']),
     helpers.Main(root_fn=root_fn),
   ]

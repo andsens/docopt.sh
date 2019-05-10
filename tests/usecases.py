@@ -3,7 +3,7 @@ import json
 import pytest
 import subprocess
 import shlex
-from docopt_sh.parser import parse_doc
+from docopt_sh.script import Script
 from docopt_sh.generator import generate_parser
 from docopt_sh.bash_helper import bash_name
 from . import bash_eval_script,bash_decl,bash_decl_value,declare_quote
@@ -25,13 +25,19 @@ class DocoptUsecaseTestFile(pytest.File):
       '--no-doc-check': True,
       '--no-teardown': True,
     }
+    program_template = '''
+doc="{doc}"
+docopt "$@"
+for var in "${{param_names[@]}}"; do declare -p "$var"; done
+'''
     for name, doc, cases in self._parse_test(raw):
       name = self.fspath.purebasename
       if cases:
-        pattern = parse_doc(doc)
-        parser = generate_parser(pattern, 'doc', doc, version_present=False, params=params)
+        script = Script(program_template.format(doc=doc))
+        parser = generate_parser(script, params=params)
+        script = str(script.insert_parser(parser))
       for case in cases:
-        yield DocoptUsecaseTest("%s(%d)" % (name, index), self, doc, parser, case)
+        yield DocoptUsecaseTest("%s(%d)" % (name, index), self, doc, script, case)
         index += 1
 
   def _parse_test(self, raw):
@@ -56,21 +62,15 @@ class DocoptUsecaseTestFile(pytest.File):
 
 class DocoptUsecaseTest(pytest.Item):
 
-  def __init__(self, name, parent, doc, parser, case):
+  def __init__(self, name, parent, doc, script, case):
     super(DocoptUsecaseTest, self).__init__(name, parent)
     self.doc = doc
-    self.parser = parser
+    self.script = script
     self.prog, self.argv, self.expect = case
 
   def runtest(self):
-    program = '''
-doc="{doc}"
-{parser}
-docopt "$@"
-for var in "${{param_names[@]}}"; do declare -p "$var"; done
-'''.format(doc=self.doc, parser=self.parser)
     try:
-      code, out, err = bash_eval_script(program, shlex.split(self.argv))
+      code, out, err = bash_eval_script(self.script, shlex.split(self.argv))
       if code == 0:
         expr = re.compile('^declare (--|-a) ([^=]+)=')
         out = out.strip('\n')

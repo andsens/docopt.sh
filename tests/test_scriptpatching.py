@@ -1,7 +1,7 @@
 import re
 from io import StringIO
 from . import bash_eval_script, patched_script, invoke_docopt, temp_script
-from docopt_sh.patcher import get_doc
+from docopt_sh.script import Script
 
 def test_arg(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
@@ -104,7 +104,7 @@ def test_no_doc_check(monkeypatch):
 def test_only_parser(monkeypatch, capsys):
   with open('tests/scripts/naval_fate.sh') as h:
     script = h.read()
-  doc = get_doc(script)[0]
+  doc = Script(script).doc.value
   parser = invoke_docopt(monkeypatch, capsys=capsys, params=['--only-parser'], stdin=StringIO(script)).out
   program = '''
 doc="{doc}"
