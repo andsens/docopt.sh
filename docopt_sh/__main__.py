@@ -4,7 +4,7 @@ import re
 import os
 import docopt
 from docopt_sh.script import Script
-from docopt_sh.generator import generate_parser
+from docopt_sh.parser import Parser
 
 __doc__ = """
 docopt.sh
@@ -45,27 +45,16 @@ def docopt_sh(params):
   else:
     with open(params['SCRIPT'], 'r') as h:
       script = Script(h.read(), params['SCRIPT'])
-  parser = generate_parser(script, params)
+  parser = Parser(script, params)
   if params['--only-parser']:
-    sys.stdout.write(parser)
+    sys.stdout.write(str(parser))
   else:
-    refresh_command = generate_refresh_command(params)
-    patched_script = script.insert_parser(parser, refresh_command)
+    patched_script = str(parser.patched_script)
     if params['SCRIPT'] is None:
-      sys.stdout.write(str(patched_script))
+      sys.stdout.write(patched_script)
     else:
       with open(params['SCRIPT'], 'w') as h:
-        h.write(str(patched_script))
-
-def generate_refresh_command(params):
-  command = 'docopt.sh'
-  if params['--debug']:
-    command += ' --debug'
-  if params['--prefix'] != '':
-    command += ' --prefix=' + params['--prefix']
-  if params['SCRIPT'] is not None:
-    command += ' ' + params['SCRIPT']
-  return command
+        h.write(patched_script)
 
 def main():
   params = docopt.docopt(__doc__)

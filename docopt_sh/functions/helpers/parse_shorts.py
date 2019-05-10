@@ -3,8 +3,8 @@ from .. import Function
 
 class ParseShorts(Function):
 
-  def __init__(self):
-    super(ParseShorts, self).__init__('parse_shorts')
+  def __init__(self, settings):
+    super(ParseShorts, self).__init__(settings, 'parse_shorts')
 
   def __str__(self):
     script = '''

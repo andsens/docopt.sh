@@ -2,12 +2,11 @@ from .. import Function
 
 
 class Teardown(Function):
-  def __init__(self, no_teardown):
-    super(Teardown, self).__init__('teardown')
-    self.no_teardown = no_teardown
+  def __init__(self, settings):
+    super(Teardown, self).__init__(settings, 'teardown')
 
   def include(self):
-    return not self.no_teardown
+    return self.settings.add_teardown
 
   def __str__(self):
     script = '''

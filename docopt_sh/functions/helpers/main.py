@@ -2,8 +2,8 @@ from .. import Function
 
 
 class Main(Function):
-  def __init__(self, root_fn):
-    super(Main, self).__init__('docopt')
+  def __init__(self, settings, root_fn):
+    super(Main, self).__init__(settings, 'docopt')
     self.root_fn = root_fn
 
   def __str__(self):

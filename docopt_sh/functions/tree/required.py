@@ -2,8 +2,8 @@ from .. import Function
 
 
 class Required(Function):
-  def __init__(self):
-    super(Required, self).__init__('required')
+  def __init__(self, settings):
+    super(Required, self).__init__(settings, 'required')
 
   def __str__(self):
     script = '''

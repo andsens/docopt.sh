@@ -2,8 +2,8 @@ from .. import Function
 
 
 class OneOrMore(Function):
-  def __init__(self):
-    super(OneOrMore, self).__init__('oneormore')
+  def __init__(self, settings):
+    super(OneOrMore, self).__init__(settings, 'oneormore')
 
   def __str__(self):
     script = '''

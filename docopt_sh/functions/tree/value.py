@@ -2,8 +2,8 @@ from .. import Function
 
 
 class Value(Function):
-  def __init__(self):
-    super(Value, self).__init__('_value')
+  def __init__(self, settings):
+    super(Value, self).__init__(settings, '_value')
 
   def __str__(self):
     # $1=variable name

@@ -2,8 +2,8 @@ from .. import Function
 
 
 class Optional(Function):
-  def __init__(self):
-    super(Optional, self).__init__('optional')
+  def __init__(self, settings):
+    super(Optional, self).__init__(settings, 'optional')
 
   def __str__(self):
     script = '''

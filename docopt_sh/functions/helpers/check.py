@@ -4,15 +4,12 @@ import hashlib
 
 class Check(Function):
 
-  def __init__(self, doc, docname, no_doc_check):
-    super(Check, self).__init__('check')
-    self.doc = doc
-    self.docname = docname
-    self.digest = hashlib.sha256(doc.encode('utf-8')).hexdigest()
-    self.no_doc_check = no_doc_check
+  def __init__(self, settings):
+    super(Check, self).__init__(settings, 'check')
+    self.digest = hashlib.sha256(settings.script.doc.value.encode('utf-8')).hexdigest()
 
   def include(self):
-    return not self.no_doc_check
+    return self.settings.add_doc_check
 
   def __str__(self):
     script = '''
@@ -22,5 +19,5 @@ if [[ $current_doc_hash != "{digest}" ]]; then
   printf "The current usage doc (%s) does not match what the parser was generated with ({{digest}})\\n" "$current_doc_hash" >&2
   exit 1;
 fi
-'''.format(docname=self.docname, digest=self.digest)
+'''.format(docname=self.settings.script.doc.name, digest=self.digest)
     return self.fn_wrap(script)

@@ -4,10 +4,9 @@ from ...parser import Option
 
 class Setup(Function):
 
-  def __init__(self, sorted_params, name_prefix):
-    super(Setup, self).__init__('setup')
+  def __init__(self, settings, sorted_params):
+    super(Setup, self).__init__(settings, 'setup')
     self.sorted_params = sorted_params
-    self.name_prefix = name_prefix
 
   def __str__(self):
     sorted_options = [o for o in self.sorted_params if type(o) is Option]
@@ -26,6 +25,6 @@ for var in "${{param_names[@]}}"; do unset "$var"; done
       options_short=' '.join([bash_array_value(o.short) for o in sorted_options]),
       options_long=' '.join([bash_array_value(o.long) for o in sorted_options]),
       options_argcount=' '.join([bash_array_value(o.argcount) for o in sorted_options]),
-      param_names=' '.join([bash_name(p.name, self.name_prefix) for p in self.sorted_params]),
+      param_names=' '.join([bash_name(p.name, self.settings.name_prefix) for p in self.sorted_params]),
     )
     return self.fn_wrap(script)

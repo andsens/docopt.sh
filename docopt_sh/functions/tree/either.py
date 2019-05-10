@@ -2,8 +2,8 @@ from .. import Function
 
 
 class Either(Function):
-  def __init__(self):
-    super(Either, self).__init__('either')
+  def __init__(self, settings):
+    super(Either, self).__init__(settings, 'either')
 
   def __str__(self):
     script = '''

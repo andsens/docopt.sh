@@ -3,17 +3,15 @@ from .. import Function
 
 class Extras(Function):
 
-  def __init__(self, add_help, no_version, version_present):
-    super(Extras, self).__init__('extras')
-    self.add_help = add_help
-    self.add_version = not no_version and version_present
+  def __init__(self, settings):
+    super(Extras, self).__init__(settings, 'extras')
 
   def include(self):
-    return self.add_help or self.add_version
+    return self.settings.add_help or self.settings.add_version
 
   def __str__(self):
     script = ''
-    if self.add_help:
+    if self.settings.add_help:
       script += '''
 for idx in "${parsed_params[@]}"; do
   [[ $idx == 'a' ]] && continue
@@ -23,7 +21,7 @@ for idx in "${parsed_params[@]}"; do
   fi
 done
 '''
-    if self.add_version:
+    if self.settings.add_version:
       script += '''
 for idx in "${parsed_params[@]}"; do
   [[ $idx == 'a' ]] && continue

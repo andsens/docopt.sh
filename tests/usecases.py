@@ -4,7 +4,7 @@ import pytest
 import subprocess
 import shlex
 from docopt_sh.script import Script
-from docopt_sh.generator import generate_parser
+from docopt_sh.parser import Parser
 from docopt_sh.bash_helper import bash_name
 from . import bash_eval_script,bash_decl,bash_decl_value,declare_quote
 
@@ -18,12 +18,14 @@ class DocoptUsecaseTestFile(pytest.File):
     raw = self.fspath.open().read()
     index = 1
     params = {
+      'SCRIPT': None,
       '--prefix': '_',
       '--options-first': False,
       '--no-help': False,
       '--no-version': False,
       '--no-doc-check': True,
       '--no-teardown': True,
+      '--debug': False,
     }
     program_template = '''
 doc="{doc}"
@@ -34,8 +36,8 @@ for var in "${{param_names[@]}}"; do declare -p "$var"; done
       name = self.fspath.purebasename
       if cases:
         script = Script(program_template.format(doc=doc))
-        parser = generate_parser(script, params=params)
-        script = str(script.insert_parser(parser))
+        parser = Parser(script, params)
+        script = str(parser.patched_script)
       for case in cases:
         yield DocoptUsecaseTest("%s(%d)" % (name, index), self, doc, script, case)
         index += 1

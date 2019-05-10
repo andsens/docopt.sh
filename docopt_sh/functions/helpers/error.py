@@ -2,8 +2,8 @@ from .. import Function
 
 
 class Error(Function):
-  def __init__(self):
-    super(Error, self).__init__('error')
+  def __init__(self, settings):
+    super(Error, self).__init__(settings, 'error')
 
   def __str__(self):
     script = '''

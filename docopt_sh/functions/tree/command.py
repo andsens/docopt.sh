@@ -2,8 +2,8 @@ from .. import Function
 
 
 class Command(Function):
-  def __init__(self):
-    super(Command, self).__init__('_command')
+  def __init__(self, settings):
+    super(Command, self).__init__(settings, '_command')
 
   def __str__(self):
     # $1=variable name

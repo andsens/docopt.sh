@@ -2,8 +2,8 @@ from .. import Function
 
 
 class Switch(Function):
-  def __init__(self):
-    super(Switch, self).__init__('_switch')
+  def __init__(self, settings):
+    super(Switch, self).__init__(settings, '_switch')
 
   def __str__(self):
     # $1=variable name

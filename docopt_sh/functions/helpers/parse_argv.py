@@ -3,9 +3,8 @@ from .. import Function
 
 class ParseArgv(Function):
 
-  def __init__(self, options_first):
-    super(ParseArgv, self).__init__('parse_argv')
-    self.options_first = options_first
+  def __init__(self, settings):
+    super(ParseArgv, self).__init__(settings, 'parse_argv')
 
   def __str__(self):
     script = '''
@@ -21,7 +20,7 @@ while [[ ${#argv[@]} -gt 0 ]]; do
   elif [[ ${argv[0]} == -* && ${argv[0]} != "-" ]]; then
     parse_shorts
 '''
-    if self.options_first:
+    if self.settings.options_first:
       script += '''
   else
     for arg in "${argv[@]}"; do

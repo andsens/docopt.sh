@@ -2,8 +2,9 @@
 
 class Function(object):
 
-  def __init__(self, name):
+  def __init__(self, settings, name):
     self.name = name
+    self.settings = settings
 
   def include(self):
     return True
