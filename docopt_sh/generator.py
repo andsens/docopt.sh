@@ -5,7 +5,7 @@ from .functions import tree
 def generate_parser(script, params):
   pattern = parse_doc(script.doc.value)
   sort_order = [Option, Argument, Command]
-  sorted_params = sorted(set(pattern.flat(*sort_order)), key=lambda p: sort_order.index(type(p)))
+  sorted_params = sorted(set(pattern.flat(*sort_order)), key=lambda p: '%d %s' % (sort_order.index(type(p)), p.name))
   for i, p in enumerate(sorted_params):
     p.index = i
     p.name_prefix = params['--prefix']

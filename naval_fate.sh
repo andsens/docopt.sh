@@ -34,7 +34,7 @@ cmd_4() { _command move false move; }
 arg_3() { _value _x_ false; }
 arg_4() { _value _y_ false; }
 optional_1() { optional opt_1; }
-opt_1() { _value __speed false 1; }
+opt_1() { _value __speed false 3; }
 req_4() { required cmd_5 cmd_6 arg_5 arg_6; }
 cmd_5() { _command ship false ship; }
 cmd_6() { _command shoot false shoot; }
@@ -50,14 +50,14 @@ arg_7() { _value _x_ false; }
 arg_8() { _value _y_ false; }
 optional_2() { optional either_3; }
 either_3() { either opt_2 opt_3; }
-opt_2() { _switch __moored false 0; }
-opt_3() { _switch __drifting false 3; }
+opt_2() { _switch __moored false 2; }
+opt_3() { _switch __drifting false 0; }
 req_7() { required either_4; }
 either_4() { either opt_4 opt_5; }
-opt_4() { _switch __help false 4; }
-opt_5() { _switch __help false 4; }
+opt_4() { _switch __help false 1; }
+opt_5() { _switch __help false 1; }
 req_8() { required opt_6; }
-opt_6() { _switch __version false 2; }
+opt_6() { _switch __version false 4; }
 _command() { local i
 for i in "${!left[@]}"; do
   local l=${left[$i]}
@@ -322,10 +322,10 @@ for idx in "${parsed_params[@]}"; do
   fi
 done; }
 setup() { argv=("$@")
-options_short=('' '' '' '' -h)
-options_long=(--moored --speed --version --drifting --help)
-options_argcount=(0 1 0 0 0)
-param_names=(__moored __speed __version __drifting __help _x_ _name_ _y_ new ship shoot rmove move mine set)
+options_short=('' -h '' '' '')
+options_long=(--drifting --help --moored --speed --version)
+options_argcount=(0 0 0 1 0)
+param_names=(__drifting __help __moored __speed __version _name_ _x_ _y_ mine move new rmove set ship shoot)
 parsed_params=()
 parsed_values=()
 left=()
@@ -342,21 +342,21 @@ if [[ $current_doc_hash != "82d3bc0f206c1d975c30cbf14b013fbd085ea37a428f2dd77869
   printf "The current usage doc (%s) does not match what the parser was generated with ({digest})\n" "$current_doc_hash" >&2
   exit 1;
 fi; }
-defaults() { __moored=${__moored:-false}
+defaults() { __drifting=${__drifting:-false}
+__help=${__help:-false}
+__moored=${__moored:-false}
 __speed=${__speed:-10}
 __version=${__version:-false}
-__drifting=${__drifting:-false}
-__help=${__help:-false}
-_x_=${_x_:-}
 [[ -z ${_name_+x} ]] && _name_=()
+_x_=${_x_:-}
 _y_=${_y_:-}
-new=${new:-false}
-ship=${ship:-false}
-shoot=${shoot:-false}
-rmove=${rmove:-false}
-move=${move:-false}
 mine=${mine:-false}
-set=${set:-false}; }
+move=${move:-false}
+new=${new:-false}
+rmove=${rmove:-false}
+set=${set:-false}
+ship=${ship:-false}
+shoot=${shoot:-false}; }
 docopt() { type check &>/dev/null && check
 setup "$@"
 parse_argv
