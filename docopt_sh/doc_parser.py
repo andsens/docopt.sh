@@ -1,5 +1,5 @@
 import re
-from .bash import bash_name, bash_value
+from .bash import bash_variable_name
 from .bash.tree.node import Node
 
 
@@ -151,7 +151,7 @@ class Argument(LeafPattern):
     return class_(name, value[0] if value else None)
 
   def get_helper_invocation(self, settings, function_name):
-    args = [bash_name(self.name, settings.name_prefix), type(self.value) is list]
+    args = [bash_variable_name(self.name, settings.name_prefix), type(self.value) is list]
     return Node(settings, function_name, '_value', args)
 
 
@@ -163,7 +163,7 @@ class Command(Argument):
     self.name, self.value = name, value
 
   def get_helper_invocation(self, settings, function_name):
-    args = [bash_name(self.name, settings.name_prefix), type(self.value) is int, self.name]
+    args = [bash_variable_name(self.name, settings.name_prefix), type(self.value) is int, self.name]
     return Node(settings, function_name, '_command', args)
 
 
@@ -202,12 +202,12 @@ class Option(LeafPattern):
 
   def get_helper_invocation(self, settings, function_name):
     if type(self.value) is bool:
-      args = [bash_name(self.name, settings.name_prefix), False, self.index]
+      args = [bash_variable_name(self.name, settings.name_prefix), False, self.index]
       return Node(settings, function_name, '_switch', args)
     elif type(self.value) is int:
-      args = [bash_name(self.name, settings.name_prefix), True, self.index]
+      args = [bash_variable_name(self.name, settings.name_prefix), True, self.index]
       return Node(settings, function_name, '_switch', args)
-    args = [bash_name(self.name, settings.name_prefix), type(self.value) is list, self.index]
+    args = [bash_variable_name(self.name, settings.name_prefix), type(self.value) is list, self.index]
     return Node(settings, function_name, '_value', args)
 
 

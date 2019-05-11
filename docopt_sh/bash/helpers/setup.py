@@ -1,4 +1,4 @@
-from .. import Function, bash_name, bash_array_value
+from .. import Function, bash_variable_name, bash_ifs_value
 from ...parser import Option
 
 
@@ -22,9 +22,9 @@ left=()
 test_match=false
 for var in "${{param_names[@]}}"; do unset "$var"; done
 '''.format(
-      options_short=' '.join([bash_array_value(o.short) for o in sorted_options]),
-      options_long=' '.join([bash_array_value(o.long) for o in sorted_options]),
-      options_argcount=' '.join([bash_array_value(o.argcount) for o in sorted_options]),
-      param_names=' '.join([bash_name(p.name, self.settings.name_prefix) for p in self.sorted_params]),
+      options_short=' '.join([bash_ifs_value(o.short) for o in sorted_options]),
+      options_long=' '.join([bash_ifs_value(o.long) for o in sorted_options]),
+      options_argcount=' '.join([bash_ifs_value(o.argcount) for o in sorted_options]),
+      param_names=' '.join([bash_variable_name(p.name, self.settings.name_prefix) for p in self.sorted_params]),
     )
     return self.fn_wrap(script)

@@ -1,4 +1,4 @@
-from .. import Function, bash_name, bash_value
+from .. import Function, bash_variable_name, bash_variable_value
 
 
 class Defaults(Function):
@@ -12,10 +12,10 @@ class Defaults(Function):
   def __str__(self):
     defaults = [
       "[[ -z ${{{name}+x}} ]] && {name}={default}".format(
-        name=bash_name(p.name, self.settings.name_prefix), default=bash_value(p.value)
+        name=bash_variable_name(p.name, self.settings.name_prefix), default=bash_variable_value(p.value)
       )
       if type(p.value) is list else "{name}=${{{name}:-{default}}}".format(
-        name=bash_name(p.name, self.settings.name_prefix), default=bash_value(p.value)
+        name=bash_variable_name(p.name, self.settings.name_prefix), default=bash_variable_value(p.value)
       )
       for p in self.sorted_params
     ]

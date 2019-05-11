@@ -15,7 +15,7 @@ class Function(object):
     return '{name}() {{\n{script}\n}}'.format(name=self.name, script=script.strip())
 
 
-def bash_name(name, prefix=''):
+def bash_variable_name(name, prefix=''):
   name = name.replace('<', '_')
   name = name.replace('>', '_')
   name = name.replace('-', '_')
@@ -23,7 +23,7 @@ def bash_name(name, prefix=''):
   return prefix + name
 
 
-def bash_value(value):
+def bash_variable_value(value):
   if value is None:
     return ''
   if type(value) is bool:
@@ -33,11 +33,11 @@ def bash_value(value):
   if type(value) is str:
     return quote(value)
   if type(value) is list:
-    return '(%s)' % ' '.join(bash_value(v) for v in value)
-  raise Exception('Unknown value type %s' % type(value))
+    return '(%s)' % ' '.join(bash_variable_value(v) for v in value)
+  raise Exception('Unhandled value type %s' % type(value))
 
 
-def bash_array_value(value):
+def bash_ifs_value(value):
   if value is None or value == '':
     return "''"
   if type(value) is bool:
@@ -47,8 +47,8 @@ def bash_array_value(value):
   if type(value) is str:
     return quote(value)
   if type(value) is list:
-    raise Exception('Unable to convert list to bash array value')
-  raise Exception('Unknown value type %s' % type(value))
+    raise Exception('Unable to convert list to bash value intended for an IFS separated field')
+  raise Exception('Unhandled value type %s' % type(value))
 
 
 def minimize(parser_str, max_length):

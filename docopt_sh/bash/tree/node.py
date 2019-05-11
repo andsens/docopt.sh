@@ -1,4 +1,4 @@
-from .. import Function, bash_value
+from .. import Function, bash_ifs_value
 
 
 class Node(Function):
@@ -8,5 +8,5 @@ class Node(Function):
     self.args = args
 
   def __str__(self):
-    script = ' '.join([self.function] + [bash_value(arg) for arg in self.args])
+    script = ' '.join([self.function] + [bash_ifs_value(arg) for arg in self.args])
     return self.fn_wrap(script)

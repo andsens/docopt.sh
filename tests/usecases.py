@@ -5,7 +5,7 @@ import subprocess
 import shlex
 from docopt_sh.script import Script
 from docopt_sh.parser import Parser
-from docopt_sh.bash import bash_name
+from docopt_sh.bash import bash_variable_name
 from . import bash_eval_script, bash_decl, bash_decl_value, declare_quote
 
 import logging
@@ -57,7 +57,10 @@ for var in "${{param_names[@]}}"; do declare -p "$var"; done
         argv, _, expect = case.strip().partition('\n')
         expect = json.loads(expect)
         if type(expect) is dict:
-          expect = {bash_name(k, prefix='_'): bash_decl(bash_name(k, prefix='_'), v) for k, v in expect.items()}
+          expect = {
+            bash_variable_name(k, prefix='_'): bash_decl(bash_variable_name(k, prefix='_'), v)
+            for k, v in expect.items()
+          }
         prog, _, argv = argv.strip().partition(' ')
         cases.append((prog, argv, expect))
 
