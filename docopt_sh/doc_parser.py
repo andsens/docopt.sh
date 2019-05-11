@@ -124,7 +124,7 @@ class BranchPattern(Pattern):
 
   def get_node_functions(self, settings, counters={}):
     counters[self.function_prefix] = counters.get(self.function_prefix, 0) + 1
-    fn_name = '%s_%d' % (self.function_prefix, counters[self.function_prefix])
+    fn_name = '%s%d' % (self.function_prefix, counters[self.function_prefix])
     functions = []
     function_names = []
     for child in self.children:
@@ -133,7 +133,7 @@ class BranchPattern(Pattern):
         functions += c_fns
       else:
         counters[child.function_prefix] = counters.get(child.function_prefix, 0) + 1
-        c_fn_name = '%s_%d' % (child.function_prefix, counters[child.function_prefix])
+        c_fn_name = '%s%d' % (child.function_prefix, counters[child.function_prefix])
         functions.append(child.get_helper_invocation(settings, c_fn_name))
       function_names.append(c_fn_name)
     functions.insert(0, self.get_helper_invocation(settings, fn_name, function_names))
