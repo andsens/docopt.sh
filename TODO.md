@@ -12,3 +12,4 @@ Prefix names with docopt
 Check for docopt_* function/variable name collision, test it
 Convert test_match into parameter
 --add-version    Add --version despite no $version being present
+Add library version that allows inclusion from multiple scripts
