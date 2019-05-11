@@ -6,7 +6,7 @@ import shlex
 from docopt_sh.script import Script
 from docopt_sh.parser import Parser
 from docopt_sh.bash import bash_variable_name
-from . import bash_eval_script, bash_decl, bash_decl_value, declare_quote
+from . import bash_eval_script, bash_decl
 
 import logging
 log = logging.getLogger(__name__)
@@ -40,9 +40,10 @@ for var in "${{param_names[@]}}"; do declare -p "$var"; done
         script = Script(program_template.format(doc=doc))
         parser = Parser(script, params)
         script = str(parser.patched_script)
-      for case in cases:
-        yield DocoptUsecaseTest("%s(%d)" % (name, index), self, doc, script, case)
-        index += 1
+      for bash in self.config.bash_versions:
+        for case in cases:
+          yield DocoptUsecaseTest("%s(%d)" % (name, index), self, bash, doc, script, case)
+          index += 1
 
   def _parse_test(self, raw):
     raw = re.compile('#.*$', re.M).sub('', raw).strip()
@@ -56,11 +57,6 @@ for var in "${{param_names[@]}}"; do declare -p "$var"; done
       for case in body.split('$')[1:]:
         argv, _, expect = case.strip().partition('\n')
         expect = json.loads(expect)
-        if type(expect) is dict:
-          expect = {
-            bash_variable_name(k, prefix='_'): bash_decl(bash_variable_name(k, prefix='_'), v)
-            for k, v in expect.items()
-          }
         prog, _, argv = argv.strip().partition(' ')
         cases.append((prog, argv, expect))
 
@@ -69,15 +65,23 @@ for var in "${{param_names[@]}}"; do declare -p "$var"; done
 
 class DocoptUsecaseTest(pytest.Item):
 
-  def __init__(self, name, parent, doc, script, case):
+  def __init__(self, name, parent, bash, doc, script, case):
     super(DocoptUsecaseTest, self).__init__(name, parent)
     self.doc = doc
     self.script = script
     self.prog, self.argv, self.expect = case
+    self.bash = bash
+    if type(self.expect) is dict:
+      self.expect = {
+        bash_variable_name(k, prefix='_'): bash_decl(
+          bash_variable_name(k, prefix='_'), v, bash_version=self.bash[0]
+        )
+        for k, v in self.expect.items()
+      }
 
   def runtest(self):
     try:
-      code, out, err = bash_eval_script(self.script, shlex.split(self.argv))
+      code, out, err = bash_eval_script(self.script, shlex.split(self.argv), bash=self.bash)
       if code == 0:
         expr = re.compile('^declare (--|-a) ([^=]+)=')
         out = out.strip('\n')
