@@ -8,6 +8,7 @@ def bash_name(name, prefix=''):
   name = name.replace(' ', '_')
   return prefix + name
 
+
 def bash_value(value):
   if value is None:
     return ''
@@ -20,6 +21,7 @@ def bash_value(value):
   if type(value) is list:
     return '(%s)' % ' '.join(bash_value(v) for v in value)
   raise Exception('Unknown value type %s' % type(value))
+
 
 def bash_array_value(value):
   if value is None or value == '':

@@ -3,16 +3,19 @@ from io import StringIO
 from . import bash_eval_script, patched_script, invoke_docopt, temp_script
 from docopt_sh.script import Script
 
+
 def test_arg(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
     code, out, err = run('ship', 'new', 'Britannica')
     assert code == 0
     assert out == 'Britannica\n'
 
+
 def test_wrong_usage(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
     code, out, err = run('--bad-opt')
     assert code != 0
+
 
 def test_help(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
@@ -20,11 +23,13 @@ def test_help(monkeypatch, capsys):
     assert code == 0
     assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
 
+
 def test_no_help(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh', ['--no-help']) as run:
     code, out, err = run('--help')
     assert code == 1
     assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
+
 
 def test_version(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
@@ -32,15 +37,18 @@ def test_version(monkeypatch, capsys):
     assert code == 0
     assert out == '0.1.5\n'
 
+
 def test_no_version(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'echo_ship_name.sh', ['--no-version']) as run:
     code, out, err = run('--version')
     assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
 
+
 def test_options_anywhere(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'naval_fate.sh') as run:
     code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
     assert out == 'The Titanic is now moving to 1,4 at 6 knots.\n'
+
 
 def test_options_first(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'naval_fate.sh', ['--options-first']) as run:
@@ -48,11 +56,13 @@ def test_options_first(monkeypatch, capsys):
     assert code == 0
     assert out == 'The Titanic is now moving to 1,4 at 6 knots.\n'
 
+
 def test_options_first_fail(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'naval_fate.sh', ['--options-first']) as run:
     code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
     assert code == 1
     assert out[:11] == 'Naval Fate.'
+
 
 def test_teardown(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'output_internals.sh') as run:
@@ -61,11 +71,13 @@ def test_teardown(monkeypatch, capsys):
     assert code == 0
     assert out == '\n\n\n'
 
+
 def test_no_teardown(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'output_internals.sh', ['--no-teardown']) as run:
     code, out, err = run('ship', 'shoot', '3', '1')
     assert code == 0
     assert '\n'.join(out.split('\n')[1:]) == 'a a a a\nship shoot 3 1\n'
+
 
 def test_prefix(monkeypatch, capsys):
   with patched_script(monkeypatch, capsys, 'output_internals.sh', ['--prefix', 'docopt_', '--no-teardown']) as run:
@@ -73,11 +85,13 @@ def test_prefix(monkeypatch, capsys):
     assert code == 0
     assert 'docopt_shoot' in out
 
+
 def test_patch_file(monkeypatch):
   with temp_script('echo_ship_name.sh') as (script, run):
     invoke_docopt(monkeypatch, params=[script.name])
     code, out, err = run(['ship', 'new', 'Olympia'])
     assert out == 'Olympia\n'
+
 
 def test_doc_check(monkeypatch):
   with temp_script('echo_ship_name.sh') as (script, run):
@@ -88,7 +102,9 @@ def test_doc_check(monkeypatch):
     with open(script.name, 'w') as h:
       h.write(contents)
     code, out, err = run(['ship', 'new', 'Olympia'])
-    assert re.match('^The current usage doc \([^)]+\) does not match what the parser was generated with \([^)]+\)\n$', err) is not None
+    regex = '^The current usage doc \([^)]+\) does not match what the parser was generated with \([^)]+\)\n$'
+    assert re.match(regex, err) is not None
+
 
 def test_no_doc_check(monkeypatch):
   with temp_script('echo_ship_name.sh') as (script, run):
@@ -100,6 +116,7 @@ def test_no_doc_check(monkeypatch):
       h.write(contents)
     code, out, err = run(['ship', 'new', 'Olympia'])
     assert out == 'Olympia\n'
+
 
 def test_only_parser(monkeypatch, capsys):
   with open('tests/scripts/naval_fate.sh') as h:

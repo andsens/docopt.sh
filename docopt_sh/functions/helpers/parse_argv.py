@@ -36,7 +36,7 @@ while [[ ${#argv[@]} -gt 0 ]]; do
     parsed_values+=("${argv[0]}")
     argv=("${argv[@]:1}")
 '''
-    script +='''
+    script += '''
   fi
 done
 '''

@@ -3,6 +3,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
+
 class Script(object):
 
   def __init__(self, contents, path=None):
@@ -31,7 +32,10 @@ class Script(object):
     if self.invocation.count > 1:
       log.warning('Multiple invocations of docopt found, check your script to make sure this is correct.')
     if not self.invocation.present:
-      log.warning('No invocations of docopt found, check your script to make sure this is correct.\ndocopt.sh is invoked with `docopt "$@"`')
+      log.warning(
+        'No invocations of docopt found, check your script to make sure this is correct.\n'
+        'docopt.sh is invoked with `docopt "$@"`'
+      )
 
   def insert_parser(self, parser, refresh_command=None):
     guard_begin = "# docopt parser below"
@@ -39,16 +43,19 @@ class Script(object):
     if refresh_command:
       guard_begin += ", refresh this parser with `%s`" % refresh_command
       guard_end += ", refresh this parser with `%s`" % refresh_command
-    return Script(\
-      self.contents[:self.parser.start] + \
-      guard_begin + "\n" + \
-      parser + \
-      guard_end + "\n" + \
-      self.contents[self.parser.end:]
+    return Script(
+      "{start}{guard_begin}\n{parser}{guard_end}\n{end}".format(
+        start=self.contents[:self.parser.start],
+        guard_begin=guard_begin,
+        parser=parser,
+        guard_end=guard_end,
+        end=self.contents[self.parser.end:],
+      )
     )
 
   def __str__(self):
     return self.contents
+
 
 class ScriptLocation(object):
 
@@ -82,7 +89,11 @@ class ScriptLocation(object):
 class Doc(ScriptLocation):
 
   def __init__(self, script):
-    matches = re.finditer(r'([a-zA-Z_][a-zA-Z_0-9]*)="((\\"|[^"])*Usage:(\\"|[^"])+)"\s*(\n|;)', script, re.MULTILINE | re.IGNORECASE)
+    matches = re.finditer(
+      r'([a-zA-Z_][a-zA-Z_0-9]*)="((\\"|[^"])*Usage:(\\"|[^"])+)"\s*(\n|;)',
+      script,
+      re.MULTILINE | re.IGNORECASE
+    )
     super(Doc, self).__init__(matches, 0)
 
   @property
@@ -162,6 +173,6 @@ class Version(ScriptLocation):
 
 class DocoptScriptValidationError(Exception):
 
-  def __init__(self, message, script_location = None):
+  def __init__(self, message, script_location=None):
     super(DocoptScriptValidationError, self).__init__(message)
     self.script_location = script_location

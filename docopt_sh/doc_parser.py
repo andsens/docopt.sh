@@ -20,6 +20,7 @@ def parse_doc(doc):
 
   return pattern.fix()
 
+
 class DocoptLanguageError(Exception):
 
   """Error in construction of usage-message by developer."""
@@ -115,6 +116,7 @@ class LeafPattern(Pattern):
   def flat(self, *types):
     return [self] if not types or type(self) in types else []
 
+
 class BranchPattern(Pattern):
 
   """Branch/inner node of a pattern tree."""
@@ -159,7 +161,9 @@ class Argument(LeafPattern):
     return class_(name, value[0] if value else None)
 
   def get_helper_invocation(self, settings, function_name):
-    return Node(settings, function_name, '_value', [bash_name(self.name, settings.name_prefix), type(self.value) is list])
+    args = [bash_name(self.name, settings.name_prefix), type(self.value) is list]
+    return Node(settings, function_name, '_value', args)
+
 
 class Command(Argument):
 
@@ -169,7 +173,9 @@ class Command(Argument):
     self.name, self.value = name, value
 
   def get_helper_invocation(self, settings, function_name):
-    return Node(settings, function_name, '_command', [bash_name(self.name, settings.name_prefix), type(self.value) is int, self.name])
+    args = [bash_name(self.name, settings.name_prefix), type(self.value) is int, self.name]
+    return Node(settings, function_name, '_command', args)
+
 
 class Option(LeafPattern):
 
@@ -206,10 +212,13 @@ class Option(LeafPattern):
 
   def get_helper_invocation(self, settings, function_name):
     if type(self.value) is bool:
-      return Node(settings, function_name, '_switch', [bash_name(self.name, settings.name_prefix), False, self.index])
+      args = [bash_name(self.name, settings.name_prefix), False, self.index]
+      return Node(settings, function_name, '_switch', args)
     elif type(self.value) is int:
-      return Node(settings, function_name, '_switch', [bash_name(self.name, settings.name_prefix), True, self.index])
-    return Node(settings, function_name, '_value', [bash_name(self.name, settings.name_prefix), type(self.value) is list, self.index])
+      args = [bash_name(self.name, settings.name_prefix), True, self.index]
+      return Node(settings, function_name, '_switch', args)
+    args = [bash_name(self.name, settings.name_prefix), type(self.value) is list, self.index]
+    return Node(settings, function_name, '_value', args)
 
 
 class Required(BranchPattern):
@@ -219,12 +228,14 @@ class Required(BranchPattern):
   def get_helper_invocation(self, settings, function_name, children):
     return Node(settings, function_name, 'required', children)
 
+
 class Optional(BranchPattern):
 
   function_prefix = 'optional'
 
   def get_helper_invocation(self, settings, function_name, children):
     return Node(settings, function_name, 'optional', children)
+
 
 class OptionsShortcut(Optional):
 
@@ -237,6 +248,7 @@ class OneOrMore(BranchPattern):
 
   def get_helper_invocation(self, settings, function_name, children):
     return Node(settings, function_name, 'oneormore', children)
+
 
 class Either(BranchPattern):
 
@@ -282,8 +294,7 @@ def parse_long(tokens, options):
     if tokens.error is DocoptExit:
       o = Option(None, long, argcount, value if argcount else True)
   else:
-    o = Option(similar[0].short, similar[0].long,
-           similar[0].argcount, similar[0].value)
+    o = Option(similar[0].short, similar[0].long, similar[0].argcount, similar[0].value)
     if o.argcount == 0:
       if value is not None:
         raise tokens.error('%s must not have an argument' % o.long)
@@ -328,6 +339,7 @@ def parse_shorts(tokens, options):
         o.value = value if value is not None else True
     parsed.append(o)
   return parsed
+
 
 def parse_pattern(source, options):
   tokens = Tokens.from_pattern(source)
@@ -386,6 +398,7 @@ def parse_atom(tokens, options):
     return [Argument(tokens.move())]
   else:
     return [Command(tokens.move())]
+
 
 def parse_defaults(doc):
   defaults = []

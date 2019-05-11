@@ -1,7 +1,6 @@
 import sys
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
-
 from docopt_sh import __version__
 
 
@@ -48,6 +47,7 @@ setup(
   tests_require=[
     'pytest',
     'pytest-xdist',
+    'pytest-pep8',
   ],
   cmdclass={
     'test': PyTestCommand,

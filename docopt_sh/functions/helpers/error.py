@@ -11,4 +11,3 @@ printf "%s\\n" "$1"
 exit 1
 '''
     return self.fn_wrap(script)
-

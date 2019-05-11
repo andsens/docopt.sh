@@ -56,6 +56,7 @@ def docopt_sh(params):
       with open(params['SCRIPT'], 'w') as h:
         h.write(patched_script)
 
+
 def main():
   params = docopt.docopt(__doc__)
   docopt_sh(params)

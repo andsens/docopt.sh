@@ -2,6 +2,7 @@ from .doc_parser import parse_doc, Option, Argument, Command
 from .functions import helpers
 from .functions import tree
 
+
 class ParserSettings(object):
 
   def __init__(self, script, docopt_params):
@@ -45,6 +46,7 @@ class ParserSettings(object):
       command += ' ' + self.docopt_params['SCRIPT']
     return command
 
+
 class Parser(object):
 
   def __init__(self, script, params):
@@ -58,7 +60,10 @@ class Parser(object):
 
   def __str__(self):
     sort_order = [Option, Argument, Command]
-    sorted_params = sorted(set(self.pattern.flat(*sort_order)), key=lambda p: '%d %s' % (sort_order.index(type(p)), p.name))
+    sorted_params = sorted(
+      set(self.pattern.flat(*sort_order)),
+      key=lambda p: '%d %s' % (sort_order.index(type(p)), p.name)
+    )
     for i, p in enumerate(sorted_params):
       p.index = i
 

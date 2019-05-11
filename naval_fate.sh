@@ -337,9 +337,10 @@ unset -f either oneormore optional required _command _switch _value \
 check defaults extras help error docopt \
 parse_argv parse_long parse_shorts setup teardown; }
 check() { local current_doc_hash
+local digest="10b94532526dfeb4b51b46eb6d0b2bc294030ff82237dbecd100b72caa7c1fc1"
 current_doc_hash=$(printf "%s" "$doc" | shasum -a 256 | cut -f 1 -d " ")
-if [[ $current_doc_hash != "10b94532526dfeb4b51b46eb6d0b2bc294030ff82237dbecd100b72caa7c1fc1" ]]; then
-  printf "The current usage doc (%s) does not match what the parser was generated with ({digest})\n" "$current_doc_hash" >&2
+if [[ $current_doc_hash != "$digest" ]]; then
+  printf "The current usage doc (%s) does not match what the parser was generated with (%s)\n"     "$current_doc_hash" "$digest" >&2
   exit 1;
 fi; }
 defaults() { __drifting=${__drifting:-false}

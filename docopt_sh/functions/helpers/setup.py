@@ -2,6 +2,7 @@ from .. import Function
 from ...bash_helper import bash_name, bash_array_value
 from ...parser import Option
 
+
 class Setup(Function):
 
   def __init__(self, settings, sorted_params):
