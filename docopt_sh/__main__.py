@@ -3,8 +3,8 @@ import sys
 import re
 import os
 import docopt
-from docopt_sh.script import Script
-from docopt_sh.parser import Parser
+from .script import Script
+from .parser import Parser
 
 __doc__ = """
 docopt.sh

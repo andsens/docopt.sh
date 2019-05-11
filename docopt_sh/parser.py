@@ -1,7 +1,5 @@
 from .doc_parser import parse_doc, Option, Argument, Command
-from .functions import helpers
-from .functions import tree
-from .bash_helper import minimize
+from .bash import helpers, tree, minimize
 
 
 class ParserSettings(object):

@@ -1,5 +1,4 @@
-from .. import Function
-from ...bash_helper import bash_value
+from .. import Function, bash_value
 
 
 class Node(Function):

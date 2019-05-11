@@ -2,6 +2,19 @@ import re
 from shlex import quote
 
 
+class Function(object):
+
+  def __init__(self, settings, name):
+    self.name = name
+    self.settings = settings
+
+  def include(self):
+    return True
+
+  def fn_wrap(self, script):
+    return '{name}() {{\n{script}\n}}'.format(name=self.name, script=script.strip())
+
+
 def bash_name(name, prefix=''):
   name = name.replace('<', '_')
   name = name.replace('>', '_')

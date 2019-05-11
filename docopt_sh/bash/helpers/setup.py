@@ -1,5 +1,4 @@
-from .. import Function
-from ...bash_helper import bash_name, bash_array_value
+from .. import Function, bash_name, bash_array_value
 from ...parser import Option
 
 

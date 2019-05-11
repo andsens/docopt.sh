@@ -1,6 +1,6 @@
 import re
-from .bash_helper import bash_name, bash_value
-from .functions.tree.node import Node
+from .bash import bash_name, bash_value
+from .bash.tree.node import Node
 
 
 def parse_doc(doc):

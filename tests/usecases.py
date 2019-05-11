@@ -5,7 +5,7 @@ import subprocess
 import shlex
 from docopt_sh.script import Script
 from docopt_sh.parser import Parser
-from docopt_sh.bash_helper import bash_name
+from docopt_sh.bash import bash_name
 from . import bash_eval_script, bash_decl, bash_decl_value, declare_quote
 
 import logging
