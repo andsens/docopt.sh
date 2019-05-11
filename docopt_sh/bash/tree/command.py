@@ -7,7 +7,7 @@ class Command(Function):
 
   def __str__(self):
     # $1=variable name
-    # $2=is it a list?
+    # $2=should the value be incremented?
     # $3=name of the command
     script = '''
 local i

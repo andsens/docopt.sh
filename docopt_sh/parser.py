@@ -1,4 +1,4 @@
-from .doc_pattern import DocPattern
+from .doc import DocAst
 from .bash import helpers, tree, minimize
 
 
@@ -7,14 +7,14 @@ class Parser(object):
   def __init__(self, script, params):
     self.script = script
     self.settings = ParserSettings(script, params)
-    self.doc_pattern = DocPattern(self.settings, script.doc.value)
+    self.doc_ast = DocAst(self.settings, script.doc.value)
 
   @property
   def patched_script(self):
     return self.script.insert_parser(str(self), self.settings.refresh_command)
 
   def __str__(self):
-    all_functions = self.doc_pattern.ast_functions + [
+    all_functions = self.doc_ast.functions + [
       tree.Command(self.settings),
       tree.Either(self.settings),
       tree.OneOrMore(self.settings),
@@ -28,10 +28,10 @@ class Parser(object):
       helpers.Help(self.settings),
       helpers.Error(self.settings),
       helpers.Extras(self.settings),
-      helpers.Setup(self.settings, sorted_params=self.doc_pattern.sorted_params),
+      helpers.Setup(self.settings, sorted_params=self.doc_ast.sorted_params),
       helpers.Teardown(self.settings),
       helpers.Check(self.settings),
-      helpers.Defaults(self.settings, sorted_params=self.doc_pattern.sorted_params),
+      helpers.Defaults(self.settings, sorted_params=self.doc_ast.sorted_params),
       helpers.Main(self.settings),
     ]
     parser_str = '\n'.join([str(function) for function in all_functions if function.include()])

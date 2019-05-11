@@ -1,5 +1,5 @@
 from .. import Function, bash_variable_name, bash_ifs_value
-from ...doc_pattern import Option
+from ...doc import Option
 
 
 class Setup(Function):

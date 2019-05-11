@@ -1,30 +1,34 @@
 import re
-from .bash import bash_variable_name
-from .bash.tree.node import Node
+from collections import OrderedDict
+from itertools import chain
 
 
-class DocPattern(object):
+class DocAst(object):
 
   def __init__(self, settings, doc):
+    from .bash.tree.node import BranchNode, LeafNode
     self.settings = settings
     self.doc = doc
     self.root = parse_doc(doc)
+    self.nodes = OrderedDict([])
     param_sort_order = [Option, Argument, Command]
-    self.sorted_params = sorted(
-      set(self.root.flat(*param_sort_order)),
-      key=lambda p: '%d %s' % (param_sort_order.index(type(p)), p.name)
-    )
-    for i, p in enumerate(self.sorted_params):
-      p.index = i
-    branches = [Required, Optional, OneOrMore, Either, OptionsShortcut]
-    for branch in branches:
-      for i, b in enumerate(self.root.flat(branch)):
-        b.index = i
-    self.root.function_name = 'root'
+    unique_params = list(OrderedDict.fromkeys(self.root.flat(*param_sort_order)))
+    sorted_params = sorted(unique_params, key=lambda p: param_sort_order.index(type(p)))
+    for idx, param in enumerate(sorted_params):
+      self.nodes[param] = LeafNode(settings, param, idx)
+    for idx, pattern in enumerate(iter(self.root)):
+      if isinstance(pattern, BranchPattern):
+        self.nodes[pattern] = BranchNode(settings, pattern, idx, self.nodes)
+    self.nodes[self.root].name = 'root'
 
   @property
-  def ast_functions(self):
-    return self.root.get_node_functions(self.settings)
+  def functions(self):
+    return list(self.nodes.values())
+
+  @property
+  def sorted_params(self):
+    params = [Option, Argument, Command]
+    return [key for key in self.nodes.keys() if type(key) in params]
 
 
 def parse_doc(doc):
@@ -89,14 +93,6 @@ class Pattern(object):
           e.value = 0
     return self
 
-  @property
-  def function_name(self):
-    return getattr(self, '_function_name', self.function_prefix + str(self.index))
-
-  @function_name.setter
-  def function_name(self, name):
-    self._function_name = name
-
 
 def transform(pattern):
   """Expand pattern into an (almost) equivalent one, but with single Either.
@@ -135,6 +131,9 @@ class LeafPattern(Pattern):
   def __repr__(self):
     return '%s(%r, %r)' % (self.__class__.__name__, self.name, self.value)
 
+  def __iter__(self):
+    yield self
+
   def flat(self, *types):
     return [self] if not types or type(self) in types else []
 
@@ -149,25 +148,18 @@ class BranchPattern(Pattern):
   def __repr__(self):
     return '%s(%s)' % (self.__class__.__name__, ', '.join(repr(a) for a in self.children))
 
-  def flat(self, *types):
-    return sum(
-      [child.flat(*types) for child in self.children],
-      [self] if type(self) in types else []
-    )
+  def __iter__(self):
+    for child in chain(*map(iter, self.children)):
+      yield child
+    yield self
 
-  def get_node_functions(self, settings):
-    functions = [self.get_node_invocation(settings, map(lambda child: child.function_name, self.children))]
-    for child in self.children:
-      if isinstance(child, BranchPattern):
-        functions += child.get_node_functions(settings)
-      else:
-        functions += [child.get_node_invocation(settings)]
-    return functions
+  def flat(self, *types):
+    if type(self) in types:
+      return [self]
+    return sum([child.flat(*types) for child in self.children], [])
 
 
 class Argument(LeafPattern):
-
-  function_prefix = 'arg'
 
   @classmethod
   def parse(class_, source):
@@ -175,26 +167,14 @@ class Argument(LeafPattern):
     value = re.findall('\[default: (.*)\]', source, flags=re.I)
     return class_(name, value[0] if value else None)
 
-  def get_node_invocation(self, settings):
-    args = [bash_variable_name(self.name, settings.name_prefix), type(self.value) is list]
-    return Node(settings, self.function_name, '_value', args)
-
 
 class Command(Argument):
-
-  function_prefix = 'cmd'
 
   def __init__(self, name, value=False):
     self.name, self.value = name, value
 
-  def get_node_invocation(self, settings):
-    args = [bash_variable_name(self.name, settings.name_prefix), type(self.value) is int, self.name]
-    return Node(settings, self.function_name, '_command', args)
-
 
 class Option(LeafPattern):
-
-  function_prefix = 'opt'
 
   def __init__(self, short=None, long=None, argcount=0, value=False):
     assert argcount in (0, 1)
@@ -225,52 +205,25 @@ class Option(LeafPattern):
   def __repr__(self):
     return 'Option(%r, %r, %r, %r)' % (self.short, self.long, self.argcount, self.value)
 
-  def get_node_invocation(self, settings):
-    if type(self.value) is bool:
-      args = [bash_variable_name(self.name, settings.name_prefix), False, self.index]
-      return Node(settings, self.function_name, '_switch', args)
-    elif type(self.value) is int:
-      args = [bash_variable_name(self.name, settings.name_prefix), True, self.index]
-      return Node(settings, self.function_name, '_switch', args)
-    args = [bash_variable_name(self.name, settings.name_prefix), type(self.value) is list, self.index]
-    return Node(settings, self.function_name, '_value', args)
-
 
 class Required(BranchPattern):
-
-  function_prefix = 'req'
-
-  def get_node_invocation(self, settings, children):
-    return Node(settings, self.function_name, 'required', children)
+  pass
 
 
 class Optional(BranchPattern):
-
-  function_prefix = 'optional'
-
-  def get_node_invocation(self, settings, children):
-    return Node(settings, self.function_name, 'optional', children)
+  pass
 
 
 class OptionsShortcut(Optional):
-
   """Marker/placeholder for [options] shortcut."""
 
 
 class OneOrMore(BranchPattern):
-
-  function_prefix = 'oneormore'
-
-  def get_node_invocation(self, settings, children):
-    return Node(settings, self.function_name, 'oneormore', children)
+  pass
 
 
 class Either(BranchPattern):
-
-  function_prefix = 'either'
-
-  def get_node_invocation(self, settings, children):
-    return Node(settings, self.function_name, 'either', children)
+  pass
 
 
 class Tokens(list):
