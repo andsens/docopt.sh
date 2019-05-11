@@ -20,8 +20,8 @@ Parser generation options:
   --no-doc-check   Disable check for whether if the parser matches the doc
   --no-help        Disable automatic help on -h or --help
   --options-first  Require that options precede positional arguments
-  --no-teardown    Do not tear down functions or variables after parsing
-  --no-version     Do not add --version despite $version being present
+  --no-teardown    Disable teardown of functions and variables after parsing
+  --no-version     Disable automatic --version despite $version being present
 
 Other options:
   --only-parser    Only output the parser to stdout
