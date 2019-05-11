@@ -60,22 +60,22 @@ def remove_empty_lines(lines):
 def remove_newlines(lines, max_length):
   no_separator = re.compile(r'; (then|do)$|else$|\{$')
   comment = re.compile(r'^\s*#')
-  current = ''
-  separator = ''
+  current = None
   for line in lines:
+    if not current:
+      current = line
+      continue
     if comment.match(line):
-      if current != '':
+      if current:
         yield current
       yield line
-      current = ''
-      separator = ''
+      current = None
       continue
+    separator = ' ' if no_separator.search(current) else '; '
     if len(current + separator + line) < max_length:
       current += separator + line
-      separator = ' ' if no_separator.search(line) else '; '
     else:
       yield current
       current = line
-      separator = ' ' if no_separator.search(line) else '; '
   if current != '':
     yield current
