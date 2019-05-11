@@ -20,26 +20,26 @@ Options:
   --drifting    Drifting mine.
 "
 # docopt parser below, refresh this parser with `docopt.sh naval_fate.sh`
-req1() { required either1; }; either1() { either req2 req3 req4 req5 req7 req8
-}; req2() { required cmd1 cmd2 oneormore1; }; cmd1() { _command ship false ship
-}; cmd2() { _command new false new; }; oneormore1() { oneormore arg1; }
-arg1() { _value _name_ true; }; req3() {
-required cmd3 arg2 cmd4 arg3 arg4 optional1; }; cmd3() {
-_command ship false ship; }; arg2() { _value _name_ true; }; cmd4() {
-_command move false move; }; arg3() { _value _x_ false; }; arg4() {
-_value _y_ false; }; optional1() { optional opt1; }; opt1() {
-_value __speed false 3; }; req4() { required cmd5 cmd6 arg5 arg6; }; cmd5() {
-_command ship false ship; }; cmd6() { _command shoot false shoot; }; arg5() {
-_value _x_ false; }; arg6() { _value _y_ false; }; req5() {
-required cmd7 req6 arg7 arg8 optional2; }; cmd7() { _command mine false mine; }
-req6() { required either2; }; either2() { either cmd8 cmd9; }; cmd8() {
-_command set false set; }; cmd9() { _command remove false remove; }; arg7() {
-_value _x_ false; }; arg8() { _value _y_ false; }; optional2() {
-optional either3; }; either3() { either opt2 opt3; }; opt2() {
-_switch __moored false 2; }; opt3() { _switch __drifting false 0; }; req7() {
-required either4; }; either4() { either opt4 opt5; }; opt4() {
-_switch __help false 1; }; opt5() { _switch __help false 1; }; req8() {
-required opt6; }; opt6() { _switch __version false 4; }; _command() { local i
+req0() { required either0; }; either0() { either req1 req2 req3 req4 req6 req7
+}; req1() { required cmd13 cmd10 oneormore0; }; cmd13() {
+_command ship false ship; }; cmd10() { _command new false new; }
+oneormore0() { oneormore arg5; }; arg5() { _value _name_ true; }; req2() {
+required cmd13 arg5 cmd9 arg6 arg7 optional0; }; cmd13() {
+_command ship false ship; }; arg5() { _value _name_ true; }; cmd9() {
+_command move false move; }; arg6() { _value _x_ false; }; arg7() {
+_value _y_ false; }; optional0() { optional opt3; }; opt3() {
+_value __speed false 3; }; req3() { required cmd13 cmd14 arg6 arg7; }
+cmd13() { _command ship false ship; }; cmd14() { _command shoot false shoot; }
+arg6() { _value _x_ false; }; arg7() { _value _y_ false; }; req4() {
+required cmd8 req5 arg6 arg7 optional1; }; cmd8() { _command mine false mine; }
+req5() { required either1; }; either1() { either cmd12 cmd11; }; cmd12() {
+_command set false set; }; cmd11() { _command remove false remove; }; arg6() {
+_value _x_ false; }; arg7() { _value _y_ false; }; optional1() {
+optional either2; }; either2() { either opt2 opt0; }; opt2() {
+_switch __moored false 2; }; opt0() { _switch __drifting false 0; }; req6() {
+required either3; }; either3() { either opt1 opt1; }; opt1() {
+_switch __help false 1; }; opt1() { _switch __help false 1; }; req7() {
+required opt4; }; opt4() { _switch __version false 4; }; _command() { local i
 for i in "${!left[@]}"; do local l=${left[$i]}
 if [[ ${parsed_params[$l]} == 'a' ]]; then
 if [[ ${parsed_values[$l]} != "$3" ]]; then return 1; fi
@@ -159,7 +159,7 @@ remove=${remove:-false}; set=${set:-false}; ship=${ship:-false}
 shoot=${shoot:-false}; }; docopt() { type check &>/dev/null && check
 setup "$@"; parse_argv; extras; local i=0
 while [[ $i -lt ${#parsed_params[@]} ]]; do left+=("$i"); ((i++)); done
-if ! req1; then help; exit 1; fi; type defaults &>/dev/null && defaults
+if ! req0; then help; exit 1; fi; type defaults &>/dev/null && defaults
 if [[ ${#left[@]} -gt 0 ]]; then help; exit 1; fi
 type teardown &>/dev/null && teardown; return 0; }
 # docopt parser above, refresh this parser with `docopt.sh naval_fate.sh`

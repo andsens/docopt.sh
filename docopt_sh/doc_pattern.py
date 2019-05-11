@@ -9,18 +9,21 @@ class DocPattern(object):
     self.settings = settings
     self.doc = doc
     self.root = parse_doc(doc)
-    sort_order = [Option, Argument, Command]
+    param_sort_order = [Option, Argument, Command]
     self.sorted_params = sorted(
-      set(self.root.flat(*sort_order)),
-      key=lambda p: '%d %s' % (sort_order.index(type(p)), p.name)
+      set(self.root.flat(*param_sort_order)),
+      key=lambda p: '%d %s' % (param_sort_order.index(type(p)), p.name)
     )
     for i, p in enumerate(self.sorted_params):
       p.index = i
+    branches = [Required, Optional, OneOrMore, Either, OptionsShortcut]
+    for branch in branches:
+      for i, b in enumerate(self.root.flat(branch)):
+        b.index = i
 
   @property
   def ast_functions(self):
-    root_fn, node_functions, _ = self.root.get_node_functions(self.settings)
-    return root_fn, node_functions
+    return self.root.get_node_functions(self.settings)
 
 
 def parse_doc(doc):
@@ -85,6 +88,10 @@ class Pattern(object):
           e.value = 0
     return self
 
+  @property
+  def function_name(self):
+    return '%s%d' % (self.function_prefix, self.index)
+
 
 def transform(pattern):
   """Expand pattern into an (almost) equivalent one, but with single Either.
@@ -138,26 +145,19 @@ class BranchPattern(Pattern):
     return '%s(%s)' % (self.__class__.__name__, ', '.join(repr(a) for a in self.children))
 
   def flat(self, *types):
-    if type(self) in types:
-      return [self]
-    return sum([child.flat(*types) for child in self.children], [])
+    return sum(
+      [child.flat(*types) for child in self.children],
+      [self] if type(self) in types else []
+    )
 
-  def get_node_functions(self, settings, counters={}):
-    counters[self.function_prefix] = counters.get(self.function_prefix, 0) + 1
-    fn_name = '%s%d' % (self.function_prefix, counters[self.function_prefix])
-    functions = []
-    function_names = []
+  def get_node_functions(self, settings):
+    functions = [self.get_node_invocation(settings, map(lambda child: child.function_name, self.children))]
     for child in self.children:
       if isinstance(child, BranchPattern):
-        c_fn_name, c_fns, counters = child.get_node_functions(settings, counters)
-        functions += c_fns
+        functions += child.get_node_functions(settings)
       else:
-        counters[child.function_prefix] = counters.get(child.function_prefix, 0) + 1
-        c_fn_name = '%s%d' % (child.function_prefix, counters[child.function_prefix])
-        functions.append(child.get_helper_invocation(settings, c_fn_name))
-      function_names.append(c_fn_name)
-    functions.insert(0, self.get_helper_invocation(settings, fn_name, function_names))
-    return fn_name, functions, counters
+        functions += [child.get_node_invocation(settings)]
+    return functions
 
 
 class Argument(LeafPattern):
@@ -170,9 +170,9 @@ class Argument(LeafPattern):
     value = re.findall('\[default: (.*)\]', source, flags=re.I)
     return class_(name, value[0] if value else None)
 
-  def get_helper_invocation(self, settings, function_name):
+  def get_node_invocation(self, settings):
     args = [bash_variable_name(self.name, settings.name_prefix), type(self.value) is list]
-    return Node(settings, function_name, '_value', args)
+    return Node(settings, self.function_name, '_value', args)
 
 
 class Command(Argument):
@@ -182,9 +182,9 @@ class Command(Argument):
   def __init__(self, name, value=False):
     self.name, self.value = name, value
 
-  def get_helper_invocation(self, settings, function_name):
+  def get_node_invocation(self, settings):
     args = [bash_variable_name(self.name, settings.name_prefix), type(self.value) is int, self.name]
-    return Node(settings, function_name, '_command', args)
+    return Node(settings, self.function_name, '_command', args)
 
 
 class Option(LeafPattern):
@@ -220,31 +220,31 @@ class Option(LeafPattern):
   def __repr__(self):
     return 'Option(%r, %r, %r, %r)' % (self.short, self.long, self.argcount, self.value)
 
-  def get_helper_invocation(self, settings, function_name):
+  def get_node_invocation(self, settings):
     if type(self.value) is bool:
       args = [bash_variable_name(self.name, settings.name_prefix), False, self.index]
-      return Node(settings, function_name, '_switch', args)
+      return Node(settings, self.function_name, '_switch', args)
     elif type(self.value) is int:
       args = [bash_variable_name(self.name, settings.name_prefix), True, self.index]
-      return Node(settings, function_name, '_switch', args)
+      return Node(settings, self.function_name, '_switch', args)
     args = [bash_variable_name(self.name, settings.name_prefix), type(self.value) is list, self.index]
-    return Node(settings, function_name, '_value', args)
+    return Node(settings, self.function_name, '_value', args)
 
 
 class Required(BranchPattern):
 
   function_prefix = 'req'
 
-  def get_helper_invocation(self, settings, function_name, children):
-    return Node(settings, function_name, 'required', children)
+  def get_node_invocation(self, settings, children):
+    return Node(settings, self.function_name, 'required', children)
 
 
 class Optional(BranchPattern):
 
   function_prefix = 'optional'
 
-  def get_helper_invocation(self, settings, function_name, children):
-    return Node(settings, function_name, 'optional', children)
+  def get_node_invocation(self, settings, children):
+    return Node(settings, self.function_name, 'optional', children)
 
 
 class OptionsShortcut(Optional):
@@ -256,16 +256,16 @@ class OneOrMore(BranchPattern):
 
   function_prefix = 'oneormore'
 
-  def get_helper_invocation(self, settings, function_name, children):
-    return Node(settings, function_name, 'oneormore', children)
+  def get_node_invocation(self, settings, children):
+    return Node(settings, self.function_name, 'oneormore', children)
 
 
 class Either(BranchPattern):
 
   function_prefix = 'either'
 
-  def get_helper_invocation(self, settings, function_name, children):
-    return Node(settings, function_name, 'either', children)
+  def get_node_invocation(self, settings, children):
+    return Node(settings, self.function_name, 'either', children)
 
 
 class Tokens(list):

@@ -14,7 +14,7 @@ class Parser(object):
     return self.script.insert_parser(str(self), self.settings.refresh_command)
 
   def __str__(self):
-    root_fn, ast_functions = self.doc_pattern.ast_functions
+    ast_functions = self.doc_pattern.ast_functions
     all_functions = ast_functions + [
       tree.Command(self.settings),
       tree.Either(self.settings),
@@ -33,7 +33,7 @@ class Parser(object):
       helpers.Teardown(self.settings),
       helpers.Check(self.settings),
       helpers.Defaults(self.settings, sorted_params=self.doc_pattern.sorted_params),
-      helpers.Main(self.settings, root_fn=root_fn),
+      helpers.Main(self.settings, root_fn=ast_functions[0].name),
     ]
     rendered_functions = [str(function) for function in all_functions if function.include()]
     parser_str = '\n'.join(rendered_functions)
