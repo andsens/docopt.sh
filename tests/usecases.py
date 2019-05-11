@@ -42,7 +42,7 @@ for var in "${{param_names[@]}}"; do declare -p "$var"; done
         script = str(parser.patched_script)
       for bash in self.config.bash_versions:
         for case in cases:
-          yield DocoptUsecaseTest("%s(%d)" % (name, index), self, bash, doc, script, case)
+          yield DocoptUsecaseTest("%s (%d, bash %s)" % (name, index, bash[0]), self, bash, doc, script, case)
           index += 1
 
   def _parse_test(self, raw):
