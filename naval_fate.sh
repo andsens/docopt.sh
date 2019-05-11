@@ -20,7 +20,7 @@ Options:
   --drifting    Drifting mine.
 "
 # docopt parser below, refresh this parser with `docopt.sh naval_fate.sh`
-req0() { required either0; }; either0() { either req1 req2 req3 req4 req6 req7
+root() { required either0; }; either0() { either req1 req2 req3 req4 req6 req7
 }; req1() { required cmd13 cmd10 oneormore0; }; cmd13() {
 _command ship false ship; }; cmd10() { _command new false new; }
 oneormore0() { oneormore arg5; }; arg5() { _value _name_ true; }; req2() {
@@ -159,7 +159,7 @@ remove=${remove:-false}; set=${set:-false}; ship=${ship:-false}
 shoot=${shoot:-false}; }; docopt() { type check &>/dev/null && check
 setup "$@"; parse_argv; extras; local i=0
 while [[ $i -lt ${#parsed_params[@]} ]]; do left+=("$i"); ((i++)); done
-if ! req0; then help; exit 1; fi; type defaults &>/dev/null && defaults
+if ! root; then help; exit 1; fi; type defaults &>/dev/null && defaults
 if [[ ${#left[@]} -gt 0 ]]; then help; exit 1; fi
 type teardown &>/dev/null && teardown; return 0; }
 # docopt parser above, refresh this parser with `docopt.sh naval_fate.sh`

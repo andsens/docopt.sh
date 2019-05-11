@@ -14,8 +14,7 @@ class Parser(object):
     return self.script.insert_parser(str(self), self.settings.refresh_command)
 
   def __str__(self):
-    ast_functions = self.doc_pattern.ast_functions
-    all_functions = ast_functions + [
+    all_functions = self.doc_pattern.ast_functions + [
       tree.Command(self.settings),
       tree.Either(self.settings),
       tree.OneOrMore(self.settings),
@@ -33,10 +32,9 @@ class Parser(object):
       helpers.Teardown(self.settings),
       helpers.Check(self.settings),
       helpers.Defaults(self.settings, sorted_params=self.doc_pattern.sorted_params),
-      helpers.Main(self.settings, root_fn=ast_functions[0].name),
+      helpers.Main(self.settings),
     ]
-    rendered_functions = [str(function) for function in all_functions if function.include()]
-    parser_str = '\n'.join(rendered_functions)
+    parser_str = '\n'.join([str(function) for function in all_functions if function.include()])
     if self.settings.minimize:
       parser_str = minimize(parser_str, self.settings.max_line_length)
     return parser_str + '\n'

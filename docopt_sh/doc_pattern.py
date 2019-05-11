@@ -20,6 +20,7 @@ class DocPattern(object):
     for branch in branches:
       for i, b in enumerate(self.root.flat(branch)):
         b.index = i
+    self.root.function_name = 'root'
 
   @property
   def ast_functions(self):
@@ -90,7 +91,11 @@ class Pattern(object):
 
   @property
   def function_name(self):
-    return '%s%d' % (self.function_prefix, self.index)
+    return getattr(self, '_function_name', self.function_prefix + str(self.index))
+
+  @function_name.setter
+  def function_name(self, name):
+    self._function_name = name
 
 
 def transform(pattern):
