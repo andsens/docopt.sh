@@ -17,9 +17,9 @@ local current_doc_hash
 local digest="{digest}"
 current_doc_hash=$(printf "%s" "${docname}" | shasum -a 256 | cut -f 1 -d " ")
 if [[ $current_doc_hash != "$digest" ]]; then
-  printf "The current usage doc (%s) does not match what the parser was generated with (%s)\\n" \
+  printf "The current usage doc (%s) does not match what the parser was generated with (%s)\\n" \\
     "$current_doc_hash" "$digest" >&2
-  exit 1;
+  exit 1
 fi
 '''.format(docname=self.settings.script.doc.name, digest=self.digest)
     return self.fn_wrap(script)

@@ -10,4 +10,4 @@ class Function(object):
     return True
 
   def fn_wrap(self, script):
-    return '{name}() {{ {script}; }}'.format(name=self.name, script=script.strip())
+    return '{name}() {{\n{script}\n}}'.format(name=self.name, script=script.strip())

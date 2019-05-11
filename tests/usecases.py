@@ -25,6 +25,8 @@ class DocoptUsecaseTestFile(pytest.File):
       '--no-version': False,
       '--no-doc-check': True,
       '--no-teardown': True,
+      '--no-minimize': False,
+      '--line-length': '80',
       '--debug': False,
     }
     program_template = '''

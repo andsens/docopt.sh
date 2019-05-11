@@ -1,6 +1,7 @@
 from .doc_parser import parse_doc, Option, Argument, Command
 from .functions import helpers
 from .functions import tree
+from .bash_helper import minimize
 
 
 class ParserSettings(object):
@@ -34,6 +35,14 @@ class ParserSettings(object):
   @property
   def add_teardown(self):
     return not self.docopt_params['--no-teardown']
+
+  @property
+  def minimize(self):
+    return not self.docopt_params['--no-minimize']
+
+  @property
+  def max_line_length(self):
+    return int(self.docopt_params['--line-length'])
 
   @property
   def refresh_command(self):
@@ -89,4 +98,7 @@ class Parser(object):
       helpers.Main(self.settings, root_fn=root_fn),
     ]
     rendered_functions = [str(function) for function in all_functions if function.include()]
-    return '\n'.join(rendered_functions) + '\n'
+    parser_str = '\n'.join(rendered_functions)
+    if self.settings.minimize:
+      parser_str = minimize(parser_str, self.settings.max_line_length)
+    return parser_str + '\n'
