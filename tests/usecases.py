@@ -85,15 +85,14 @@ class DocoptUsecaseTest(pytest.Item):
         if out != '':
           result = {expr.match(line).group(2): line for line in out.split('\n')}
       else:
-        log.error(err)
         result = 'user-error'
     except Exception as e:
       log.exception(e)
 
     if self.expect != result:
-      if(len(process.stderr)):
+      if len(err) > 0:
         log.error(self.doc)
-        log.error(process.stderr.decode('utf-8'))
+        log.error(err)
       raise DocoptUsecaseTestException(self, result)
 
   def repr_failure(self, excinfo):
