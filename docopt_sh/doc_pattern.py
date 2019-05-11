@@ -3,6 +3,26 @@ from .bash import bash_variable_name
 from .bash.tree.node import Node
 
 
+class DocPattern(object):
+
+  def __init__(self, settings, doc):
+    self.settings = settings
+    self.doc = doc
+    self.root = parse_doc(doc)
+    sort_order = [Option, Argument, Command]
+    self.sorted_params = sorted(
+      set(self.root.flat(*sort_order)),
+      key=lambda p: '%d %s' % (sort_order.index(type(p)), p.name)
+    )
+    for i, p in enumerate(self.sorted_params):
+      p.index = i
+
+  @property
+  def ast_functions(self):
+    root_fn, node_functions, _ = self.root.get_node_functions(self.settings)
+    return root_fn, node_functions
+
+
 def parse_doc(doc):
   usage_sections = parse_section('usage:', doc)
   if len(usage_sections) == 0:

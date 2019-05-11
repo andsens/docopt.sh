@@ -1,5 +1,45 @@
-from .doc_parser import parse_doc, Option, Argument, Command
+from .doc_pattern import DocPattern
 from .bash import helpers, tree, minimize
+
+
+class Parser(object):
+
+  def __init__(self, script, params):
+    self.script = script
+    self.settings = ParserSettings(script, params)
+    self.doc_pattern = DocPattern(self.settings, script.doc.value)
+
+  @property
+  def patched_script(self):
+    return self.script.insert_parser(str(self), self.settings.refresh_command)
+
+  def __str__(self):
+    root_fn, ast_functions = self.doc_pattern.ast_functions
+    all_functions = ast_functions + [
+      tree.Command(self.settings),
+      tree.Either(self.settings),
+      tree.OneOrMore(self.settings),
+      tree.Optional(self.settings),
+      tree.Required(self.settings),
+      tree.Switch(self.settings),
+      tree.Value(self.settings),
+      helpers.ParseShorts(self.settings),
+      helpers.ParseLong(self.settings),
+      helpers.ParseArgv(self.settings),
+      helpers.Help(self.settings),
+      helpers.Error(self.settings),
+      helpers.Extras(self.settings),
+      helpers.Setup(self.settings, sorted_params=self.doc_pattern.sorted_params),
+      helpers.Teardown(self.settings),
+      helpers.Check(self.settings),
+      helpers.Defaults(self.settings, sorted_params=self.doc_pattern.sorted_params),
+      helpers.Main(self.settings, root_fn=root_fn),
+    ]
+    rendered_functions = [str(function) for function in all_functions if function.include()]
+    parser_str = '\n'.join(rendered_functions)
+    if self.settings.minimize:
+      parser_str = minimize(parser_str, self.settings.max_line_length)
+    return parser_str + '\n'
 
 
 class ParserSettings(object):
@@ -52,51 +92,3 @@ class ParserSettings(object):
     if self.docopt_params['SCRIPT'] is not None:
       command += ' ' + self.docopt_params['SCRIPT']
     return command
-
-
-class Parser(object):
-
-  def __init__(self, script, params):
-    self.script = script
-    self.settings = ParserSettings(script, params)
-    self.pattern = parse_doc(script.doc.value)
-
-  @property
-  def patched_script(self):
-    return self.script.insert_parser(str(self), self.settings.refresh_command)
-
-  def __str__(self):
-    sort_order = [Option, Argument, Command]
-    sorted_params = sorted(
-      set(self.pattern.flat(*sort_order)),
-      key=lambda p: '%d %s' % (sort_order.index(type(p)), p.name)
-    )
-    for i, p in enumerate(sorted_params):
-      p.index = i
-
-    root_fn, node_functions, _ = self.pattern.get_node_functions(self.settings)
-    all_functions = node_functions + [
-      tree.Command(self.settings),
-      tree.Either(self.settings),
-      tree.OneOrMore(self.settings),
-      tree.Optional(self.settings),
-      tree.Required(self.settings),
-      tree.Switch(self.settings),
-      tree.Value(self.settings),
-      helpers.ParseShorts(self.settings),
-      helpers.ParseLong(self.settings),
-      helpers.ParseArgv(self.settings),
-      helpers.Help(self.settings),
-      helpers.Error(self.settings),
-      helpers.Extras(self.settings),
-      helpers.Setup(self.settings, sorted_params=sorted_params),
-      helpers.Teardown(self.settings),
-      helpers.Check(self.settings),
-      helpers.Defaults(self.settings, sorted_params=sorted_params),
-      helpers.Main(self.settings, root_fn=root_fn),
-    ]
-    rendered_functions = [str(function) for function in all_functions if function.include()]
-    parser_str = '\n'.join(rendered_functions)
-    if self.settings.minimize:
-      parser_str = minimize(parser_str, self.settings.max_line_length)
-    return parser_str + '\n'
