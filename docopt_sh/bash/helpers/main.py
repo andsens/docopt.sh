@@ -16,15 +16,15 @@ class Main(Function):
       body += '''
 local doc_hash
 local digest="{digest}"
-doc_hash=$(printf "%s" "${docname}" | shasum -a 256 | cut -f 1 -d " ")
-if [[ $doc_hash != "$digest" ]]; then
+doc_hash=$(printf "%s" "${docname}" | shasum -a 256)
+if [[ ${{doc_hash:0:5}} != "$digest" ]]; then
   printf "The current usage doc (%s) does not match what the parser was generated with (%s)\\n" \\
     "$doc_hash" "$digest" >&2
   exit 70
 fi
 '''.format(
         docname=self.settings.script.doc.name,
-        digest=hashlib.sha256(self.settings.script.doc.value.encode('utf-8')).hexdigest()
+        digest=hashlib.sha256(self.settings.script.doc.value.encode('utf-8')).hexdigest()[0:5]
       )
     # variables setup
     option_nodes = [o for o in self.leaf_nodes if o.type is Option]
