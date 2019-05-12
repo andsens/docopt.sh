@@ -75,24 +75,41 @@ def remove_empty_lines(lines):
 
 
 def remove_newlines(lines, max_length):
-  no_separator = re.compile(r'; (then|do)$|else$|\{$')
-  comment = re.compile(r'^\s*#')
-  current = None
-  for line in lines:
-    if not current:
-      current = line
-      continue
-    if comment.match(line):
-      if current:
-        yield current
-      yield line
-      current = None
-      continue
-    separator = ' ' if no_separator.search(current) else '; '
-    if len(current + separator + line) <= max_length:
-      current += separator + line
+  def is_comment(line):
+    return re.match(r'^\s*#', line) is not None
+
+  def needs_separator(line):
+    return re.search(r'; (then|do)$|else$|\{$', line) is None
+
+  def has_continuation(line):
+    return re.search(r'\\\s*$', line) is not None
+
+  def remove_continuation(line):
+    return re.sub(r'\s*\\\s*$', '', line)
+
+  def combine(line1, line2):
+    if is_comment(line1) or is_comment(line2):
+      if not is_comment(line1):
+        return line1
+      if not is_comment(line2):
+        return line2
+      return None
+    if has_continuation(line1):
+      return remove_continuation(line1) + ' ' + line2
+    if needs_separator(line1):
+      return line1 + '; ' + line2
     else:
-      yield current
-      current = line
-  if current != '':
-    yield current
+      return line1 + ' ' + line2
+
+  previous = next(lines)
+  for line in lines:
+    combined = combine(previous, line)
+    if combined is None:
+      previous = next(lines, None)
+    elif len(combined) > max_length:
+      yield previous
+      previous = line
+    else:
+      previous = combined
+  if previous:
+    yield previous
