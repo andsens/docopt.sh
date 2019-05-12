@@ -1,24 +1,25 @@
-from .. import Function, bash_variable_name, bash_variable_value
+from .. import Function, bash_variable_value
 
 
 class Defaults(Function):
-  def __init__(self, settings, sorted_params):
+  def __init__(self, settings, leaf_nodes):
     super(Defaults, self).__init__(settings, 'defaults')
-    self.sorted_params = sorted_params
+    self.leaf_nodes = leaf_nodes
 
   def include(self):
-    return len(self.sorted_params) > 0
+    return len(self.leaf_nodes) > 0
 
   @property
   def body(self):
-    defaults = [
-      "[[ -z ${{{name}+x}} ]] && {name}={default}".format(
-        name=bash_variable_name(p.name, self.settings.name_prefix), default=bash_variable_value(p.value)
-      )
-      if type(p.value) is list else "{name}=${{{name}:-{default}}}".format(
-        name=bash_variable_name(p.name, self.settings.name_prefix), default=bash_variable_value(p.value)
-      )
-      for p in self.sorted_params
-    ]
+    defaults = []
+    for node in self.leaf_nodes:
+      if type(node.default_value) is list:
+        tpl = "[[ -z ${{{name}+x}} ]] && {name}={default}"
+      else:
+        tpl = "{name}=${{{name}:-{default}}}"
+      defaults.append(tpl.format(
+        name=node.variable_name,
+        default=bash_variable_value(node.default_value)
+      ))
     body = '\n'.join(defaults)
     return body

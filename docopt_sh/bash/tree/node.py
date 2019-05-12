@@ -40,8 +40,10 @@ class LeafNode(Node):
 
   def __init__(self, settings, pattern, idx):
     super(LeafNode, self).__init__(settings, pattern, idx)
+    self.default_value = pattern.value
+    self.pattern = pattern
     if self.type is Option:
-      self.helper_name = '_switch' if type(pattern.value) in [bool, int] else '_value'
+      self.helper_name = '_switch' if type(self.default_value) in [bool, int] else '_value'
       self.needle = idx
     elif self.type is Command:
       self.helper_name = '_command'
@@ -49,8 +51,8 @@ class LeafNode(Node):
     else:
       self.helper_name = '_value'
       self.needle = None
+    self.multiple = type(self.default_value) in [list, int]
     self.variable_name = bash_variable_name(pattern.name, settings.name_prefix)
-    self.multiple = type(pattern.value) in [list, int]
 
   @property
   def body(self):

@@ -7,28 +7,30 @@ class DocAst(object):
 
   def __init__(self, settings, doc):
     from .bash.tree.node import BranchNode, LeafNode
-    self.settings = settings
-    self.doc = doc
-    self.root, self.usage_match = parse_doc(doc)
-    self.nodes = OrderedDict([])
+    doc = doc
+    root, usage_match = parse_doc(doc)
+    node_map = OrderedDict([])
     param_sort_order = [Option, Argument, Command]
-    unique_params = list(OrderedDict.fromkeys(self.root.flat(*param_sort_order)))
+    unique_params = list(OrderedDict.fromkeys(root.flat(*param_sort_order)))
     sorted_params = sorted(unique_params, key=lambda p: param_sort_order.index(type(p)))
     for idx, param in enumerate(sorted_params):
-      self.nodes[param] = LeafNode(settings, param, idx)
-    for idx, pattern in enumerate(iter(self.root)):
+      node_map[param] = LeafNode(settings, param, idx)
+    for idx, pattern in enumerate(iter(root)):
       if isinstance(pattern, BranchPattern):
-        self.nodes[pattern] = BranchNode(settings, pattern, idx, self.nodes)
-    self.nodes[self.root].name = 'root'
+        node_map[pattern] = BranchNode(settings, pattern, idx, node_map)
+    node_map[root].name = 'root'
+
+    self.node_map = node_map
+    self.usage_match = usage_match
 
   @property
-  def functions(self):
-    return list(self.nodes.values())
+  def nodes(self):
+    return self.node_map.values()
 
   @property
-  def sorted_params(self):
-    params = [Option, Argument, Command]
-    return [key for key in self.nodes.keys() if type(key) in params]
+  def leaf_nodes(self):
+    from .bash.tree.node import LeafNode
+    return [node for node in self.nodes if type(node) is LeafNode]
 
   @property
   def usage_section(self):

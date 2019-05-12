@@ -1,12 +1,12 @@
 import hashlib
-from .. import Function, bash_variable_name, bash_ifs_value
+from .. import Function, bash_ifs_value
 from ...doc import Option
 
 
 class Main(Function):
-  def __init__(self, settings, sorted_params):
+  def __init__(self, settings, leaf_nodes):
     super(Main, self).__init__(settings, 'docopt')
-    self.sorted_params = sorted_params
+    self.leaf_nodes = leaf_nodes
 
   @property
   def body(self):
@@ -26,7 +26,7 @@ fi
         digest=hashlib.sha256(self.settings.script.doc.value.encode('utf-8')).hexdigest()
       )
     # variables setup
-    sorted_options = [o for o in self.sorted_params if type(o) is Option]
+    option_nodes = [o for o in self.leaf_nodes if o.type is Option]
     body += '''
 argv=("$@")
 options_short=({options_short})
@@ -42,10 +42,10 @@ for var in "${{param_names[@]}}"; do
   unset "$var"
 done
 '''.format(
-      options_short=' '.join([bash_ifs_value(o.short) for o in sorted_options]),
-      options_long=' '.join([bash_ifs_value(o.long) for o in sorted_options]),
-      options_argcount=' '.join([bash_ifs_value(o.argcount) for o in sorted_options]),
-      param_names=' '.join([bash_variable_name(p.name, self.settings.name_prefix) for p in self.sorted_params]),
+      options_short=' '.join([bash_ifs_value(o.pattern.short) for o in option_nodes]),
+      options_long=' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
+      options_argcount=' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
+      param_names=' '.join([node.variable_name for node in self.leaf_nodes]),
     )
     # parse argv
     body += '''
@@ -124,7 +124,7 @@ if ! root || [ ${#left[@]} -gt 0 ]; then
 fi
 '''
     # defaults
-    if len(self.sorted_params) > 0:
+    if len(self.leaf_nodes) > 0:
       body += '''
 defaults
 '''
