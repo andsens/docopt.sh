@@ -62,7 +62,7 @@ class ScriptLocation(object):
   def __init__(self, matches, offset):
     self.matches = matches
     self.match = next(matches, None)
-    self.offset = offset
+    self.offset = 0 if offset is None else offset
 
   def __len__(self):
     return self.end - self.start if self.present else 0
