@@ -8,19 +8,19 @@ class Command(Function):
   @property
   def body(self):
     # $1=variable name
-    # $2=should the value be incremented?
-    # $3=name of the command
+    # $2=name of the command
+    # $3=should the value be incremented?
     body = '''
 local i
 for i in "${!_lft[@]}"; do
   local l=${_lft[$i]}
   if [[ ${_do_pp[$l]} = 'a' ]]; then
-    if [[ ${_do_pv[$l]} != "$3" ]]; then
+    if [[ ${_do_pv[$l]} != "$2" ]]; then
       return 1
     fi
     _lft=("${_lft[@]:0:$i}" "${_lft[@]:((i+1))}")
     $_do_tm && return 0
-    if [[ $2 = true ]]; then
+    if [[ $3 = true ]]; then
       eval "(($1++))"
     else
       eval "$1=true"

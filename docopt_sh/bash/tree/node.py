@@ -46,16 +46,14 @@ class LeafNode(Node):
       self.needle = pattern.name
     else:
       self.helper_name = '_do_val'
-      self.needle = None
+      self.needle = 'a'
     self.multiple = type(self.default_value) in [list, int]
     self.variable_name = bash_variable_name(pattern.name, settings.name_prefix)
 
   @property
   def body(self):
-    body = ' '.join([
-      self.helper_name,
-      self.variable_name,
-      bash_ifs_value(self.multiple),
-      bash_ifs_value(self.needle)
-    ])
+    args = [self.variable_name, bash_ifs_value(self.needle)]
+    if self.multiple:
+      args.append(bash_ifs_value(self.multiple))
+    body = ' '.join([self.helper_name] + args)
     return body
