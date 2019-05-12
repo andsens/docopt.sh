@@ -51,7 +51,7 @@ done
     body += '''
 local arg
 while [[ ${#argv[@]} -gt 0 ]]; do
-  if [[ ${argv[0]} == "--" ]]; then
+  if [[ ${argv[0]} = "--" ]]; then
     for arg in "${argv[@]}"; do
       parsed_params+=('a')
       parsed_values+=("$arg")
@@ -59,7 +59,7 @@ while [[ ${#argv[@]} -gt 0 ]]; do
     break
   elif [[ ${argv[0]} = --* ]]; then
     parse_long
-  elif [[ ${argv[0]} == -* && ${argv[0]} != "-" ]]; then
+  elif [[ ${argv[0]} = -* && ${argv[0]} != "-" ]]; then
     parse_shorts
   else
 '''
@@ -88,8 +88,8 @@ done
     if self.settings.add_help:
       body += '''
 for idx in "${{parsed_params[@]}}"; do
-  [[ $idx == 'a' ]] && continue
-  if [[ ${{options_short[$idx]}} == "-h" || ${{options_long[$idx]}} == "--help" ]]; then
+  [[ $idx = 'a' ]] && continue
+  if [[ ${{options_short[$idx]}} = "-h" || ${{options_long[$idx]}} = "--help" ]]; then
     printf -- "{template}" "${docname}"
     exit 0
   fi
@@ -101,8 +101,8 @@ done
     if self.settings.add_version:
       body += '''
 for idx in "${parsed_params[@]}"; do
-  [[ $idx == 'a' ]] && continue
-  if [[ ${options_long[$idx]} == "--version" ]]; then
+  [[ $idx = 'a' ]] && continue
+  if [[ ${options_long[$idx]} = "--version" ]]; then
     printf "%s\\n" "$version"
     exit 0
   fi

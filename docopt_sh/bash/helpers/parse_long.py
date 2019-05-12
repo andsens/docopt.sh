@@ -14,7 +14,7 @@ local long=${token%%=*}
 local value=${token#*=}
 local argcount
 argv=("${argv[@]:1}")
-[[ $token == --* ]] || assert_fail
+[[ $token = --* ]] || assert_fail
 if [[ $token = *=* ]]; then
   eq='='
 else
@@ -25,18 +25,18 @@ local i=0
 local similar=()
 local similar_idx=false
 for o in "${options_long[@]}"; do
-  if [[ $o == "$long" ]]; then
+  if [[ $o = "$long" ]]; then
     similar+=("$long")
-    [[ $similar_idx == false ]] && similar_idx=$i
+    [[ $similar_idx = false ]] && similar_idx=$i
   fi
   ((i++))
 done
 if [[ ${#similar[@]} -eq 0 ]]; then
   i=0
   for o in "${options_long[@]}"; do
-    if [[ $o == $long* ]]; then
+    if [[ $o = $long* ]]; then
       similar+=("$long")
-      [[ $similar_idx == false ]] && similar_idx=$i
+      [[ $similar_idx = false ]] && similar_idx=$i
     fi
     ((i++))
   done
@@ -44,7 +44,7 @@ fi
 if [[ ${#similar[@]} -gt 1 ]]; then
   error "$(printf "%s is not a unique prefix: %s?" "$long" "${similar[*]}")"
 elif [[ ${#similar[@]} -lt 1 ]]; then
-  if [[ $eq == '=' ]]; then
+  if [[ $eq = '=' ]]; then
     argcount=1
   else
     argcount=0
@@ -61,14 +61,14 @@ else
     if [[ $value != false ]]; then
       error "$(printf "%s must not have an argument" "${options_long[$similar_idx]}")"
     fi
-  elif [[ $value == false ]]; then
-    if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
+  elif [[ $value = false ]]; then
+    if [[ ${#argv[@]} -eq 0 || ${argv[0]} = '--' ]]; then
       error "$(printf "%s requires argument" "$long")"
     fi
     value=${argv[0]}
     argv=("${argv[@]:1}")
   fi
-  if [[ $value == false ]]; then
+  if [[ $value = false ]]; then
     value=true
   fi
 fi

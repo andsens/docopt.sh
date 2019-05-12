@@ -14,10 +14,10 @@ class Switch(Function):
 local i
 for i in "${!left[@]}"; do
   local l=${left[$i]}
-  if [[ ${parsed_params[$l]} == "$3" ]]; then
+  if [[ ${parsed_params[$l]} = "$3" ]]; then
     left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
     $test_match && return 0
-    if [[ $2 == true ]]; then
+    if [[ $2 = true ]]; then
       eval "(($1++))"
     else
       eval "$1=true"

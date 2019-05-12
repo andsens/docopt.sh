@@ -12,7 +12,7 @@ class ParseShorts(Function):
 local token=${argv[0]}
 local value
 argv=("${argv[@]:1}")
-[[ $token == -* && $token != --* ]] || assert_fail
+[[ $token = -* && $token != --* ]] || assert_fail
 local remaining=${token#-}
 while [[ -n $remaining ]]; do
   local short="-${remaining:0:1}"
@@ -21,9 +21,9 @@ while [[ -n $remaining ]]; do
   local similar=()
   local similar_idx=false
   for o in "${options_short[@]}"; do
-    if [[ $o == "$short" ]]; then
+    if [[ $o = "$short" ]]; then
       similar+=("$short")
-      [[ $similar_idx == false ]] && similar_idx=$i
+      [[ $similar_idx = false ]] && similar_idx=$i
     fi
     ((i++))
   done
@@ -38,8 +38,8 @@ while [[ -n $remaining ]]; do
   else
     value=false
     if [[ ${options_argcount[$similar_idx]} -ne 0 ]]; then
-      if [[ $remaining == '' ]]; then
-        if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
+      if [[ $remaining = '' ]]; then
+        if [[ ${#argv[@]} -eq 0 || ${argv[0]} = '--' ]]; then
           error "$(printf "%s requires argument" "$short")"
         fi
         value=${argv[0]}
@@ -49,7 +49,7 @@ while [[ -n $remaining ]]; do
         remaining=''
       fi
     fi
-    if [[ $value == false ]]; then
+    if [[ $value = false ]]; then
       value=true
     fi
   fi
