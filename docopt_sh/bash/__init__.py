@@ -10,7 +10,7 @@ class Function(object):
 
   def fn_wrap(self, body):
     indented = '\n'.join(['  ' + line for line in body.strip().split('\n')])
-    return '{name}() {{\n{body}\n}}'.format(name=self.name, body=indented)
+    return '{name}(){{\n{body}\n}}'.format(name=self.name, body=indented)
 
   def __str__(self):
     return self.fn_wrap(self.body)
