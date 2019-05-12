@@ -1,3 +1,4 @@
+import os.path
 from .doc import DocAst
 from .bash import helpers, tree, minimize
 
@@ -87,5 +88,5 @@ class ParserSettings(object):
     if self.docopt_params['--prefix'] != '':
       command += ' --prefix=' + self.docopt_params['--prefix']
     if self.docopt_params['SCRIPT'] is not None:
-      command += ' ' + self.docopt_params['SCRIPT']
+      command += ' ' + os.path.basename(self.docopt_params['SCRIPT'])
     return command
