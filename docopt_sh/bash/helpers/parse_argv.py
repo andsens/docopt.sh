@@ -9,6 +9,7 @@ class ParseArgv(Function):
   @property
   def body(self):
     body = '''
+local arg
 while [[ ${#argv[@]} -gt 0 ]]; do
   if [[ ${argv[0]} == "--" ]]; then
     for arg in "${argv[@]}"; do

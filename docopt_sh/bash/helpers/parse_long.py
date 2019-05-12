@@ -60,14 +60,12 @@ else
     if [[ $value != false ]]; then
       error "$(printf "%s must not have an argument" "${options_long[$similar_idx]}")"
     fi
-  else
-    if [[ $value == false ]]; then
-      if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
-        error "$(printf "%s requires argument" "$long")"
-      fi
-      value=${argv[0]}
-      argv=("${argv[@]:1}")
+  elif [[ $value == false ]]; then
+    if [[ ${#argv[@]} -eq 0 || ${argv[0]} == '--' ]]; then
+      error "$(printf "%s requires argument" "$long")"
     fi
+    value=${argv[0]}
+    argv=("${argv[@]:1}")
   fi
   if [[ $value == false ]]; then
     value=true

@@ -11,7 +11,7 @@ class Extras(Function):
 
   @property
   def body(self):
-    body = ''
+    body = 'local idx'
     if self.settings.add_help:
       body += '''
 for idx in "${parsed_params[@]}"; do

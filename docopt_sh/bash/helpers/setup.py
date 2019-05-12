@@ -21,7 +21,10 @@ parsed_params=()
 parsed_values=()
 left=()
 test_match=false
-for var in "${{param_names[@]}}"; do unset "$var"; done
+local var
+for var in "${{param_names[@]}}"; do
+  unset "$var"
+done
 '''.format(
       options_short=' '.join([bash_ifs_value(o.short) for o in sorted_options]),
       options_long=' '.join([bash_ifs_value(o.long) for o in sorted_options]),
