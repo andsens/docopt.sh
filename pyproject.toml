@@ -1,0 +1,30 @@
+[build-system]
+requires = ["flit"]
+build-backend = "flit.buildapi"
+
+[tool.flit.metadata]
+dist-name = "docopt-sh"
+module = "docopt_sh"
+author = "Anders Ingemann"
+author-email = "anders@ingemann.de"
+home-page = "https://github.com/andsens/docopt.sh"
+description-file = "README.rst"
+classifiers = [
+  "Topic :: Utilities",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.5",
+  "Programming Language :: Python :: 3.6",
+  "License :: OSI Approved :: MIT License",
+]
+requires-python = ">=3.5"
+requires = ["docopt"]
+
+[tool.flit.scripts]
+"docopt.sh" = "docopt_sh.__main__:main"
+
+[tool.flit.metadata.requires-extra]
+test = [
+  "pytest",
+  "pytest-xdist",
+  "pytest-pep8",
+]
