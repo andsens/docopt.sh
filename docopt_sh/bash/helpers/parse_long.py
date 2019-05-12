@@ -9,9 +9,10 @@ class ParseLong(Function):
   @property
   def body(self):
     body = '''
-token=${argv[0]}
-long=${token%%=*}
-value=${token#*=}
+local token=${argv[0]}
+local long=${token%%=*}
+local value=${token#*=}
+local argcount
 argv=("${argv[@]:1}")
 [[ $token == --* ]] || assert_fail
 if [[ $token = *=* ]]; then
@@ -49,7 +50,7 @@ elif [[ ${#similar[@]} -lt 1 ]]; then
     argcount=0
   fi
   similar_idx=${#options_short[@]}
-  if [[ argcount -eq 0 ]]; then
+  if [[ $argcount -eq 0 ]]; then
     value=true
   fi
   options_short+=('')

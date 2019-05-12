@@ -9,12 +9,13 @@ class ParseShorts(Function):
   @property
   def body(self):
     body = '''
-token=${argv[0]}
+local token=${argv[0]}
+local value
 argv=("${argv[@]:1}")
 [[ $token == -* && $token != --* ]] || assert_fail
 local remaining=${token#-}
 while [[ -n $remaining ]]; do
-  short="-${remaining:0:1}"
+  local short="-${remaining:0:1}"
   remaining="${remaining:1}"
   local i=0
   local similar=()
