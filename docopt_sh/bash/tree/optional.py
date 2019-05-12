@@ -8,9 +8,9 @@ class Optional(Function):
   @property
   def body(self):
     body = '''
-local pattern
-for pattern in "$@"; do
-  $pattern
+local p
+for p in "$@"; do
+  $p
 done
 return 0
 '''
