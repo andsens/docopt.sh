@@ -24,15 +24,9 @@ class Parser(object):
       tree.Value(self.settings),
       helpers.ParseShorts(self.settings),
       helpers.ParseLong(self.settings),
-      helpers.ParseArgv(self.settings),
-      helpers.Help(self.settings),
       helpers.Error(self.settings, usage_section=self.doc_ast.usage_section),
-      helpers.Extras(self.settings),
-      helpers.Setup(self.settings, sorted_params=self.doc_ast.sorted_params),
-      helpers.Teardown(self.settings),
-      helpers.Check(self.settings),
+      helpers.Main(self.settings, sorted_params=self.doc_ast.sorted_params),
       helpers.Defaults(self.settings, sorted_params=self.doc_ast.sorted_params),
-      helpers.Main(self.settings),
     ]
     parser_str = '\n'.join([str(function) for function in all_functions if function.include()])
     if self.settings.minimize:
