@@ -68,6 +68,8 @@ def get_installed_bash_versions():
 
 def get_bash_version(version):
   versions_path = 'tests/bash-versions'
+  if not os.path.exists(versions_path):
+    os.mkdir(versions_path)
   version_path = os.path.join(versions_path, 'bash-%s' % version)
   executable_path = os.path.join(version_path, 'bash')
   if not os.path.exists(executable_path):
