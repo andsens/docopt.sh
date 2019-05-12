@@ -132,11 +132,9 @@ defaults
     # teardown
     if self.settings.add_teardown:
       body += '''
-unset argv options_short options_long options_argcount param_names \\
-parsed_params parsed_values left test_match
-unset -f either oneormore optional required _command _switch _value \\
-check defaults extras help error docopt \\
-parse_argv parse_long parse_shorts setup teardown
+unset argv options_short options_long options_argcount param_names left \\
+parsed_params parsed_values test_match; unset -f either oneormore optional \\
+required _command _switch _value defaults error docopt parse_long parse_shorts
 '''
 
     body += '''
