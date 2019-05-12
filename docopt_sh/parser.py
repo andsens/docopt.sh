@@ -14,7 +14,7 @@ class Parser(object):
     return self.script.insert_parser(str(self), self.settings.refresh_command)
 
   def __str__(self):
-    all_functions = list(self.doc_ast.nodes) + [
+    all_functions = [node for node in self.doc_ast.nodes if node is not self.doc_ast.root_node] + [
       tree.Command(self.settings),
       tree.Either(self.settings),
       tree.OneOrMore(self.settings),
@@ -25,7 +25,7 @@ class Parser(object):
       helpers.ParseShorts(self.settings),
       helpers.ParseLong(self.settings),
       helpers.Error(self.settings, usage_section=self.doc_ast.usage_section),
-      helpers.Main(self.settings, leaf_nodes=self.doc_ast.leaf_nodes),
+      helpers.Main(self.settings, root_node=self.doc_ast.root_node, leaf_nodes=self.doc_ast.leaf_nodes),
       helpers.Defaults(self.settings, leaf_nodes=self.doc_ast.leaf_nodes),
     ]
     parser_str = '\n'.join([str(function) for function in all_functions if function.include()])

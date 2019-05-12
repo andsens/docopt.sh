@@ -4,8 +4,9 @@ from ...doc import Option
 
 
 class Main(Function):
-  def __init__(self, settings, leaf_nodes):
+  def __init__(self, settings, root_node, leaf_nodes):
     super(Main, self).__init__(settings, 'docopt')
+    self.root_node = root_node
     self.leaf_nodes = leaf_nodes
 
   @property
@@ -119,10 +120,10 @@ done
 '''
     # run the parser
     body += '''
-if ! root || [ ${#_lft[@]} -gt 0 ]; then
+if ! {root} || [ ${{#_lft[@]}} -gt 0 ]; then
   _do_err
 fi
-'''
+'''.format(root=self.root_node.body)
     # defaults
     if len(self.leaf_nodes) > 0:
       body += '''
