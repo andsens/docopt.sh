@@ -3,18 +3,14 @@ import sys
 import re
 import os
 from docopt import docopt, DocoptExit
+from . import __doc__ as pkg_doc
 from .script import Script, DocoptScriptValidationError
 from .parser import Parser
 import logging
 
 log = logging.getLogger(__name__)
 
-__doc__ = """
-docopt.sh
-  Bash argument parser generator.
-  This program looks for a "doc" variable in SCRIPT
-  and appends a matching parser to it.
-
+__doc__ = pkg_doc + """
 Usage:
   docopt.sh [options] [SCRIPT]
 
