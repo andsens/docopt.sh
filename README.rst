@@ -2,4 +2,4 @@
 
 A bash argument parser generator
 
-Early alpha, do not use
+Somewhat beta, do not use for production
