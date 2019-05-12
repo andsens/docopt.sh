@@ -4,7 +4,6 @@ Has usage to ensure parser is up to date
 Replace double == with single =
 Add version of docopt.sh to hash & inform user whether update made any changes
 Account for presence of version variable in hash
-Check for version up until docopt invocation (if there is any, otherwise just the whole script)
 Prefix names with docopt
 Check for docopt_* function/variable name collision, test it
 Convert test_match into parameter
