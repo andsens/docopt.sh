@@ -15,7 +15,8 @@ class Parser(object):
 
   def __str__(self):
     nodes = [node for node in self.doc_ast.nodes if node is not self.doc_ast.root_node]
-    ast_helper_fns = [
+    ast_helper_names = set([n.helper_name for n in nodes])
+    ast_helper_fns = list(filter(lambda h: h.name in ast_helper_names, [
       tree.Command(self.settings),
       tree.Either(self.settings),
       tree.OneOrMore(self.settings),
@@ -23,7 +24,7 @@ class Parser(object):
       tree.Required(self.settings),
       tree.Switch(self.settings),
       tree.Value(self.settings),
-    ]
+    ]))
     helper_fns = [
       helpers.ParseShorts(self.settings),
       helpers.ParseLong(self.settings),
