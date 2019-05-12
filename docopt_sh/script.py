@@ -18,17 +18,17 @@ class Script(object):
 
   def validate_script_locations(self):
     if not self.doc.present:
-      raise DocoptScriptValidationError('Variable containing usage doc not found.', self.doc)
+      raise DocoptScriptValidationError('Variable containing usage doc not found.', self.path)
     if self.doc.count > 1:
-      raise DocoptScriptValidationError('More than one variable contain usage doc found.', self.doc)
+      raise DocoptScriptValidationError('More than one variable contain usage doc found.', self.path)
     if self.parser.start_guard.count > 1:
-      raise DocoptScriptValidationError('Multiple docopt parser start guards found')
+      raise DocoptScriptValidationError('Multiple docopt parser start guards found', self.path)
     if self.parser.end_guard.count > 1:
-      raise DocoptScriptValidationError('Multiple docopt parser end guards found')
+      raise DocoptScriptValidationError('Multiple docopt parser end guards found', self.path)
     if self.parser.start_guard.present and not self.parser.end_guard.present:
-        raise DocoptScriptValidationError('Parser begin guard found, but no end guard detected')
+        raise DocoptScriptValidationError('Parser begin guard found, but no end guard detected', self.path)
     if self.parser.end_guard.present and not self.parser.start_guard.present:
-      raise DocoptScriptValidationError('Parser end guard found, but no begin guard detected')
+      raise DocoptScriptValidationError('Parser end guard found, but no begin guard detected', self.path)
     if self.invocation.count > 1:
       log.warning('Multiple invocations of docopt found, check your script to make sure this is correct.')
     if not self.invocation.present:
@@ -173,6 +173,12 @@ class Version(ScriptLocation):
 
 class DocoptScriptValidationError(Exception):
 
-  def __init__(self, message, script_location=None):
+  def __init__(self, message, path=None):
     super(DocoptScriptValidationError, self).__init__(message)
-    self.script_location = script_location
+    self.message = message
+    self.path = path
+
+  def __str__(self):
+    if self.path:
+      return 'Error in %s: %s' % (self.path, self.message)
+    return self.message

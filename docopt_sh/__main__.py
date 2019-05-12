@@ -2,9 +2,12 @@
 import sys
 import re
 import os
-import docopt
-from .script import Script
+from docopt import docopt, DocoptExit
+from .script import Script, DocoptScriptValidationError
 from .parser import Parser
+import logging
+
+log = logging.getLogger(__name__)
 
 __doc__ = """
 docopt.sh
@@ -42,25 +45,31 @@ Notes:
 
 
 def docopt_sh(params):
-  if params['SCRIPT'] is None:
-    script = Script(sys.stdin.read())
-  else:
-    with open(params['SCRIPT'], 'r') as h:
-      script = Script(h.read(), params['SCRIPT'])
-  parser = Parser(script, params)
-  if params['--only-parser']:
-    sys.stdout.write(str(parser))
-  else:
-    patched_script = str(parser.patched_script)
+  try:
     if params['SCRIPT'] is None:
-      sys.stdout.write(patched_script)
+      if sys.stdin.isatty():
+        raise DocoptExit('Not reading from stdin when it is a tty')
+      script = Script(sys.stdin.read())
     else:
-      with open(params['SCRIPT'], 'w') as h:
-        h.write(patched_script)
+      with open(params['SCRIPT'], 'r') as h:
+        script = Script(h.read(), params['SCRIPT'])
+    parser = Parser(script, params)
+    if params['--only-parser']:
+      sys.stdout.write(str(parser))
+    else:
+      patched_script = str(parser.patched_script)
+      if params['SCRIPT'] is None:
+        sys.stdout.write(patched_script)
+      else:
+        with open(params['SCRIPT'], 'w') as h:
+          h.write(patched_script)
+  except DocoptScriptValidationError as e:
+    print(str(e))
+    sys.exit(1)
 
 
 def main():
-  params = docopt.docopt(__doc__)
+  params = docopt(__doc__)
   docopt_sh(params)
 
 if __name__ == '__main__':
