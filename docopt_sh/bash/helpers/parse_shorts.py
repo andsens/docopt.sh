@@ -4,7 +4,7 @@ from .. import Function
 class ParseShorts(Function):
 
   def __init__(self, settings):
-    super(ParseShorts, self).__init__(settings, 'parse_shorts')
+    super(ParseShorts, self).__init__(settings, '_do_shorts')
 
   @property
   def body(self):
@@ -28,7 +28,7 @@ while [[ -n $remaining ]]; do
     ((i++))
   done
   if [[ ${#similar[@]} -gt 1 ]]; then
-    error "$(printf "%s is specified ambiguously %d times" "$short" "${#similar[@]}")"
+    _do_err "$(printf "%s is specified ambiguously %d times" "$short" "${#similar[@]}")"
   elif [[ ${#similar[@]} -lt 1 ]]; then
     similar_idx=${#_do_sh[@]}
     value=true
@@ -40,7 +40,7 @@ while [[ -n $remaining ]]; do
     if [[ ${_do_ac[$similar_idx]} -ne 0 ]]; then
       if [[ $remaining = '' ]]; then
         if [[ ${#_do_av[@]} -eq 0 || ${_do_av[0]} = '--' ]]; then
-          error "$(printf "%s requires argument" "$short")"
+          _do_err "$(printf "%s requires argument" "$short")"
         fi
         value=${_do_av[0]}
         _do_av=("${_do_av[@]:1}")

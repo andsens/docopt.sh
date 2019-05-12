@@ -3,7 +3,7 @@ from .. import Function
 
 class OneOrMore(Function):
   def __init__(self, settings):
-    super(OneOrMore, self).__init__(settings, 'oneormore')
+    super(OneOrMore, self).__init__(settings, '_do_oom')
 
   @property
   def body(self):

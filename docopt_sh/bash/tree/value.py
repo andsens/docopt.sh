@@ -3,7 +3,7 @@ from .. import Function
 
 class Value(Function):
   def __init__(self, settings):
-    super(Value, self).__init__(settings, '_value')
+    super(Value, self).__init__(settings, '_do_val')
 
   @property
   def body(self):

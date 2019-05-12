@@ -58,9 +58,9 @@ while [[ ${#_do_av[@]} -gt 0 ]]; do
     done
     break
   elif [[ ${_do_av[0]} = --* ]]; then
-    parse_long
+    _do_long
   elif [[ ${_do_av[0]} = -* && ${_do_av[0]} != "-" ]]; then
-    parse_shorts
+    _do_shorts
   else
 '''
     if self.settings.options_first:
@@ -120,21 +120,21 @@ done
     # run the parser
     body += '''
 if ! root || [ ${#_lft[@]} -gt 0 ]; then
-  error
+  _do_err
 fi
 '''
     # defaults
     if len(self.leaf_nodes) > 0:
       body += '''
-defaults
+_do_def
 '''
 
     # teardown
     if self.settings.add_teardown:
       body += '''
-unset _do_av _do_sh _do_lo _do_ac _do_pn _lft \\
-_do_pp _do_pv _do_tm; unset -f either oneormore optional \\
-required _command _switch _value defaults error docopt parse_long parse_shorts
+unset _do_av _do_sh _do_lo _do_ac _do_pn _lft _do_pp _do_pv _do_tm
+unset -f _do_eith _do_oom _do_opt _do_req _do_cmd _do_sw _do_val _do_def \\
+_do_err _do_long _do_shorts docopt
 '''
 
     body += '''

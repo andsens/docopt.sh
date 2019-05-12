@@ -3,7 +3,7 @@ from .. import Function
 
 class Error(Function):
   def __init__(self, settings, usage_section):
-    super(Error, self).__init__(settings, 'error')
+    super(Error, self).__init__(settings, '_do_err')
     self.usage_start, self.usage_end = usage_section
     if self.settings.script.doc.value.endswith('\n'):
       self.usage_end -= 1

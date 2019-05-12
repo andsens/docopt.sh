@@ -3,7 +3,7 @@ from .. import Function, bash_variable_value
 
 class Defaults(Function):
   def __init__(self, settings, leaf_nodes):
-    super(Defaults, self).__init__(settings, 'defaults')
+    super(Defaults, self).__init__(settings, '_do_def')
     self.leaf_nodes = leaf_nodes
 
   def include(self):

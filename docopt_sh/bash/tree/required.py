@@ -3,7 +3,7 @@ from .. import Function
 
 class Required(Function):
   def __init__(self, settings):
-    super(Required, self).__init__(settings, 'required')
+    super(Required, self).__init__(settings, '_do_req')
 
   @property
   def body(self):

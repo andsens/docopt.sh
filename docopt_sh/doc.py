@@ -15,9 +15,10 @@ class DocAst(object):
     sorted_params = sorted(unique_params, key=lambda p: param_sort_order.index(type(p)))
     for idx, param in enumerate(sorted_params):
       node_map[param] = LeafNode(settings, param, idx)
+    offset = len(node_map)
     for idx, pattern in enumerate(iter(root)):
       if isinstance(pattern, BranchPattern):
-        node_map[pattern] = BranchNode(settings, pattern, idx, node_map)
+        node_map[pattern] = BranchNode(settings, pattern, offset + idx, node_map)
     node_map[root].name = 'root'
 
     self.node_map = node_map

@@ -4,7 +4,7 @@ from .. import Function
 class ParseLong(Function):
 
   def __init__(self, settings):
-    super(ParseLong, self).__init__(settings, 'parse_long')
+    super(ParseLong, self).__init__(settings, '_do_long')
 
   @property
   def body(self):
@@ -42,7 +42,7 @@ if [[ ${#similar[@]} -eq 0 ]]; then
   done
 fi
 if [[ ${#similar[@]} -gt 1 ]]; then
-  error "$(printf "%s is not a unique prefix: %s?" "$long" "${similar[*]}")"
+  _do_err "$(printf "%s is not a unique prefix: %s?" "$long" "${similar[*]}")"
 elif [[ ${#similar[@]} -lt 1 ]]; then
   if [[ $eq = '=' ]]; then
     argcount=1
@@ -59,11 +59,11 @@ elif [[ ${#similar[@]} -lt 1 ]]; then
 else
   if [[ ${_do_ac[$similar_idx]} -eq 0 ]]; then
     if [[ $value != false ]]; then
-      error "$(printf "%s must not have an argument" "${_do_lo[$similar_idx]}")"
+      _do_err "$(printf "%s must not have an argument" "${_do_lo[$similar_idx]}")"
     fi
   elif [[ $value = false ]]; then
     if [[ ${#_do_av[@]} -eq 0 || ${_do_av[0]} = '--' ]]; then
-      error "$(printf "%s requires argument" "$long")"
+      _do_err "$(printf "%s requires argument" "$long")"
     fi
     value=${_do_av[0]}
     _do_av=("${_do_av[@]:1}")

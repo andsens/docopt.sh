@@ -3,7 +3,7 @@ from .. import Function
 
 class Either(Function):
   def __init__(self, settings):
-    super(Either, self).__init__(settings, 'either')
+    super(Either, self).__init__(settings, '_do_eith')
 
   @property
   def body(self):

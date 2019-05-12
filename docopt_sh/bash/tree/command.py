@@ -3,7 +3,7 @@ from .. import Function
 
 class Command(Function):
   def __init__(self, settings):
-    super(Command, self).__init__(settings, '_command')
+    super(Command, self).__init__(settings, '_do_cmd')
 
   @property
   def body(self):

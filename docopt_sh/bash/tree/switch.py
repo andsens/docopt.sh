@@ -3,7 +3,7 @@ from .. import Function
 
 class Switch(Function):
   def __init__(self, settings):
-    super(Switch, self).__init__(settings, '_switch')
+    super(Switch, self).__init__(settings, '_do_sw')
 
   @property
   def body(self):
