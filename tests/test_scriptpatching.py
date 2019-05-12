@@ -61,7 +61,7 @@ def test_options_first_fail(monkeypatch, capsys, bash):
   with patched_script(monkeypatch, capsys, 'naval_fate.sh', params=['--options-first'], bash=bash) as run:
     code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
     assert code == 1
-    assert out[:11] == 'Naval Fate.'
+    assert out[:6] == 'Usage:'
 
 
 def test_teardown(monkeypatch, capsys, bash):

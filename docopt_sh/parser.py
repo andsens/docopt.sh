@@ -26,7 +26,7 @@ class Parser(object):
       helpers.ParseLong(self.settings),
       helpers.ParseArgv(self.settings),
       helpers.Help(self.settings),
-      helpers.Error(self.settings),
+      helpers.Error(self.settings, usage_section=self.doc_ast.usage_section),
       helpers.Extras(self.settings),
       helpers.Setup(self.settings, sorted_params=self.doc_ast.sorted_params),
       helpers.Teardown(self.settings),

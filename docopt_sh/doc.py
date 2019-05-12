@@ -9,7 +9,7 @@ class DocAst(object):
     from .bash.tree.node import BranchNode, LeafNode
     self.settings = settings
     self.doc = doc
-    self.root = parse_doc(doc)
+    self.root, self.usage_match = parse_doc(doc)
     self.nodes = OrderedDict([])
     param_sort_order = [Option, Argument, Command]
     unique_params = list(OrderedDict.fromkeys(self.root.flat(*param_sort_order)))
@@ -30,6 +30,10 @@ class DocAst(object):
     params = [Option, Argument, Command]
     return [key for key in self.nodes.keys() if type(key) in params]
 
+  @property
+  def usage_section(self):
+    return self.usage_match.start(0), self.usage_match.end(0)
+
 
 def parse_doc(doc):
   usage_sections = parse_section('usage:', doc)
@@ -37,7 +41,7 @@ def parse_doc(doc):
     raise DocoptLanguageError('"usage:" (case-insensitive) not found.')
   if len(usage_sections) > 1:
     raise DocoptLanguageError('More than one "usage:" (case-insensitive).')
-  usage = usage_sections[0]
+  usage, usage_match = usage_sections[0]
 
   options = parse_defaults(doc)
   pattern = parse_pattern(formal_usage(usage), options)
@@ -46,7 +50,7 @@ def parse_doc(doc):
     doc_options = parse_defaults(doc)
     options_shortcut.children = list(set(doc_options) - pattern_options)
 
-  return pattern.fix()
+  return pattern.fix(), usage_match
 
 
 class DocoptLanguageError(Exception):
@@ -359,7 +363,7 @@ def parse_atom(tokens, options):
 
 def parse_defaults(doc):
   defaults = []
-  for s in parse_section('options:', doc):
+  for s, _ in parse_section('options:', doc):
     # FIXME corner case "bla: options: --foo"
     _, _, s = s.partition(':')  # get rid of "options:"
     split = re.split('\n[ \t]*(-\S+?)', '\n' + s)[1:]
@@ -371,7 +375,7 @@ def parse_defaults(doc):
 
 def parse_section(name, source):
   pattern = re.compile('^([^\n]*' + name + '[^\n]*\n?(?:[ \t].*?(?:\n|$))*)', re.IGNORECASE | re.MULTILINE)
-  return [s.strip() for s in pattern.findall(source)]
+  return [(m.group(0).strip(), m) for m in pattern.finditer(source)]
 
 
 def formal_usage(section):

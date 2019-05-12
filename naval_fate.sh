@@ -120,9 +120,9 @@ parsed_params+=('a'); parsed_values+=("$arg"); done; return
 elif [[ ${argv[0]} = --* ]]; then parse_long
 elif [[ ${argv[0]} == -* && ${argv[0]} != "-" ]]; then parse_shorts; else
 parsed_params+=('a'); parsed_values+=("${argv[0]}"); argv=("${argv[@]:1}"); fi
-done; }; help() { printf -- "%s" "$doc"; }; error() { printf "%s\n" "$1"
-exit 1; }; extras() { for idx in "${parsed_params[@]}"; do
-[[ $idx == 'a' ]] && continue
+done; }; help() { printf -- "%s" "$doc"; }; error() {
+[[ -n $1 ]] && printf "%s\n" "$1"; printf "%s\n" "${doc:13:222}"; exit 1; }
+extras() { for idx in "${parsed_params[@]}"; do [[ $idx == 'a' ]] && continue
 if [[ ${options_short[$idx]} == "-h" || ${options_long[$idx]} == "--help" ]]; then
 help; exit 0; fi; done; for idx in "${parsed_params[@]}"; do
 [[ $idx == 'a' ]] && continue
@@ -152,8 +152,8 @@ shoot=${shoot:-false}; mine=${mine:-false}; set=${set:-false}
 remove=${remove:-false}; }; docopt() { type check &>/dev/null && check
 setup "$@"; parse_argv; extras; local i=0
 while [[ $i -lt ${#parsed_params[@]} ]]; do left+=("$i"); ((i++)); done
-if ! root; then help; exit 1; fi; type defaults &>/dev/null && defaults
-if [[ ${#left[@]} -gt 0 ]]; then help; exit 1; fi
+if ! root; then error; fi; type defaults &>/dev/null && defaults
+if [[ ${#left[@]} -gt 0 ]]; then error; fi
 type teardown &>/dev/null && teardown; return 0; }
 # docopt parser above, refresh this parser with `docopt.sh naval_fate.sh`
 

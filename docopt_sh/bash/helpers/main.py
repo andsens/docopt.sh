@@ -14,13 +14,11 @@ extras
 local i=0
 while [[ $i -lt ${#parsed_params[@]} ]]; do left+=("$i"); ((i++)); done
 if ! root; then
-  help
-  exit 1
+  error
 fi
 type defaults &>/dev/null && defaults
 if [[ ${#left[@]} -gt 0 ]]; then
-  help
-  exit 1
+  error
 fi
 type teardown &>/dev/null && teardown
 return 0
