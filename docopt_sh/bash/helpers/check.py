@@ -11,9 +11,10 @@ class Check(Function):
   def include(self):
     return self.settings.add_doc_check
 
-  def __str__(self):
+  @property
+  def body(self):
     # Exit code 70: internal software error (sysexits.h)
-    script = '''
+    body = '''
 local current_doc_hash
 local digest="{digest}"
 current_doc_hash=$(printf "%s" "${docname}" | shasum -a 256 | cut -f 1 -d " ")
@@ -23,4 +24,4 @@ if [[ $current_doc_hash != "$digest" ]]; then
   exit 70
 fi
 '''.format(docname=self.settings.script.doc.name, digest=self.digest)
-    return self.fn_wrap(script)
+    return body

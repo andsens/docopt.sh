@@ -6,8 +6,9 @@ class ParseLong(Function):
   def __init__(self, settings):
     super(ParseLong, self).__init__(settings, 'parse_long')
 
-  def __str__(self):
-    script = '''
+  @property
+  def body(self):
+    body = '''
 token=${argv[0]}
 long=${token%%=*}
 value=${token#*=}
@@ -75,4 +76,4 @@ fi
 parsed_params+=("$similar_idx")
 parsed_values+=("$value")
 '''
-    return self.fn_wrap(script)
+    return body

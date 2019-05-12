@@ -9,10 +9,11 @@ class Extras(Function):
   def include(self):
     return self.settings.add_help or self.settings.add_version
 
-  def __str__(self):
-    script = ''
+  @property
+  def body(self):
+    body = ''
     if self.settings.add_help:
-      script += '''
+      body += '''
 for idx in "${parsed_params[@]}"; do
   [[ $idx == 'a' ]] && continue
   if [[ ${options_short[$idx]} == "-h" || ${options_long[$idx]} == "--help" ]]; then
@@ -22,7 +23,7 @@ for idx in "${parsed_params[@]}"; do
 done
 '''
     if self.settings.add_version:
-      script += '''
+      body += '''
 for idx in "${parsed_params[@]}"; do
   [[ $idx == 'a' ]] && continue
   if [[ ${options_long[$idx]} == "--version" ]]; then
@@ -31,4 +32,4 @@ for idx in "${parsed_params[@]}"; do
   fi
 done
 '''
-    return self.fn_wrap(script)
+    return body

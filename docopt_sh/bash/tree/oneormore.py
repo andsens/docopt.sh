@@ -5,8 +5,9 @@ class OneOrMore(Function):
   def __init__(self, settings):
     super(OneOrMore, self).__init__(settings, 'oneormore')
 
-  def __str__(self):
-    script = '''
+  @property
+  def body(self):
+    body = '''
 local times=0
 # shellcheck disable=SC2154
 local previous_left=${#left[@]}
@@ -25,4 +26,4 @@ if [[ $times -ge 1 ]]; then
 fi
 return 1
 '''
-    return self.fn_wrap(script)
+    return body

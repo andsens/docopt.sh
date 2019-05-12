@@ -5,11 +5,12 @@ class Switch(Function):
   def __init__(self, settings):
     super(Switch, self).__init__(settings, '_switch')
 
-  def __str__(self):
+  @property
+  def body(self):
     # $1=variable name
     # $2=should the value be incremented?
     # $3=option idx to find in the options list
-    script = '''
+    body = '''
 local i
 for i in "${!left[@]}"; do
   local l=${left[$i]}
@@ -26,4 +27,4 @@ for i in "${!left[@]}"; do
 done
 return 1
 '''
-    return self.fn_wrap(script)
+    return body

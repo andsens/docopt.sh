@@ -5,8 +5,9 @@ class Required(Function):
   def __init__(self, settings):
     super(Required, self).__init__(settings, 'required')
 
-  def __str__(self):
-    script = '''
+  @property
+  def body(self):
+    body = '''
 local initial_left=("${left[@]}")
 local pattern
 local unset_test_match=true
@@ -26,4 +27,4 @@ if $unset_test_match; then
 fi
 return 0
 '''
-    return self.fn_wrap(script)
+    return body

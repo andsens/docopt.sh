@@ -5,11 +5,12 @@ class Value(Function):
   def __init__(self, settings):
     super(Value, self).__init__(settings, '_value')
 
-  def __str__(self):
+  @property
+  def body(self):
     # $1=variable name
     # $2=is it a list?
     # $3=option idx to find in the options list
-    script = '''
+    body = '''
 local i
 local needle=${3:-'a'}
 for i in "${!left[@]}"; do
@@ -29,4 +30,4 @@ for i in "${!left[@]}"; do
 done
 return 1
 '''
-    return self.fn_wrap(script)
+    return body

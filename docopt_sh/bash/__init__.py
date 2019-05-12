@@ -11,8 +11,11 @@ class Function(object):
   def include(self):
     return True
 
-  def fn_wrap(self, script):
-    return '{name}() {{\n{script}\n}}'.format(name=self.name, script=script.strip())
+  def fn_wrap(self, body):
+    return '{name}() {{\n{body}\n}}'.format(name=self.name, body=body.strip())
+
+  def __str__(self):
+    return self.fn_wrap(self.body)
 
 
 def bash_variable_name(name, prefix=''):

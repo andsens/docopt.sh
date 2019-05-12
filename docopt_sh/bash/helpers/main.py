@@ -5,8 +5,9 @@ class Main(Function):
   def __init__(self, settings):
     super(Main, self).__init__(settings, 'docopt')
 
-  def __str__(self):
-    script = '''
+  @property
+  def body(self):
+    body = '''
 type check &>/dev/null && check
 setup "$@"
 parse_argv
@@ -26,4 +27,4 @@ fi
 type teardown &>/dev/null && teardown
 return 0
 '''
-    return self.fn_wrap(script)
+    return body

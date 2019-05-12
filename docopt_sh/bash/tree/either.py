@@ -5,8 +5,9 @@ class Either(Function):
   def __init__(self, settings):
     super(Either, self).__init__(settings, 'either')
 
-  def __str__(self):
-    script = '''
+  @property
+  def body(self):
+    body = '''
 local initial_left=("${left[@]}")
 local best_match
 local previous_best
@@ -31,4 +32,4 @@ fi
 left=("${initial_left[@]}")
 return 1
 '''
-    return self.fn_wrap(script)
+    return body

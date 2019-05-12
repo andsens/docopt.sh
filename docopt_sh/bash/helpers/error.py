@@ -8,8 +8,9 @@ class Error(Function):
     if self.settings.script.doc.value.endswith('\n'):
       self.usage_end -= 1
 
-  def __str__(self):
-    script = '''
+  @property
+  def body(self):
+    body = '''
 [[ -n $1 ]] && printf "%s\\n" "$1"
 printf "%s\\n" "${{{docname}:{start}:{length}}}"
 exit 1
@@ -18,4 +19,4 @@ exit 1
       start=self.usage_start,
       length=self.usage_end - self.usage_start,
     )
-    return self.fn_wrap(script)
+    return body

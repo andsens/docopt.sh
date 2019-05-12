@@ -9,11 +9,12 @@ class Help(Function):
     else:
       self.printf_template = "%s\\n"
 
-  def __str__(self):
-    script = '''
+  @property
+  def body(self):
+    body = '''
 printf -- "{template}" "${docname}"
 '''.format(
       template=self.printf_template,
       docname=self.settings.script.doc.name,
     )
-    return self.fn_wrap(script)
+    return body

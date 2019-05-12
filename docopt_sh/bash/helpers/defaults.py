@@ -9,7 +9,8 @@ class Defaults(Function):
   def include(self):
     return len(self.sorted_params) > 0
 
-  def __str__(self):
+  @property
+  def body(self):
     defaults = [
       "[[ -z ${{{name}+x}} ]] && {name}={default}".format(
         name=bash_variable_name(p.name, self.settings.name_prefix), default=bash_variable_value(p.value)
@@ -19,5 +20,5 @@ class Defaults(Function):
       )
       for p in self.sorted_params
     ]
-    script = '\n'.join(defaults)
-    return self.fn_wrap(script)
+    body = '\n'.join(defaults)
+    return body

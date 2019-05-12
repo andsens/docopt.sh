@@ -6,8 +6,9 @@ class ParseShorts(Function):
   def __init__(self, settings):
     super(ParseShorts, self).__init__(settings, 'parse_shorts')
 
-  def __str__(self):
-    script = '''
+  @property
+  def body(self):
+    body = '''
 token=${argv[0]}
 argv=("${argv[@]:1}")
 [[ $token == -* && $token != --* ]] || assert_fail
@@ -55,4 +56,4 @@ while [[ -n $remaining ]]; do
   parsed_values+=("$value")
 done
 '''
-    return self.fn_wrap(script)
+    return body

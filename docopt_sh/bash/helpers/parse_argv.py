@@ -6,8 +6,9 @@ class ParseArgv(Function):
   def __init__(self, settings):
     super(ParseArgv, self).__init__(settings, 'parse_argv')
 
-  def __str__(self):
-    script = '''
+  @property
+  def body(self):
+    body = '''
 while [[ ${#argv[@]} -gt 0 ]]; do
   if [[ ${argv[0]} == "--" ]]; then
     for arg in "${argv[@]}"; do
@@ -21,7 +22,7 @@ while [[ ${#argv[@]} -gt 0 ]]; do
     parse_shorts
 '''
     if self.settings.options_first:
-      script += '''
+      body += '''
   else
     for arg in "${argv[@]}"; do
       parsed_params+=('a')
@@ -30,14 +31,14 @@ while [[ ${#argv[@]} -gt 0 ]]; do
     return
 '''
     else:
-      script += '''
+      body += '''
   else
     parsed_params+=('a')
     parsed_values+=("${argv[0]}")
     argv=("${argv[@]:1}")
 '''
-    script += '''
+    body += '''
   fi
 done
 '''
-    return self.fn_wrap(script)
+    return body

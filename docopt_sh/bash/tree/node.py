@@ -30,9 +30,10 @@ class BranchNode(Node):
     self.child_names = map(lambda child: function_map[child].name, pattern.children)
     super(BranchNode, self).__init__(settings, pattern, idx)
 
-  def __str__(self):
-    script = ' '.join([self.helper_name] + list(self.child_names))
-    return self.fn_wrap(script)
+  @property
+  def body(self):
+    body = ' '.join([self.helper_name] + list(self.child_names))
+    return body
 
 
 class LeafNode(Node):
@@ -51,11 +52,12 @@ class LeafNode(Node):
     self.multiple = type(pattern.value) in [list, int]
     super(LeafNode, self).__init__(settings, pattern, idx)
 
-  def __str__(self):
-    script = ' '.join([
+  @property
+  def body(self):
+    body = ' '.join([
       self.helper_name,
       self.variable_name,
       bash_ifs_value(self.multiple),
       bash_ifs_value(self.needle)
     ])
-    return self.fn_wrap(script)
+    return body
