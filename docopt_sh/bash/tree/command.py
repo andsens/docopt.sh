@@ -12,10 +12,11 @@ class Command(Function):
     # $3=should the value be incremented?
     body = '''
 local i
+local name=${2:-$1}
 for i in "${!_lft[@]}"; do
   local l=${_lft[$i]}
   if [[ ${_do_pp[$l]} = 'a' ]]; then
-    if [[ ${_do_pv[$l]} != "$2" ]]; then
+    if [[ ${_do_pv[$l]} != "$name" ]]; then
       return 1
     fi
     _lft=("${_lft[@]:0:$i}" "${_lft[@]:((i+1))}")

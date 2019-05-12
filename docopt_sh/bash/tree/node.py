@@ -55,5 +55,7 @@ class LeafNode(Node):
     args = [self.variable_name, bash_ifs_value(self.needle)]
     if self.multiple:
       args.append(bash_ifs_value(self.multiple))
+    if self.helper_name == '_do_cmd' and args[0] == args[1] and len(args) == 2:
+      args = [args[0]]
     body = ' '.join([self.helper_name] + args)
     return body
