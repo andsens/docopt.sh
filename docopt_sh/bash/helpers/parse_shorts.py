@@ -9,9 +9,9 @@ class ParseShorts(Function):
   @property
   def body(self):
     body = '''
-local token=${argv[0]}
+local token=${_do_av[0]}
 local value
-argv=("${argv[@]:1}")
+_do_av=("${_do_av[@]:1}")
 [[ $token = -* && $token != --* ]] || assert_fail
 local remaining=${token#-}
 while [[ -n $remaining ]]; do
@@ -20,7 +20,7 @@ while [[ -n $remaining ]]; do
   local i=0
   local similar=()
   local similar_idx=false
-  for o in "${options_short[@]}"; do
+  for o in "${_do_sh[@]}"; do
     if [[ $o = "$short" ]]; then
       similar+=("$short")
       [[ $similar_idx = false ]] && similar_idx=$i
@@ -30,20 +30,20 @@ while [[ -n $remaining ]]; do
   if [[ ${#similar[@]} -gt 1 ]]; then
     error "$(printf "%s is specified ambiguously %d times" "$short" "${#similar[@]}")"
   elif [[ ${#similar[@]} -lt 1 ]]; then
-    similar_idx=${#options_short[@]}
+    similar_idx=${#_do_sh[@]}
     value=true
-    options_short+=("$short")
-    options_long+=('')
-    options_argcount+=(0)
+    _do_sh+=("$short")
+    _do_lo+=('')
+    _do_ac+=(0)
   else
     value=false
-    if [[ ${options_argcount[$similar_idx]} -ne 0 ]]; then
+    if [[ ${_do_ac[$similar_idx]} -ne 0 ]]; then
       if [[ $remaining = '' ]]; then
-        if [[ ${#argv[@]} -eq 0 || ${argv[0]} = '--' ]]; then
+        if [[ ${#_do_av[@]} -eq 0 || ${_do_av[0]} = '--' ]]; then
           error "$(printf "%s requires argument" "$short")"
         fi
-        value=${argv[0]}
-        argv=("${argv[@]:1}")
+        value=${_do_av[0]}
+        _do_av=("${_do_av[@]:1}")
       else
         value=$remaining
         remaining=''
@@ -53,8 +53,8 @@ while [[ -n $remaining ]]; do
       value=true
     fi
   fi
-  parsed_params+=("$similar_idx")
-  parsed_values+=("$value")
+  _do_pp+=("$similar_idx")
+  _do_pv+=("$value")
 done
 '''
     return body

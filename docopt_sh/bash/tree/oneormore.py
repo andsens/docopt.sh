@@ -7,16 +7,16 @@ class OneOrMore(Function):
 
   @property
   def body(self):
-    # This entire $previous_left thing doesn't make sense.
+    # This entire $prev_lft thing doesn't make sense.
     # I couldn't find a case anywhere, where we would match something
-    # but not remove something from $left.
+    # but not remove something from $_lft.
     body = '''
 local times=0
-local previous_left=${#left[@]}
+local prev_lft=${#_lft[@]}
 while $1; do
   ((times++))
-  [[ $previous_left -eq ${#left[@]} ]] && break
-  previous_left=${#left[@]}
+  [[ $prev_lft -eq ${#_lft[@]} ]] && break
+  prev_lft=${#_lft[@]}
 done
 if [[ $times -ge 1 ]]; then
   return 0

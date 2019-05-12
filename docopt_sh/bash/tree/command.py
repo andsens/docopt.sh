@@ -12,14 +12,14 @@ class Command(Function):
     # $3=name of the command
     body = '''
 local i
-for i in "${!left[@]}"; do
-  local l=${left[$i]}
-  if [[ ${parsed_params[$l]} = 'a' ]]; then
-    if [[ ${parsed_values[$l]} != "$3" ]]; then
+for i in "${!_lft[@]}"; do
+  local l=${_lft[$i]}
+  if [[ ${_do_pp[$l]} = 'a' ]]; then
+    if [[ ${_do_pv[$l]} != "$3" ]]; then
       return 1
     fi
-    left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
-    $test_match && return 0
+    _lft=("${_lft[@]:0:$i}" "${_lft[@]:((i+1))}")
+    $_do_tm && return 0
     if [[ $2 = true ]]; then
       eval "(($1++))"
     else

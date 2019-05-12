@@ -9,11 +9,11 @@ class ParseLong(Function):
   @property
   def body(self):
     body = '''
-local token=${argv[0]}
+local token=${_do_av[0]}
 local long=${token%%=*}
 local value=${token#*=}
 local argcount
-argv=("${argv[@]:1}")
+_do_av=("${_do_av[@]:1}")
 [[ $token = --* ]] || assert_fail
 if [[ $token = *=* ]]; then
   eq='='
@@ -24,7 +24,7 @@ fi
 local i=0
 local similar=()
 local similar_idx=false
-for o in "${options_long[@]}"; do
+for o in "${_do_lo[@]}"; do
   if [[ $o = "$long" ]]; then
     similar+=("$long")
     [[ $similar_idx = false ]] && similar_idx=$i
@@ -33,7 +33,7 @@ for o in "${options_long[@]}"; do
 done
 if [[ ${#similar[@]} -eq 0 ]]; then
   i=0
-  for o in "${options_long[@]}"; do
+  for o in "${_do_lo[@]}"; do
     if [[ $o = $long* ]]; then
       similar+=("$long")
       [[ $similar_idx = false ]] && similar_idx=$i
@@ -49,30 +49,30 @@ elif [[ ${#similar[@]} -lt 1 ]]; then
   else
     argcount=0
   fi
-  similar_idx=${#options_short[@]}
+  similar_idx=${#_do_sh[@]}
   if [[ $argcount -eq 0 ]]; then
     value=true
   fi
-  options_short+=('')
-  options_long+=("$long")
-  options_argcount+=("$argcount")
+  _do_sh+=('')
+  _do_lo+=("$long")
+  _do_ac+=("$argcount")
 else
-  if [[ ${options_argcount[$similar_idx]} -eq 0 ]]; then
+  if [[ ${_do_ac[$similar_idx]} -eq 0 ]]; then
     if [[ $value != false ]]; then
-      error "$(printf "%s must not have an argument" "${options_long[$similar_idx]}")"
+      error "$(printf "%s must not have an argument" "${_do_lo[$similar_idx]}")"
     fi
   elif [[ $value = false ]]; then
-    if [[ ${#argv[@]} -eq 0 || ${argv[0]} = '--' ]]; then
+    if [[ ${#_do_av[@]} -eq 0 || ${_do_av[0]} = '--' ]]; then
       error "$(printf "%s requires argument" "$long")"
     fi
-    value=${argv[0]}
-    argv=("${argv[@]:1}")
+    value=${_do_av[0]}
+    _do_av=("${_do_av[@]:1}")
   fi
   if [[ $value = false ]]; then
     value=true
   fi
 fi
-parsed_params+=("$similar_idx")
-parsed_values+=("$value")
+_do_pp+=("$similar_idx")
+_do_pv+=("$value")
 '''
     return body

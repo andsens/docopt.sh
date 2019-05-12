@@ -8,28 +8,28 @@ class Either(Function):
   @property
   def body(self):
     body = '''
-local initial_left=("${left[@]}")
-local best_match
-local previous_best
+local init_lft=("${_lft[@]}")
+local bm
+local prev_best
 local pattern
-local unset_test_match=true
-$test_match && unset_test_match=false
-test_match=true
+local _do_unset_tm=true
+$_do_tm && _do_unset_tm=false
+_do_tm=true
 for pattern in "$@"; do
   if $pattern; then
-    if [[ -z $previous_best || ${#left[@]} -lt $previous_best ]]; then
-      best_match=$pattern
-      previous_best=${#left[@]}
+    if [[ -z $prev_best || ${#_lft[@]} -lt $prev_best ]]; then
+      bm=$pattern
+      prev_best=${#_lft[@]}
     fi
   fi
-  left=("${initial_left[@]}")
+  _lft=("${init_lft[@]}")
 done
-$unset_test_match && test_match=false
-if [[ -n $best_match ]]; then
-  $best_match
+$_do_unset_tm && _do_tm=false
+if [[ -n $bm ]]; then
+  $bm
   return 0
 fi
-left=("${initial_left[@]}")
+_lft=("${init_lft[@]}")
 return 1
 '''
     return body

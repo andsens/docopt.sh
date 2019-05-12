@@ -13,12 +13,12 @@ class Main(Function):
     body = ''
     if self.settings.add_doc_check:
       body += '''
-local current_doc_hash
+local doc_hash
 local digest="{digest}"
-current_doc_hash=$(printf "%s" "${docname}" | shasum -a 256 | cut -f 1 -d " ")
-if [[ $current_doc_hash != "$digest" ]]; then
+doc_hash=$(printf "%s" "${docname}" | shasum -a 256 | cut -f 1 -d " ")
+if [[ $doc_hash != "$digest" ]]; then
   printf "The current usage doc (%s) does not match what the parser was generated with (%s)\\n" \\
-    "$current_doc_hash" "$digest" >&2
+    "$doc_hash" "$digest" >&2
   exit 70
 fi
 '''.format(
@@ -28,17 +28,17 @@ fi
     # variables setup
     option_nodes = [o for o in self.leaf_nodes if o.type is Option]
     body += '''
-argv=("$@")
-options_short=({options_short})
-options_long=({options_long})
-options_argcount=({options_argcount})
-param_names=({param_names})
-parsed_params=()
-parsed_values=()
-left=()
-test_match=false
+_do_av=("$@")
+_do_sh=({options_short})
+_do_lo=({options_long})
+_do_ac=({options_argcount})
+_do_pn=({param_names})
+_do_pp=()
+_do_pv=()
+_lft=()
+_do_tm=false
 local var
-for var in "${{param_names[@]}}"; do
+for var in "${{_do_pn[@]}}"; do
   unset "$var"
 done
 '''.format(
@@ -47,35 +47,35 @@ done
       options_argcount=' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
       param_names=' '.join([node.variable_name for node in self.leaf_nodes]),
     )
-    # parse argv
+    # parse _do_av
     body += '''
 local arg
-while [[ ${#argv[@]} -gt 0 ]]; do
-  if [[ ${argv[0]} = "--" ]]; then
-    for arg in "${argv[@]}"; do
-      parsed_params+=('a')
-      parsed_values+=("$arg")
+while [[ ${#_do_av[@]} -gt 0 ]]; do
+  if [[ ${_do_av[0]} = "--" ]]; then
+    for arg in "${_do_av[@]}"; do
+      _do_pp+=('a')
+      _do_pv+=("$arg")
     done
     break
-  elif [[ ${argv[0]} = --* ]]; then
+  elif [[ ${_do_av[0]} = --* ]]; then
     parse_long
-  elif [[ ${argv[0]} = -* && ${argv[0]} != "-" ]]; then
+  elif [[ ${_do_av[0]} = -* && ${_do_av[0]} != "-" ]]; then
     parse_shorts
   else
 '''
     if self.settings.options_first:
       body += '''
-    for arg in "${argv[@]}"; do
-      parsed_params+=('a')
-      parsed_values+=("$arg")
+    for arg in "${_do_av[@]}"; do
+      _do_pp+=('a')
+      _do_pv+=("$arg")
     done
     break
 '''
     else:
       body += '''
-    parsed_params+=('a')
-    parsed_values+=("${argv[0]}")
-    argv=("${argv[@]:1}")
+    _do_pp+=('a')
+    _do_pv+=("${_do_av[0]}")
+    _do_av=("${_do_av[@]:1}")
 '''
     body += '''
   fi
@@ -87,9 +87,9 @@ done
       body += 'local idx'
     if self.settings.add_help:
       body += '''
-for idx in "${{parsed_params[@]}}"; do
+for idx in "${{_do_pp[@]}}"; do
   [[ $idx = 'a' ]] && continue
-  if [[ ${{options_short[$idx]}} = "-h" || ${{options_long[$idx]}} = "--help" ]]; then
+  if [[ ${{_do_sh[$idx]}} = "-h" || ${{_do_lo[$idx]}} = "--help" ]]; then
     printf -- "{template}" "${docname}"
     exit 0
   fi
@@ -100,26 +100,26 @@ done
       )
     if self.settings.add_version:
       body += '''
-for idx in "${parsed_params[@]}"; do
+for idx in "${_do_pp[@]}"; do
   [[ $idx = 'a' ]] && continue
-  if [[ ${options_long[$idx]} = "--version" ]]; then
+  if [[ ${_do_lo[$idx]} = "--version" ]]; then
     printf "%s\\n" "$version"
     exit 0
   fi
 done
 '''
 
-    # setup $left
+    # setup $_lft
     body += '''
 local i=0
-while [[ $i -lt ${#parsed_params[@]} ]]; do
-  left+=("$i")
+while [[ $i -lt ${#_do_pp[@]} ]]; do
+  _lft+=("$i")
   ((i++))
 done
 '''
     # run the parser
     body += '''
-if ! root || [ ${#left[@]} -gt 0 ]; then
+if ! root || [ ${#_lft[@]} -gt 0 ]; then
   error
 fi
 '''
@@ -132,8 +132,8 @@ defaults
     # teardown
     if self.settings.add_teardown:
       body += '''
-unset argv options_short options_long options_argcount param_names left \\
-parsed_params parsed_values test_match; unset -f either oneormore optional \\
+unset _do_av _do_sh _do_lo _do_ac _do_pn _lft \\
+_do_pp _do_pv _do_tm; unset -f either oneormore optional \\
 required _command _switch _value defaults error docopt parse_long parse_shorts
 '''
 

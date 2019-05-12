@@ -12,11 +12,11 @@ class Switch(Function):
     # $3=option idx to find in the options list
     body = '''
 local i
-for i in "${!left[@]}"; do
-  local l=${left[$i]}
-  if [[ ${parsed_params[$l]} = "$3" ]]; then
-    left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
-    $test_match && return 0
+for i in "${!_lft[@]}"; do
+  local l=${_lft[$i]}
+  if [[ ${_do_pp[$l]} = "$3" ]]; then
+    _lft=("${_lft[@]:0:$i}" "${_lft[@]:((i+1))}")
+    $_do_tm && return 0
     if [[ $2 = true ]]; then
       eval "(($1++))"
     else

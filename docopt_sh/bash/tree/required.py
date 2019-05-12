@@ -8,21 +8,21 @@ class Required(Function):
   @property
   def body(self):
     body = '''
-local initial_left=("${left[@]}")
+local initial__lft=("${_lft[@]}")
 local pattern
-local unset_test_match=true
-$test_match && unset_test_match=false
-test_match=true
+local _do_unset_tm=true
+$_do_tm && _do_unset_tm=false
+_do_tm=true
 for pattern in "$@"; do
   if ! $pattern; then
-    left=("${initial_left[@]}")
-    $unset_test_match && test_match=false
+    _lft=("${initial__lft[@]}")
+    $_do_unset_tm && _do_tm=false
     return 1
   fi
 done
-if $unset_test_match; then
-  test_match=false
-  left=("${initial_left[@]}")
+if $_do_unset_tm; then
+  _do_tm=false
+  _lft=("${initial__lft[@]}")
   for pattern in "$@"; do $pattern; done
 fi
 return 0
