@@ -12,7 +12,10 @@ setup "$@"
 parse_argv
 extras
 local i=0
-while [[ $i -lt ${#parsed_params[@]} ]]; do left+=("$i"); ((i++)); done
+while [[ $i -lt ${#parsed_params[@]} ]]; do
+  left+=("$i")
+  ((i++))
+done
 if ! root; then
   error
 fi
