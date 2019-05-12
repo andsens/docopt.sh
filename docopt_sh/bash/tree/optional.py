@@ -10,7 +10,7 @@ class Optional(Function):
     body = '''
 local p
 for p in "$@"; do
-  $p
+  "_do$p"
 done
 return 0
 '''

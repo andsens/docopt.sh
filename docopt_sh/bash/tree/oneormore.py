@@ -13,7 +13,7 @@ class OneOrMore(Function):
     body = '''
 local i=0
 local prev=${#_lft[@]}
-while $1; do
+while "_do$1"; do
   ((i++))
   [[ $prev -eq ${#_lft[@]} ]] && break
   prev=${#_lft[@]}

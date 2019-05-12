@@ -16,9 +16,9 @@ local unset_tm=true
 $_do_tm && unset_tm=false
 _do_tm=true
 for p in "$@"; do
-  if $p; then
+  if "_do$p"; then
     if [[ -z $p_lft || ${#_lft[@]} -lt $p_lft ]]; then
-      best=$p
+      best=_do$p
       p_lft=${#_lft[@]}
     fi
   fi

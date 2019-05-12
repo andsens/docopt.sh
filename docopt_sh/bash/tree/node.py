@@ -14,6 +14,7 @@ class Node(Function):
 
   def __init__(self, settings, pattern, idx):
     self.type = type(pattern)
+    self.idx = idx
     super(Node, self).__init__(settings, '_do' + str(idx))
 
 
@@ -22,11 +23,12 @@ class BranchNode(Node):
   def __init__(self, settings, pattern, idx, function_map):
     super(BranchNode, self).__init__(settings, pattern, idx)
     self.helper_name = helper_map[self.type]
-    self.child_names = map(lambda child: function_map[child].name, pattern.children)
+    self.child_indexes = map(lambda child: function_map[child].idx, pattern.children)
 
   @property
   def body(self):
-    body = ' '.join([self.helper_name] + list(self.child_names))
+    # minimize arg list by only specifying node idx
+    body = ' '.join([self.helper_name] + list(map(str, self.child_indexes)))
     return body
 
 
