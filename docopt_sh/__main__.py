@@ -61,7 +61,8 @@ def docopt_sh(params):
           h.write(patched_script)
   except DocoptScriptValidationError as e:
     print(str(e))
-    sys.exit(1)
+    # Exit code 74: input/output error (sysexits.h)
+    sys.exit(74)
 
 
 def main():
