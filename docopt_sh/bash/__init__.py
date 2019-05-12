@@ -12,7 +12,8 @@ class Function(object):
     return True
 
   def fn_wrap(self, body):
-    return '{name}() {{\n{body}\n}}'.format(name=self.name, body=body.strip())
+    indented = '\n'.join(['  ' + line for line in body.strip().split('\n')])
+    return '{name}() {{\n{body}\n}}'.format(name=self.name, body=indented)
 
   def __str__(self):
     return self.fn_wrap(self.body)
