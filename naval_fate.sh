@@ -16,8 +16,7 @@ Options:
   --version     Show version.
   --speed=<kn>  Speed in knots [default: 10].
   --moored      Moored (anchored) mine.
-  --drifting    Drifting mine.
-"
+  --drifting    Drifting mine."
 # docopt parser below, refresh this parser with `docopt.sh naval_fate.sh`
 arg0() { _value __speed false 0; }; arg1() { _switch __moored false 1; }
 arg2() { _switch __drifting false 2; }; arg3() { _switch __version false 3; }
@@ -120,8 +119,8 @@ parsed_params+=('a'); parsed_values+=("$arg"); done; return
 elif [[ ${argv[0]} = --* ]]; then parse_long
 elif [[ ${argv[0]} == -* && ${argv[0]} != "-" ]]; then parse_shorts; else
 parsed_params+=('a'); parsed_values+=("${argv[0]}"); argv=("${argv[@]:1}"); fi
-done; }; help() { printf -- "%s" "$doc"; }; error() {
-[[ -n $1 ]] && printf "%s\n" "$1"; printf "%s\n" "${doc:13:222}"; exit 1; }
+done; }; help() { printf -- "%s\n" "$doc"; }; error() {
+[[ -n $1 ]] && printf "%s\n" "$1"; printf "%s\n" "${doc:13:223}"; exit 1; }
 extras() { for idx in "${parsed_params[@]}"; do [[ $idx == 'a' ]] && continue
 if [[ ${options_short[$idx]} == "-h" || ${options_long[$idx]} == "--help" ]]; then
 help; exit 0; fi; done; for idx in "${parsed_params[@]}"; do
@@ -139,7 +138,7 @@ unset -f either oneormore optional required _command _switch _value \
 check defaults extras help error docopt \
 parse_argv parse_long parse_shorts setup teardown; }; check() {
 local current_doc_hash
-local digest="ca73124363c887ce3d952bed04d9d99b2b9b3c01965833e1d08b391d338dc422"
+local digest="4a387f559ae024343f27dbbc69f223c67d0ec7e20082f3bd682c67348ebb208d"
 current_doc_hash=$(printf "%s" "$doc" | shasum -a 256 | cut -f 1 -d " ")
 if [[ $current_doc_hash != "$digest" ]]; then
 printf "The current usage doc (%s) does not match what the parser was generated with (%s)\n" \
