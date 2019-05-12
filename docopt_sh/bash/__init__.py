@@ -89,7 +89,7 @@ def remove_newlines(lines, max_length):
       current = None
       continue
     separator = ' ' if no_separator.search(current) else '; '
-    if len(current + separator + line) < max_length:
+    if len(current + separator + line) <= max_length:
       current += separator + line
     else:
       yield current
