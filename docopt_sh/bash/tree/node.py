@@ -16,19 +16,19 @@ prefix_map = {
 class Node(Function):
 
   def __init__(self, settings, pattern, idx):
-    name = prefix_map[type(pattern)] + str(idx)
-    super(Node, self).__init__(settings, name)
+    self.type = type(pattern)
+    super(Node, self).__init__(settings, prefix_map[self.type] + str(idx))
 
 
 class BranchNode(Node):
 
   def __init__(self, settings, pattern, idx, function_map):
-    if type(pattern) is OptionsShortcut:
+    super(BranchNode, self).__init__(settings, pattern, idx)
+    if self.type is OptionsShortcut:
       self.helper_name = 'optional'
     else:
       self.helper_name = pattern.__class__.__name__.lower()
     self.child_names = map(lambda child: function_map[child].name, pattern.children)
-    super(BranchNode, self).__init__(settings, pattern, idx)
 
   @property
   def body(self):
@@ -39,10 +39,11 @@ class BranchNode(Node):
 class LeafNode(Node):
 
   def __init__(self, settings, pattern, idx):
-    if type(pattern) is Option:
+    super(LeafNode, self).__init__(settings, pattern, idx)
+    if self.type is Option:
       self.helper_name = '_switch' if type(pattern.value) in [bool, int] else '_value'
       self.needle = idx
-    elif type(pattern) is Command:
+    elif self.type is Command:
       self.helper_name = '_command'
       self.needle = pattern.name
     else:
@@ -50,7 +51,6 @@ class LeafNode(Node):
       self.needle = None
     self.variable_name = bash_variable_name(pattern.name, settings.name_prefix)
     self.multiple = type(pattern.value) in [list, int]
-    super(LeafNode, self).__init__(settings, pattern, idx)
 
   @property
   def body(self):
