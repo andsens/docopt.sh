@@ -15,7 +15,7 @@ class Parser(object):
 
   def __str__(self):
     nodes = [node for node in self.doc_ast.nodes if node is not self.doc_ast.root_node]
-    helper_fns = list(filter(lambda n: n.include(), [
+    ast_helper_fns = [
       tree.Command(self.settings),
       tree.Either(self.settings),
       tree.OneOrMore(self.settings),
@@ -23,13 +23,16 @@ class Parser(object):
       tree.Required(self.settings),
       tree.Switch(self.settings),
       tree.Value(self.settings),
+    ]
+    helper_fns = [
       helpers.ParseShorts(self.settings),
       helpers.ParseLong(self.settings),
       helpers.Error(self.settings, usage_section=self.doc_ast.usage_section),
       helpers.Main(self.settings, root_node=self.doc_ast.root_node, leaf_nodes=self.doc_ast.leaf_nodes),
-      helpers.Defaults(self.settings, leaf_nodes=self.doc_ast.leaf_nodes),
-    ]))
-    parser_str = '\n'.join(map(str, nodes + helper_fns))
+    ]
+    if len(self.doc_ast.leaf_nodes) > 0:
+      helper_fns.append(helpers.Defaults(self.settings, leaf_nodes=self.doc_ast.leaf_nodes))
+    parser_str = '\n'.join(map(str, nodes + ast_helper_fns + helper_fns))
     if self.settings.minimize:
       parser_str = minimize(parser_str, self.settings.max_line_length)
     return parser_str + '\n'

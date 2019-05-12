@@ -8,9 +8,6 @@ class Function(object):
     self.name = name
     self.settings = settings
 
-  def include(self):
-    return True
-
   def fn_wrap(self, body):
     indented = '\n'.join(['  ' + line for line in body.strip().split('\n')])
     return '{name}() {{\n{body}\n}}'.format(name=self.name, body=indented)

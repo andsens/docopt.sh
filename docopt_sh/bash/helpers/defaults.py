@@ -6,9 +6,6 @@ class Defaults(Function):
     super(Defaults, self).__init__(settings, '_do_def')
     self.leaf_nodes = leaf_nodes
 
-  def include(self):
-    return len(self.leaf_nodes) > 0
-
   @property
   def body(self):
     defaults = []
