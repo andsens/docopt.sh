@@ -7,9 +7,6 @@ class OneOrMore(Function):
 
   @property
   def body(self):
-    # This entire $prev thing doesn't make sense.
-    # I couldn't find a case anywhere, where we would match something
-    # but not remove something from $_lft.
     body = '''
 local i=0
 local prev=${#_lft[@]}
