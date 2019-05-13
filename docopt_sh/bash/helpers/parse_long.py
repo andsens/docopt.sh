@@ -23,43 +23,39 @@ else
 fi
 local i=0
 local similar=()
-local similar_idx=false
+local match=false
 for o in "${_do_lo[@]}"; do
   if [[ $o = "$long" ]]; then
     similar+=("$long")
-    [[ $similar_idx = false ]] && similar_idx=$i
+    [[ $match = false ]] && match=$i
   fi
   ((i++))
 done
-if [[ ${#similar[@]} -eq 0 ]]; then
+if [[ $match = false ]]; then
   i=0
   for o in "${_do_lo[@]}"; do
     if [[ $o = $long* ]]; then
       similar+=("$long")
-      [[ $similar_idx = false ]] && similar_idx=$i
+      [[ $match = false ]] && match=$i
     fi
     ((i++))
   done
 fi
 if [[ ${#similar[@]} -gt 1 ]]; then
-  _do_err "$(printf "%s is not a unique prefix: %s?" "$long" "${similar[*]}")"
+  _do_err "$(printf "%s is not a unique prefix: %s?" \
+    "$long" "${similar[*]}")"
 elif [[ ${#similar[@]} -lt 1 ]]; then
-  if [[ $eq = '=' ]]; then
-    argcount=1
-  else
-    argcount=0
-  fi
-  similar_idx=${#_do_sh[@]}
-  if [[ $argcount -eq 0 ]]; then
-    value=true
-  fi
+  [[ $eq = '=' ]] && argcount=1 || argcount=0
+  match=${#_do_sh[@]}
+  [[ $argcount -eq 0 ]] && value=true
   _do_sh+=('')
   _do_lo+=("$long")
   _do_ac+=("$argcount")
 else
-  if [[ ${_do_ac[$similar_idx]} -eq 0 ]]; then
+  if [[ ${_do_ac[$match]} -eq 0 ]]; then
     if [[ $value != false ]]; then
-      _do_err "$(printf "%s must not have an argument" "${_do_lo[$similar_idx]}")"
+      _do_err "$(printf "%s must not have an argument" \
+        "${_do_lo[$match]}")"
     fi
   elif [[ $value = false ]]; then
     if [[ ${#_do_av[@]} -eq 0 || ${_do_av[0]} = '--' ]]; then
@@ -72,7 +68,7 @@ else
     value=true
   fi
 fi
-_do_pp+=("$similar_idx")
+_do_pp+=("$match")
 _do_pv+=("$value")
 '''
     return body
