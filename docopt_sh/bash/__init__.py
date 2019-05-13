@@ -52,7 +52,7 @@ def bash_ifs_value(value):
   raise Exception('Unhandled value type %s' % type(value))
 
 
-def minimize(parser_str, max_length):
+def minify(parser_str, max_length):
   lines = parser_str.split('\n')
   lines = remove_leading_spaces(lines)
   lines = remove_empty_lines(lines)

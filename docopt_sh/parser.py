@@ -1,6 +1,6 @@
 import os.path
 from .doc import DocAst
-from .bash import helpers, tree, minimize
+from .bash import helpers, tree, minify
 
 
 class Parser(object):
@@ -35,8 +35,8 @@ class Parser(object):
     if len(self.doc_ast.leaf_nodes) > 0:
       helper_fns.append(helpers.Defaults(self.settings, leaf_nodes=self.doc_ast.leaf_nodes))
     parser_str = '\n'.join(map(str, nodes + ast_helper_fns + helper_fns))
-    if self.settings.minimize:
-      parser_str = minimize(parser_str, self.settings.max_line_length)
+    if self.settings.minify:
+      parser_str = minify(parser_str, self.settings.max_line_length)
     return parser_str + '\n'
 
 
@@ -73,8 +73,8 @@ class ParserSettings(object):
     return not self.docopt_params['--no-teardown']
 
   @property
-  def minimize(self):
-    return not self.docopt_params['--no-minimize']
+  def minify(self):
+    return not self.docopt_params['--no-minify']
 
   @property
   def max_line_length(self):

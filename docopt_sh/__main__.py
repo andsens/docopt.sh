@@ -21,8 +21,8 @@ Parser generation options:
   --options-first  Require that options precede positional arguments
   --no-teardown    Disable teardown of functions and variables after parsing
   --no-version     Disable automatic --version despite $version being present
-  --no-minimize    Disable parsing code minimization
-  --line-length N  Maximum line length when minimizing [default: 80]
+  --no-minify      Disable code minification
+  --line-length N  Maximum line length when minifying [default: 80]
 
 Other options:
   --only-parser    Only output the parser to stdout

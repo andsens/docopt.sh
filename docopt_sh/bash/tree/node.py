@@ -27,7 +27,7 @@ class BranchNode(Node):
 
   @property
   def body(self):
-    # minimize arg list by only specifying node idx
+    # minify arg list by only specifying node idx
     body = ' '.join([self.helper_name] + list(map(str, self.child_indexes)))
     return body
 
