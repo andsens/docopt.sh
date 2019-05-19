@@ -28,7 +28,7 @@ while [[ -n $rem ]]; do
     ((i++))
   done
   if [[ ${#similar[@]} -gt 1 ]]; then
-    _do_err "$(printf "%s is specified ambiguously %d times" \
+    _do_err "$(printf "%s is specified ambiguously %d times" \\
       "$short" "${#similar[@]}")"
   elif [[ ${#similar[@]} -lt 1 ]]; then
     match=${#_do_sh[@]}

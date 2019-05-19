@@ -42,7 +42,7 @@ if [[ $match = false ]]; then
   done
 fi
 if [[ ${#similar[@]} -gt 1 ]]; then
-  _do_err "$(printf "%s is not a unique prefix: %s?" \
+  _do_err "$(printf "%s is not a unique prefix: %s?" \\
     "$long" "${similar[*]}")"
 elif [[ ${#similar[@]} -lt 1 ]]; then
   [[ $eq = '=' ]] && argcount=1 || argcount=0
@@ -54,7 +54,7 @@ elif [[ ${#similar[@]} -lt 1 ]]; then
 else
   if [[ ${_do_ac[$match]} -eq 0 ]]; then
     if [[ $value != false ]]; then
-      _do_err "$(printf "%s must not have an argument" \
+      _do_err "$(printf "%s must not have an argument" \\
         "${_do_lo[$match]}")"
     fi
   elif [[ $value = false ]]; then
