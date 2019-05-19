@@ -2,8 +2,11 @@ from .. import Function
 
 
 class Value(Function):
+
+  name = '_do_val'
+
   def __init__(self, settings):
-    super(Value, self).__init__(settings, '_do_val')
+    super(Value, self).__init__(settings, Value.name)
 
   @property
   def body(self):

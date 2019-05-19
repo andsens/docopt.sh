@@ -2,8 +2,11 @@ from .. import Function
 
 
 class OneOrMore(Function):
+
+  name = '_do_oom'
+
   def __init__(self, settings):
-    super(OneOrMore, self).__init__(settings, '_do_oom')
+    super(OneOrMore, self).__init__(settings, OneOrMore.name)
 
   @property
   def body(self):

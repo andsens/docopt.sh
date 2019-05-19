@@ -1,13 +1,6 @@
+from .. import tree
 from .. import Function, bash_variable_name, bash_ifs_value
-from ...doc import Option, Command, Argument, Required, Optional, OptionsShortcut, OneOrMore, Either
-
-helper_map = {
-  Required: '_do_req',
-  Optional: '_do_opt',
-  OptionsShortcut: '_do_opt',
-  OneOrMore: '_do_oom',
-  Either: '_do_eith',
-}
+from ...doc import Option, Command
 
 
 class Node(Function):
@@ -22,7 +15,8 @@ class BranchNode(Node):
 
   def __init__(self, settings, pattern, idx, function_map):
     super(BranchNode, self).__init__(settings, pattern, idx)
-    self.helper_name = helper_map[self.type]
+    from . import helper_map
+    self.helper_name = helper_map[self.type].name
     self.child_indexes = map(lambda child: function_map[child].idx, pattern.children)
 
   @property
@@ -36,16 +30,17 @@ class LeafNode(Node):
 
   def __init__(self, settings, pattern, idx):
     super(LeafNode, self).__init__(settings, pattern, idx)
+    from . import helper_map
     self.default_value = pattern.value
     self.pattern = pattern
     if self.type is Option:
-      self.helper_name = '_do_sw' if type(self.default_value) in [bool, int] else '_do_val'
+      self.helper_name = tree.Switch.name if type(self.default_value) in [bool, int] else tree.Value.name
       self.needle = idx
     elif self.type is Command:
-      self.helper_name = '_do_cmd'
+      self.helper_name = tree.Command.name
       self.needle = pattern.name
     else:
-      self.helper_name = '_do_val'
+      self.helper_name = tree.Value.name
       self.needle = 'a'
     self.multiple = type(self.default_value) in [list, int]
     self.variable_name = bash_variable_name(pattern.name, settings.name_prefix)
@@ -55,7 +50,7 @@ class LeafNode(Node):
     args = [self.variable_name, bash_ifs_value(self.needle)]
     if self.multiple:
       args.append(bash_ifs_value(self.multiple))
-    if self.helper_name == '_do_cmd' and args[0] == args[1] and len(args) == 2:
+    if self.helper_name == tree.Command.name and args[0] == args[1] and len(args) == 2:
       args = [args[0]]
     body = ' '.join([self.helper_name] + args)
     return body

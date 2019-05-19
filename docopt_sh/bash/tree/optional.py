@@ -2,8 +2,11 @@ from .. import Function
 
 
 class Optional(Function):
+
+  name = '_do_opt'
+
   def __init__(self, settings):
-    super(Optional, self).__init__(settings, '_do_opt')
+    super(Optional, self).__init__(settings, Optional.name)
 
   @property
   def body(self):

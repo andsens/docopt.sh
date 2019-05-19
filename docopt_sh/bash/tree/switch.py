@@ -2,8 +2,11 @@ from .. import Function
 
 
 class Switch(Function):
+
+  name = '_do_sw'
+
   def __init__(self, settings):
-    super(Switch, self).__init__(settings, '_do_sw')
+    super(Switch, self).__init__(settings, Switch.name)
 
   @property
   def body(self):

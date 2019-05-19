@@ -2,8 +2,11 @@ from .. import Function
 
 
 class Command(Function):
+
+  name = '_do_cmd'
+
   def __init__(self, settings):
-    super(Command, self).__init__(settings, '_do_cmd')
+    super(Command, self).__init__(settings, Command.name)
 
   @property
   def body(self):

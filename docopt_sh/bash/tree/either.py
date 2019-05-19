@@ -2,8 +2,11 @@ from .. import Function
 
 
 class Either(Function):
+
+  name = '_do_eith'
+
   def __init__(self, settings):
-    super(Either, self).__init__(settings, '_do_eith')
+    super(Either, self).__init__(settings, Either.name)
 
   @property
   def body(self):

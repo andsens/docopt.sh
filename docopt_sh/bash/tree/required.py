@@ -2,8 +2,11 @@ from .. import Function
 
 
 class Required(Function):
+
+  name = '_do_req'
+
   def __init__(self, settings):
-    super(Required, self).__init__(settings, '_do_req')
+    super(Required, self).__init__(settings, Required.name)
 
   @property
   def body(self):
