@@ -135,4 +135,6 @@ class ParserSettings(object):
       command += ' --library=' + quote(self.docopt_params['--library'])
     if self.docopt_params['SCRIPT'] is not None:
       command += ' ' + os.path.basename(self.docopt_params['SCRIPT'])
+    else:
+      command += ' < FILE'
     return command
