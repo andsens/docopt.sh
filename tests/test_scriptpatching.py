@@ -145,7 +145,7 @@ def test_parser_only(monkeypatch, capsys, bash):
   with open('tests/scripts/naval_fate.sh') as h:
     script = h.read()
   doc = Script(script).doc.value
-  parser = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser-only'], stdin=StringIO(script)).out
+  parser = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser'], stdin=StringIO(script)).out
   program = '''
 doc="{doc}"
 {parser}

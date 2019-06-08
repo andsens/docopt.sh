@@ -36,18 +36,13 @@ class Script(object):
         'docopt.sh is invoked with `docopt "$@"`'
       )
 
-  def insert_parser(self, parser, refresh_command=None):
-    guard_begin = "# docopt parser below"
-    guard_end = "# docopt parser above"
-    if refresh_command:
-      guard_begin += ", refresh this parser with `%s`" % refresh_command
-      guard_end += ", refresh this parser with `%s`" % refresh_command
+  def patch(self, parser):
     return Script(
       "{start}{guard_begin}\n{parser}{guard_end}\n{end}".format(
         start=self.contents[:self.parser.start],
-        guard_begin=guard_begin,
-        parser=parser,
-        guard_end=guard_end,
+        guard_begin="# docopt parser below, refresh this parser with `%s`" % parser.settings.refresh_command,
+        parser=parser.generate_full_parser(self),
+        guard_end="# docopt parser above, refresh this parser with `%s`" % parser.settings.refresh_command,
         end=self.contents[self.parser.end:],
       )
     )

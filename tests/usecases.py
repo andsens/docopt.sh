@@ -18,10 +18,14 @@ class DocoptUsecaseTestFile(pytest.File):
     raw = self.fspath.open().read()
     index = 1
     params = {
+      'generate-library': False,
       'SCRIPT': None,
       '--prefix': '_',
-      '--no-minify': False,
-      '--line-length': '80',
+      '--line-length': '0',
+      '--parser': False,
+      '--library': None,
+      '--help': False,
+      '--version': False,
     }
     program_template = '''
 doc="{doc}"
@@ -33,8 +37,7 @@ for var in "${{docopt_param_names[@]}}"; do declare -p "$var"; done
       name = self.fspath.purebasename
       if cases:
         script = Script(program_template.format(doc=doc))
-        parser = Parser(script, params)
-        script = str(parser.patched_script)
+        script = str(script.patch(Parser(params)))
       for bash in self.config.bash_versions:
         for case in cases:
           yield DocoptUsecaseTest("%s (%d, bash %s)" % (name, index, bash[0]), self, bash, doc, script, case)

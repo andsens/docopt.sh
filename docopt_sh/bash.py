@@ -1,5 +1,27 @@
 import re
 from shlex import quote
+from collections import OrderedDict
+
+
+class Code(object):
+
+  def __init__(self, code):
+    self.code = code
+
+  def minify(self, max_line_length):
+    return minify(str(self), max_line_length)
+
+  def __str__(self):
+    if type(self.code) is list:
+      return '\n'.join(map(str, self.code))
+    elif type(self.code) is OrderedDict:
+      return '\n'.join(map(str, list(self.code.values())))
+    elif type(self.code) is str:
+      return self.code
+    elif isinstance(self.code, Function):
+      return str(self.code)
+    else:
+      raise Exception('Unhandled data-type: %s' % type(self.code))
 
 
 class Function(object):
