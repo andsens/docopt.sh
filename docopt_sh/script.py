@@ -13,7 +13,10 @@ class Script(object):
     self.doc = Doc(self.contents)
     self.parser = Parser(self.contents, self.doc)
     self.invocation = Invocation(self.contents, self.parser)
-    self.version = Version(self.contents, self.invocation)
+    self.options = [Option(name, self.contents) for name in [
+      'docopt_program_version', 'docopt_add_help', 'docopt_options_first',
+      'docopt_teardown', 'docopt_doc_check', 'docopt_lib_check'
+    ]]
 
   def validate_script_locations(self):
     if not self.doc.present:
@@ -35,6 +38,13 @@ class Script(object):
         'No invocations of docopt found, check your script to make sure this is correct.\n'
         'docopt.sh is invoked with `docopt "$@"`'
       )
+    for option in self.options:
+      if option.present and option.start > self.invocation.end:
+        log.warning(
+          '$%s has no effect when specified after invoking docopt, '
+          'make sure to place docopt options before calling `docopt "$@"`.',
+          option.name
+        )
 
   def patch(self, parser):
     return Script(
@@ -161,11 +171,12 @@ class Invocation(ScriptLocation):
     super(Invocation, self).__init__(matches, parser.end)
 
 
-class Version(ScriptLocation):
+class Option(ScriptLocation):
 
-  def __init__(self, script, invocation):
-    matches = re.finditer(r'^version=', script[:invocation.start], re.MULTILINE)
-    super(Version, self).__init__(matches, 0)
+  def __init__(self, name, script):
+    self.name = name
+    matches = re.finditer(r'^%s=' % name, script, re.MULTILINE)
+    super(Option, self).__init__(matches, 0)
     if self.count > 1:
       # Override parent class selection of first match, previous assignments
       # would be overwritten so it's the last match that has an effect
