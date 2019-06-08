@@ -20,17 +20,12 @@ class DocoptUsecaseTestFile(pytest.File):
     params = {
       'SCRIPT': None,
       '--prefix': '_',
-      '--options-first': False,
-      '--no-help': False,
-      '--no-version': False,
-      '--no-doc-check': True,
-      '--no-teardown': True,
       '--no-minify': False,
       '--line-length': '80',
-      '--debug': False,
     }
     program_template = '''
 doc="{doc}"
+docopt_teardown=false
 docopt "$@"
 for var in "${{docopt_param_names[@]}}"; do declare -p "$var"; done
 '''

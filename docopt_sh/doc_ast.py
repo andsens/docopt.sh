@@ -6,7 +6,7 @@ from itertools import chain
 class DocAst(object):
 
   def __init__(self, settings, doc):
-    from .bash.tree.node import BranchNode, LeafNode
+    from .node import BranchNode, LeafNode
     doc = doc
     root, usage_match = parse_doc(doc)
     node_map = OrderedDict([])
@@ -20,9 +20,10 @@ class DocAst(object):
       if isinstance(pattern, BranchPattern):
         node_map[pattern] = BranchNode(settings, pattern, offset + idx, node_map)
     self.root_node = node_map[root]
+    self.root_node.name = 'docopt_node_root'
 
     self.node_map = node_map
-    self.usage_match = usage_match
+    self.usage_match = usage_match.start(0), usage_match.end(0)
 
   @property
   def nodes(self):
@@ -30,12 +31,8 @@ class DocAst(object):
 
   @property
   def leaf_nodes(self):
-    from .bash.tree.node import LeafNode
+    from .node import LeafNode
     return [node for node in self.nodes if type(node) is LeafNode]
-
-  @property
-  def usage_section(self):
-    return self.usage_match.start(0), self.usage_match.end(0)
 
 
 def parse_doc(doc):

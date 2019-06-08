@@ -16,19 +16,13 @@ Usage:
 
 Parser generation options:
   --prefix=PREFIX  Parameter variable name prefix [default: ]
-  --no-doc-check   Disable check for whether if the parser matches the doc
-  --no-help        Disable automatic help on -h or --help
-  --options-first  Require that options precede positional arguments
-  --no-teardown    Disable teardown of functions and variables after parsing
-  --no-version     Disable automatic --version despite $version being present
   --no-minify      Disable code minification
   --line-length N  Maximum line length when minifying [default: 80]
 
 Other options:
-  --only-parser    Only output the parser to stdout
-  -d --debug       Whether to enable debugging mode (embedded in the parser)
-  -h --help        This help message
-  --version        Version of this program
+  --only-parser  Only output the parser to stdout
+  -h --help      This help message
+  --version      Version of this program
 
 
 Notes:

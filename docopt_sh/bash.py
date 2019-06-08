@@ -4,16 +4,45 @@ from shlex import quote
 
 class Function(object):
 
-  def __init__(self, settings, name):
+  def __init__(self, name):
     self.name = name
-    self.settings = settings
-
-  def fn_wrap(self, body):
-    indented = '\n'.join(['  ' + line for line in body.strip().split('\n')])
-    return '{name}(){{\n{body}\n}}'.format(name=self.name, body=indented)
 
   def __str__(self):
-    return self.fn_wrap(self.body)
+    return '{name}(){{\n{body}\n}}'.format(name=self.name, body=self.body)
+
+  def __repr__(self):
+    lines = self.body.split('\n')
+    if len(lines) > 5:
+      shortend_body = '\n'.join(body[:2]) + '\n  ...\n' + '\n'.join(body[-2:])
+    else:
+      shortened_body = body
+    return '{name}(){{\n{shortend_body}\n}}'.format(name=self.name, body=shortend_body)
+
+
+class HelperTemplate(Function):
+
+  def __init__(self, name, function_body):
+    self.function_body = function_body
+    super(HelperTemplate, self).__init__(name)
+
+  @property
+  def body(self):
+    return self.function_body
+
+
+class Helper(Function):
+
+  def __init__(self, template, replacements):
+    self.template = template
+    self.replacements = replacements
+    super(Helper, self).__init__(template.name)
+
+  @property
+  def body(self):
+    body = self.template.function_body
+    for placeholder, replacement in self.replacements.items():
+      body = body.replace(placeholder, replacement)
+    return body
 
 
 def bash_variable_name(name, prefix=''):

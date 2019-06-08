@@ -89,9 +89,9 @@ class Doc(ScriptLocation):
 
   def __init__(self, script):
     matches = re.finditer(
-      r'([a-zA-Z_][a-zA-Z_0-9]*)="((\\"|[^"])*Usage:(\\"|[^"])+)"\s*(\n|;)',
+      r'([a-zA-Z_][a-zA-Z_0-9]*)="(\s*)(.*?Usage:.+?)(\s*)"(\n|;)',
       script,
-      re.MULTILINE | re.IGNORECASE
+      re.MULTILINE | re.IGNORECASE | re.DOTALL
     )
     super(Doc, self).__init__(matches, 0)
 
@@ -103,7 +103,11 @@ class Doc(ScriptLocation):
   @property
   def value(self):
     if self.present:
-      return self.match.group(2)
+      return self.match.group(3)
+
+  @property
+  def in_string_value_match(self):
+    return self.match.start(3) - self.match.start(2), self.match.end(3) - self.match.end(2)
 
 
 class ParserStartGuard(ScriptLocation):

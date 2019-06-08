@@ -1,6 +1,9 @@
 import os.path
-from .doc import DocAst
-from .bash import helpers, tree, minify
+import re
+import hashlib
+from collections import OrderedDict
+from .doc_ast import DocAst, Option
+from .bash import HelperTemplate, Helper, bash_variable_value, bash_ifs_value, minify
 
 
 class Parser(object):
@@ -9,32 +12,61 @@ class Parser(object):
     self.script = script
     self.settings = ParserSettings(script, params)
     self.doc_ast = DocAst(self.settings, script.doc.value)
+    function_re = re.compile((
+        r'^(?P<name>[a-z_][a-z0-9_]*)\(\)\s*\{'
+        r'\n+'
+        r'(?P<body>.*?)'
+        r'\n+\}$'
+      ), re.MULTILINE | re.IGNORECASE | re.DOTALL)
+    self.helper_templates = OrderedDict([])
+    with open(os.path.join(os.path.dirname(__file__), 'docopt.sh'), 'r') as handle:
+      for match in function_re.finditer(handle.read()):
+        self.helper_templates[match.group('name')] = HelperTemplate(match.group('name'), match.group('body'))
 
   @property
   def patched_script(self):
     return self.script.insert_parser(str(self), self.settings.refresh_command)
 
   def __str__(self):
-    nodes = [node for node in self.doc_ast.nodes if node is not self.doc_ast.root_node]
-    ast_helper_names = set([n.helper_name for n in nodes])
-    ast_helper_fns = list(filter(lambda h: h.name in ast_helper_names, [
-      tree.Command(self.settings),
-      tree.Either(self.settings),
-      tree.OneOrMore(self.settings),
-      tree.Optional(self.settings),
-      tree.Required(self.settings),
-      tree.Switch(self.settings),
-      tree.Value(self.settings),
-    ]))
-    helper_fns = [
-      helpers.ParseShorts(self.settings),
-      helpers.ParseLong(self.settings),
-      helpers.Error(self.settings, usage_section=self.doc_ast.usage_section),
-      helpers.Main(self.settings, root_node=self.doc_ast.root_node, leaf_nodes=self.doc_ast.leaf_nodes),
-    ]
-    if len(self.doc_ast.leaf_nodes) > 0:
-      helper_fns.append(helpers.Defaults(self.settings, leaf_nodes=self.doc_ast.leaf_nodes))
-    parser_str = '\n'.join(map(str, nodes + ast_helper_fns + helper_fns))
+    usage_start, usage_end = self.doc_ast.usage_match
+    option_nodes = [o for o in self.doc_ast.leaf_nodes if o.type is Option]
+    doc_value_start, doc_value_end = self.settings.script.doc.in_string_value_match
+    doc_name = '${{{docname}:{start}:{end}}}'.format(
+      docname=self.settings.script.doc.name,
+      start=doc_value_start,
+      end=doc_value_end,
+    )
+    defaults = []
+    for node in self.doc_ast.leaf_nodes:
+      if type(node.default_value) is list:
+        tpl = "[[ -z ${{{name}+x}} ]] && {name}={default}"
+      else:
+        tpl = "{name}=${{{name}:-{default}}}"
+      defaults.append(tpl.format(
+        name=node.variable_name,
+        default=bash_variable_value(node.default_value)
+      ))
+    replacements = {
+      'docopt': {
+        '"DOC VALUE"': doc_name,
+        '"DOC DIGEST"': hashlib.sha256(self.settings.script.doc.value.encode('utf-8')).hexdigest()[0:5],
+        '"SHORT USAGE START"': str(usage_start),
+        '"SHORT USAGE LENGTH"': str(usage_end - usage_start),
+        '"SHORTS"': ' '.join([bash_ifs_value(o.pattern.short) for o in option_nodes]),
+        '"LONGS"': ' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
+        '"ARGCOUNT"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
+        '"PARAM NAMES"': ' '.join([node.variable_name for node in self.doc_ast.leaf_nodes]),
+      },
+      'docopt_defaults': {'"DEFAULTS"': '\n'.join(defaults)}
+    }
+    helpers = OrderedDict({
+      name: Helper(tpl, replacements.get(name, {}))
+      for name, tpl in self.helper_templates.items()
+    })
+    if not defaults:
+      del helpers['docopt_defaults']
+
+    parser_str = '\n'.join(map(str, list(self.doc_ast.nodes) + list(helpers.values())))
     if self.settings.minify:
       parser_str = minify(parser_str, self.settings.max_line_length)
     return parser_str + '\n'
@@ -51,28 +83,6 @@ class ParserSettings(object):
     return self.docopt_params['--prefix']
 
   @property
-  def add_doc_check(self):
-    return not self.docopt_params['--no-doc-check']
-
-  @property
-  def options_first(self):
-    return self.docopt_params['--options-first']
-
-  @property
-  def add_help(self):
-    return not self.docopt_params['--no-help']
-
-  @property
-  def add_version(self):
-    if self.docopt_params['--no-version']:
-      return False
-    return self.script.version.present
-
-  @property
-  def add_teardown(self):
-    return not self.docopt_params['--no-teardown']
-
-  @property
   def minify(self):
     return not self.docopt_params['--no-minify']
 
@@ -83,8 +93,6 @@ class ParserSettings(object):
   @property
   def refresh_command(self):
     command = 'docopt.sh'
-    if self.docopt_params['--debug']:
-      command += ' --debug'
     if self.docopt_params['--prefix'] != '':
       command += ' --prefix=' + self.docopt_params['--prefix']
     if self.docopt_params['SCRIPT'] is not None:

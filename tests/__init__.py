@@ -2,8 +2,10 @@ import subprocess
 import shlex
 from tempfile import NamedTemporaryFile
 import os
+import io
 from contextlib import contextmanager
 from docopt_sh.__main__ import main as docopt_sh_main
+from docopt_sh.bash import bash_variable_value
 
 
 def bash_eval_script(script, argv, bash=None):
@@ -48,20 +50,29 @@ def declare_quote(value):
   return value.replace('\\', '\\\\').replace('"', '\\"')
 
 
+def replace_docopt_params(stream, docopt_params):
+  script = stream.read()
+  params = '\n'.join([k + '=' + bash_variable_value(v) for k, v in docopt_params.items()])
+  script = script.replace('"DOCOPT PARAMS"', params)
+  return io.StringIO(script)
+
+
 @contextmanager
-def patched_script(monkeypatch, capsys, name, params=[], bash=None):
+def patched_script(monkeypatch, capsys, name, program_params=[], docopt_params={}, bash=None):
   with monkeypatch.context() as m:
-    with open(os.path.join('tests/scripts', name)) as script:
-      def run(*argv):
-        captured = invoke_docopt(m, capsys, stdin=script, params=params)
-        return bash_eval_script(captured.out, argv, bash=bash)
-      yield run
+    with open(os.path.join('tests/scripts', name)) as handle:
+      script = replace_docopt_params(handle, docopt_params)
+
+    def run(*argv):
+      captured = invoke_docopt(m, capsys, stdin=script, program_params=program_params)
+      return bash_eval_script(captured.out, argv, bash=bash)
+    yield run
 
 
 @contextmanager
-def temp_script(name, bash=None):
-  with open(os.path.join('tests/scripts', name)) as h:
-    script = h.read()
+def temp_script(name, docopt_params={}, bash=None):
+  with open(os.path.join('tests/scripts', name)) as handle:
+    script = replace_docopt_params(handle, docopt_params).read()
   file = NamedTemporaryFile(mode='w', delete=False)
   try:
     file.write(script)
@@ -79,11 +90,11 @@ def temp_script(name, bash=None):
     os.unlink(file.name)
 
 
-def invoke_docopt(monkeypatch, capsys=None, params=[], stdin=None):
+def invoke_docopt(monkeypatch, capsys=None, program_params=[], stdin=None):
   with monkeypatch.context() as m:
     if stdin is not None:
       m.setattr('sys.stdin', stdin)
-    m.setattr('sys.argv', ['docopt.sh'] + params)
+    m.setattr('sys.argv', ['docopt.sh'] + program_params)
     docopt_sh_main()
     if capsys is not None:
       return capsys.readouterr()

@@ -19,7 +19,7 @@ Options:
   --moored      Moored (anchored) mine.
   --drifting    Drifting mine.
 "
-
+"DOCOPT PARAMS"
 docopt "$@"
 
 echo ${docopt_param_names[@]}
