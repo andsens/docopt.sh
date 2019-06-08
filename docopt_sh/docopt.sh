@@ -40,24 +40,24 @@ docopt_command() {
 
 docopt_either() {
   local initial_left=("${docopt_left[@]}")
-  local best_match
-  local p_lft
-  local node
+  local best_match_idx
+  local match_count
+  local node_idx
   local unset_testmatch=true
   $docopt_testmatch && unset_testmatch=false
   docopt_testmatch=true
-  for node in "$@"; do
-    if "$node"; then
-      if [[ -z $p_lft || ${#docopt_left[@]} -lt $p_lft ]]; then
-        best_match=$node
-        p_lft=${#docopt_left[@]}
+  for node_idx in "$@"; do
+    if "docopt_node_$node_idx"; then
+      if [[ -z $match_count || ${#docopt_left[@]} -lt $match_count ]]; then
+        best_match_idx=$node_idx
+        match_count=${#docopt_left[@]}
       fi
     fi
     docopt_left=("${initial_left[@]}")
   done
   $unset_testmatch && docopt_testmatch=false
-  if [[ -n $best_match ]]; then
-    $best_match
+  if [[ -n $best_match_idx ]]; then
+    "docopt_node_$best_match_idx"
     return 0
   fi
   docopt_left=("${initial_left[@]}")
@@ -67,7 +67,7 @@ docopt_either() {
 docopt_oneormore() {
   local i=0
   local prev=${#docopt_left[@]}
-  while "$1"; do
+  while "docopt_node_$1"; do
     ((i++))
     [[ $prev -eq ${#docopt_left[@]} ]] && break
     prev=${#docopt_left[@]}
@@ -79,21 +79,21 @@ docopt_oneormore() {
 }
 
 docopt_optional() {
-  local node
-  for node in "$@"; do
-    "$node"
+  local node_idx
+  for node_idx in "$@"; do
+    "docopt_node_$node_idx"
   done
   return 0
 }
 
 docopt_required() {
   local initial_left=("${docopt_left[@]}")
-  local node
+  local node_idx
   local unset_testmatch=true
   $docopt_testmatch && unset_testmatch=false
   docopt_testmatch=true
-  for node in "$@"; do
-    if ! "$node"; then
+  for node_idx in "$@"; do
+    if ! "docopt_node_$node_idx"; then
       docopt_left=("${initial_left[@]}")
       $unset_testmatch && docopt_testmatch=false
       return 1
@@ -102,8 +102,8 @@ docopt_required() {
   if $unset_testmatch; then
     docopt_testmatch=false
     docopt_left=("${initial_left[@]}")
-    for node in "$@"; do
-      "$node"
+    for node_idx in "$@"; do
+      "docopt_node_$node_idx"
     done
   fi
   return 0
