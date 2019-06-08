@@ -337,11 +337,11 @@ docopt_parse() {
       fi
     done
   fi
-  if [[ ${docopt_add_version:-true} = 'true' && -n $version ]]; then
+  if [[ ${docopt_program_version:-false} != 'false' ]]; then
     for idx in "${docopt_parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
       if [[ ${docopt_longs[$idx]} = "--version" ]]; then
-        printf "%s\n" "$version"
+        printf "%s\n" "$docopt_program_version"
         exit 0
       fi
     done
