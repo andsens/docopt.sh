@@ -10,32 +10,11 @@ docopt() {
   docopt_argcount=("ARGCOUNT")
   docopt_param_names=("PARAM NAMES")
   docopt_parse "$@"
-}
-
-docopt_defaults() {
   "DEFAULTS"
-}
-
-docopt_command() {
-  local i
-  local name=${2:-$1}
-  for i in "${!docopt_left[@]}"; do
-    local l=${docopt_left[$i]}
-    if [[ ${docopt_parsed_params[$l]} = 'a' ]]; then
-      if [[ ${docopt_parsed_values[$l]} != "$name" ]]; then
-        return 1
-      fi
-      docopt_left=("${docopt_left[@]:0:$i}" "${docopt_left[@]:((i+1))}")
-      $docopt_testmatch && return 0
-      if [[ $3 = true ]]; then
-        eval "(($1++))"
-      else
-        eval "$1=true"
-      fi
-      return 0
-    fi
+  local var
+  for var in "${docopt_param_names[@]}"; do
+    unset "docopt_var_$var"
   done
-  return 1
 }
 
 docopt_either() {
@@ -117,9 +96,9 @@ docopt_switch() {
       docopt_left=("${docopt_left[@]:0:$i}" "${docopt_left[@]:((i+1))}")
       $docopt_testmatch && return 0
       if [[ $3 = true ]]; then
-        eval "(($1++))"
+        eval "((docopt_var_$1++))"
       else
-        eval "$1=true"
+        eval "docopt_var_$1=true"
       fi
       return 0
     fi
@@ -137,9 +116,31 @@ docopt_value() {
       local value
       value=$(printf -- "%q" "${docopt_parsed_values[$l]}")
       if [[ $3 = true ]]; then
-        eval "$1+=($value)"
+        eval "docopt_var_$1+=($value)"
       else
-        eval "$1=$value"
+        eval "docopt_var_$1=$value"
+      fi
+      return 0
+    fi
+  done
+  return 1
+}
+
+docopt_command() {
+  local i
+  local name=${2:-$1}
+  for i in "${!docopt_left[@]}"; do
+    local l=${docopt_left[$i]}
+    if [[ ${docopt_parsed_params[$l]} = 'a' ]]; then
+      if [[ ${docopt_parsed_values[$l]} != "$name" ]]; then
+        return 1
+      fi
+      docopt_left=("${docopt_left[@]:0:$i}" "${docopt_left[@]:((i+1))}")
+      $docopt_testmatch && return 0
+      if [[ $3 = true ]]; then
+        eval "((docopt_var_$1++))"
+      else
+        eval "docopt_var_$1=true"
       fi
       return 0
     fi
@@ -284,10 +285,6 @@ docopt_parse() {
   docopt_parsed_values=()
   docopt_left=()
   docopt_testmatch=false
-  local var
-  for var in "${docopt_param_names[@]}"; do
-    unset "$var"
-  done
 
   local arg
   while [[ ${#docopt_argv[@]} -gt 0 ]]; do
@@ -339,17 +336,15 @@ docopt_parse() {
     ((i++))
   done
 
-  if ! docopt_required docopt_node_root || [ ${#docopt_left[@]} -gt 0 ]; then
+  if ! docopt_required root || [ ${#docopt_left[@]} -gt 0 ]; then
     docopt_error
   fi
-
-  type docopt_defaults &>/dev/null && docopt_defaults
 
   if ${docopt_teardown:-true}; then
     unset docopt_argv docopt_shorts docopt_longs docopt_argcount docopt_param_names \
     docopt_left docopt_parsed_params docopt_parsed_values docopt_testmatch
     unset -f docopt_either docopt_oneormore docopt_optional docopt_required \
-    docopt_command docopt_switch docopt_value docopt_defaults \
+    docopt_command docopt_switch docopt_value \
     docopt_error docopt_parse_long docopt_parse_shorts docopt
   fi
   return 0
