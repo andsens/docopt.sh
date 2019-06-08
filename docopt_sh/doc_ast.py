@@ -8,7 +8,7 @@ class DocAst(object):
   def __init__(self, settings, doc):
     from .node import BranchNode, LeafNode
     doc = doc
-    root, usage_match = parse_doc(doc)
+    root, self.usage_match = parse_doc(doc)
     node_map = OrderedDict([])
     param_sort_order = [Option, Argument, Command]
     unique_params = list(OrderedDict.fromkeys(root.flat(*param_sort_order)))
@@ -23,7 +23,6 @@ class DocAst(object):
 
     self.root_node = node_map[root]
     self.node_map = node_map
-    self.usage_match = usage_match.start(0), usage_match.end(0)
 
   @property
   def nodes(self):
@@ -42,6 +41,9 @@ def parse_doc(doc):
   if len(usage_sections) > 1:
     raise DocoptLanguageError('More than one "usage:" (case-insensitive).')
   usage, usage_match = usage_sections[0]
+  # Trim newlines in usage_match
+  match_fix = re.search(r'\A\n*(.+?)\n*\Z', usage, re.MULTILINE | re.DOTALL)
+  usage_match = usage_match.start(0) + match_fix.start(0), usage_match.start(0) + match_fix.end(0)
 
   options = parse_defaults(doc)
   pattern = parse_pattern(formal_usage(usage), options)
