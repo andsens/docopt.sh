@@ -15,6 +15,15 @@ docopt() {
   ${docopt_teardown:-true} && docopt_do_teardown "MAX NODE IDX"
 }
 
+lib_version_check() {
+if [[ $1 != '"VERSION"' && ${docopt_lib_check:-true} != 'false' ]]; then
+  printf "The version of the included docopt library (%s) \
+does not match the version of the invoking docopt parser (%s)\n" \
+    '"VERSION"' "$1" >&2
+  exit 70
+fi
+}
+
 docopt_do_teardown() {
   local max_node_idx=$1
   local var

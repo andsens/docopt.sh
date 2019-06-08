@@ -2,6 +2,7 @@ import os.path
 import re
 import hashlib
 from collections import OrderedDict
+from . import __version__
 from .doc_ast import DocAst, Option
 from .bash import Code, HelperTemplate, Helper, indent, bash_variable_value, bash_ifs_value, minify
 
@@ -25,7 +26,10 @@ class Parser(object):
       return str(generated)
 
   def generate_main(self, script):
-    library_source = 'source %s' % self.settings.library_path if self.settings.library_path else ''
+    if self.settings.library_path:
+      library_source = 'source %s \'%s\'' % (self.settings.library_path, __version__)
+    else:
+      library_source = ''
     doc_value_start, doc_value_end = script.doc.in_string_value_match
     doc_name = '${{{docname}:{start}:{end}}}'.format(
       docname=script.doc.name,
@@ -62,10 +66,19 @@ class Parser(object):
     }
     return self.library.main.render(replacements)
 
-  def generate_library(self):
+  def generate_library(self, check_version=False):
     functions = OrderedDict([])
+    replacements = {
+      'lib_version_check': {
+        '"VERSION"': __version__,
+      }
+    }
     for name, tpl in self.library.functions.items():
-      functions[name] = tpl.render()
+      functions[name] = tpl.render(replacements.get(name, {}))
+    if check_version:
+      functions['lib_version_check'] = Code(functions['lib_version_check'].body)
+    else:
+      del functions['lib_version_check']
     return Code(functions)
 
 

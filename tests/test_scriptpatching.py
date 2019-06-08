@@ -1,9 +1,8 @@
 import re
 import os
 from io import StringIO
-from . import bash_eval_script, patched_script, invoke_docopt, temp_script
+from . import bash_eval_script, patched_script, invoke_docopt, temp_script, generated_library
 from docopt_sh.script import Script
-from tempfile import NamedTemporaryFile
 
 
 def test_arg(monkeypatch, capsys, bash):
@@ -127,7 +126,7 @@ def test_doc_check(monkeypatch, bash):
     with open(script.name, 'w') as h:
       h.write(contents)
     code, out, err = run(['ship', 'new', 'Olympia'])
-    regex = '^The current usage doc \([^)]+\) does not match what the parser was generated with \([^)]+\)\n$'
+    regex = r'^The current usage doc \([^)]+\) does not match what the parser was generated with \([^)]+\)\n$'
     assert re.match(regex, err) is not None
 
 
@@ -172,11 +171,7 @@ def test_cleanup(monkeypatch, capsys, bash):
 
 
 def test_library(monkeypatch, capsys, bash):
-  library = NamedTemporaryFile(mode='w', delete=False)
-  try:
-    captured = invoke_docopt(monkeypatch, capsys, program_params=['generate-library'])
-    library.write(captured.out)
-    library.close()
+  with generated_library(monkeypatch, capsys) as library:
     with patched_script(
       monkeypatch, capsys, 'echo_ship_name.sh',
       program_params=['--library', library.name],
@@ -185,5 +180,20 @@ def test_library(monkeypatch, capsys, bash):
       code, out, err = run('ship', 'new', 'Britannica')
       assert code == 0
       assert out == 'Britannica\n'
-  finally:
-    os.unlink(library.name)
+
+
+def test_library_version(monkeypatch, capsys, bash):
+  with generated_library(monkeypatch, capsys) as library:
+    with temp_script('echo_ship_name.sh', bash=bash) as (script, run):
+      invoke_docopt(monkeypatch, program_params=['--library', library.name, script.name])
+      with open(script.name, 'r') as h:
+        contents = h.read()
+      contents = re.sub(r"source (\S+) '([^']+)'", r"source \1 '0.0.0'", contents)
+      with open(script.name, 'w') as h:
+        h.write(contents)
+      code, out, err = run(['ship', 'new', 'Olympia'])
+      regex = (
+        r'^The version of the included docopt library \([^)]+\) does not '
+        r'match the version of the invoking docopt parser \(0\.0\.0\)\n$'
+      )
+      assert re.match(regex, err) is not None

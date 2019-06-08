@@ -3,7 +3,7 @@ import sys
 import re
 import os
 from docopt import docopt, DocoptExit
-from . import __doc__ as pkg_doc
+from . import __doc__ as pkg_doc, __version__
 from .script import Script, DocoptScriptValidationError
 from .parser import Parser, Library
 import logging
@@ -41,15 +41,17 @@ Parameters:
                            after arguments/commands
   $docopt_teardown         Set to `false` to prevent cleanup of
                            $docopt_ variables (default: true)
-  $docopt_doc_check        Set to `false to disable checking
+  $docopt_doc_check        Set to `false` to disable checking
                            whether the parser matches the doc (default: true)
+  $docopt_lib_check        Set to `false` to disable checking whether the
+                           library version and the docopt parser version match
 """
 
 
 def docopt_sh(params):
   if params['generate-library']:
     parser = Parser(params)
-    sys.stdout.write('#!/usr/bin/env bash\n\n' + str(parser.generate_library()))
+    sys.stdout.write('#!/usr/bin/env bash\n\n' + str(parser.generate_library(check_version=True)))
   else:
     try:
       if params['SCRIPT'] is None:

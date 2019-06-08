@@ -90,6 +90,18 @@ def temp_script(name, docopt_params={}, bash=None):
     os.unlink(file.name)
 
 
+@contextmanager
+def generated_library(monkeypatch, capsys=None, program_params=[]):
+  file = NamedTemporaryFile(mode='w', delete=False)
+  try:
+    captured = invoke_docopt(monkeypatch, capsys, program_params=['generate-library'] + program_params)
+    file.write(captured.out)
+    file.close()
+    yield file
+  finally:
+    os.unlink(file.name)
+
+
 def invoke_docopt(monkeypatch, capsys=None, program_params=[], stdin=None):
   with monkeypatch.context() as m:
     if stdin is not None:
