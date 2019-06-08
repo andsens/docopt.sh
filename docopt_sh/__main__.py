@@ -8,6 +8,10 @@ from .script import Script, DocoptScriptValidationError
 from .parser import Parser, Library
 import logging
 
+logging.basicConfig(
+  level=logging.INFO,
+  format='%(message)s'
+)
 log = logging.getLogger(__name__)
 
 __doc__ = pkg_doc + """
@@ -66,6 +70,10 @@ def docopt_sh(params):
         else:
           with open(params['SCRIPT'], 'w') as h:
             h.write(str(patched_script))
+          if patched_script == script:
+            log.warning('The parser in %s is already up-to-date', params['SCRIPT'])
+          else:
+            log.info('%s has been updated', params['SCRIPT'])
     except DocoptScriptValidationError as e:
       print(str(e))
       # Exit code 74: input/output error (sysexits.h)

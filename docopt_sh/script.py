@@ -47,6 +47,9 @@ class Script(object):
       )
     )
 
+  def __eq__(self, other):
+    return self.contents == other.contents
+
   def __str__(self):
     return self.contents
 
