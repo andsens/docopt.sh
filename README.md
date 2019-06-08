@@ -30,17 +30,17 @@ Notes:
 ```
 
 ```
-  $docopt_program_version  The string to print when --version is specified
+  $DOCOPT_PROGRAM_VERSION  The string to print when --version is specified
                            (default: none/disabled)
-  $docopt_add_help         Set to `false` to not print usage on --help
+  $DOCOPT_ADD_HELP         Set to `false` to not print usage on --help
                            (default: true)
-  $docopt_options_first    Set to `true` to fail when options are specified
+  $DOCOPT_OPTIONS_FIRST    Set to `true` to fail when options are specified
                            after arguments/commands
-  $docopt_teardown         Set to `false` to prevent cleanup of
+  $DOCOPT_TEARDOWN         Set to `false` to prevent cleanup of
                            $docopt_ variables (default: true)
-  $docopt_doc_check        Set to `false` to disable checking
+  $DOCOPT_DOC_CHECK        Set to `false` to disable checking
                            whether the parser matches the doc (default: true)
-  $docopt_lib_check        Set to `false` to disable checking whether the
+  $DOCOPT_LIB_CHECK        Set to `false` to disable checking whether the
                            library version and the docopt parser version match
 
 

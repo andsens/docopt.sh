@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-docopt_program_version='1.5.2'
+DOCOPT_PROGRAM_VERSION='1.5.2'
 
 doc="Naval Fate.
 

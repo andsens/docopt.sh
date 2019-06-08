@@ -34,14 +34,14 @@ Note:
   docopt.sh will then output the modified script to stdout.
 
 Parameters:
-  You can set the following variables before invoking docopt with `docopt "$@"`
-  to change the behavior of docopt.
+  You can set the following global variables before invoking docopt with
+  `docopt "$@"` to change the behavior of docopt.
 
-  $docopt_program_version  The string to print when --version is specified
+  $DOCOPT_PROGRAM_VERSION  The string to print when --version is specified
                            [default: none/disabled]
-  $docopt_add_help         Set to `false` to not print usage on --help
+  $DOCOPT_ADD_HELP         Set to `false` to not print usage on --help
                            [default: true]
-  $docopt_options_first    Set to `true` to fail when options are specified
+  $DOCOPT_OPTIONS_FIRST    Set to `true` to fail when options are specified
                            after arguments/commands [default: false]
 """
 

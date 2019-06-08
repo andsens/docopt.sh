@@ -12,11 +12,11 @@ docopt() {
   "NODES"
   docopt_parse "$@"
   "DEFAULTS"
-  ${docopt_teardown:-true} && docopt_do_teardown "MAX NODE IDX"
+  ${DOCOPT_TEARDOWN:-true} && docopt_do_teardown "MAX NODE IDX"
 }
 
 lib_version_check() {
-if [[ $1 != '"VERSION"' && ${docopt_lib_check:-true} != 'false' ]]; then
+if [[ $1 != '"VERSION"' && ${DOCOPT_LIB_CHECK:-true} != 'false' ]]; then
   printf "The version of the included docopt library (%s) \
 does not match the version of the invoking docopt parser (%s)\n" \
     '"VERSION"' "$1" >&2
@@ -295,7 +295,7 @@ docopt_error() {
 }
 
 docopt_parse() {
-  if ${docopt_doc_check:-true}; then
+  if ${DOCOPT_DOC_CHECK:-true}; then
     local doc_hash
     doc_hash=$(printf "%s" "$docopt_usage" | shasum -a 256)
     if [[ ${doc_hash:0:5} != "$docopt_digest" ]]; then
@@ -323,7 +323,7 @@ docopt_parse() {
       docopt_parse_long
     elif [[ ${docopt_argv[0]} = -* && ${docopt_argv[0]} != "-" ]]; then
       docopt_parse_shorts
-    elif ${docopt_options_first:-false}; then
+    elif ${DOCOPT_OPTIONS_FIRST:-false}; then
       for arg in "${docopt_argv[@]}"; do
         docopt_parsed_params+=('a')
         docopt_parsed_values+=("$arg")
@@ -336,7 +336,7 @@ docopt_parse() {
     fi
   done
   local idx
-  if ${docopt_add_help:-true}; then
+  if ${DOCOPT_ADD_HELP:-true}; then
     for idx in "${docopt_parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
       if [[ ${docopt_shorts[$idx]} = "-h" || ${docopt_longs[$idx]} = "--help" ]]; then
@@ -345,11 +345,11 @@ docopt_parse() {
       fi
     done
   fi
-  if [[ ${docopt_program_version:-false} != 'false' ]]; then
+  if [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' ]]; then
     for idx in "${docopt_parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
       if [[ ${docopt_longs[$idx]} = "--version" ]]; then
-        printf "%s\n" "$docopt_program_version"
+        printf "%s\n" "$DOCOPT_PROGRAM_VERSION"
         exit 0
       fi
     done

@@ -28,7 +28,7 @@ def test_help(monkeypatch, capsys, bash):
 def test_no_help(monkeypatch, capsys, bash):
   with patched_script(
     monkeypatch, capsys, 'echo_ship_name.sh',
-    docopt_params={'docopt_add_help': False},
+    docopt_params={'DOCOPT_ADD_HELP': False},
     bash=bash) as run:
     code, out, err = run('--help')
     assert code == 1
@@ -45,7 +45,7 @@ def test_version(monkeypatch, capsys, bash):
 def test_no_version(monkeypatch, capsys, bash):
   with patched_script(
     monkeypatch, capsys, 'echo_ship_name.sh',
-    docopt_params={'docopt_program_version': False},
+    docopt_params={'DOCOPT_PROGRAM_VERSION': False},
     bash=bash) as run:
     code, out, err = run('--version')
     assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
@@ -60,7 +60,7 @@ def test_options_anywhere(monkeypatch, capsys, bash):
 def test_options_first(monkeypatch, capsys, bash):
   with patched_script(
     monkeypatch, capsys, 'naval_fate.sh',
-    docopt_params={'docopt_options_first': True},
+    docopt_params={'DOCOPT_OPTIONS_FIRST': True},
     bash=bash
   ) as run:
     code, out, err = run('--speed', '6', 'ship', 'Titanic', 'move', '1', '4')
@@ -71,7 +71,7 @@ def test_options_first(monkeypatch, capsys, bash):
 def test_options_first_fail(monkeypatch, capsys, bash):
   with patched_script(
     monkeypatch, capsys, 'naval_fate.sh',
-    docopt_params={'docopt_options_first': True},
+    docopt_params={'DOCOPT_OPTIONS_FIRST': True},
     bash=bash
   ) as run:
     code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
@@ -90,7 +90,7 @@ def test_teardown(monkeypatch, capsys, bash):
 def test_no_teardown(monkeypatch, capsys, bash):
   with patched_script(
     monkeypatch, capsys, 'output_internals.sh',
-    docopt_params={'docopt_teardown': False},
+    docopt_params={'DOCOPT_TEARDOWN': False},
     bash=bash
   ) as run:
     code, out, err = run('ship', 'shoot', '3', '1')
@@ -102,7 +102,7 @@ def test_prefix(monkeypatch, capsys, bash):
   with patched_script(
     monkeypatch, capsys, 'output_internals.sh',
     program_params=['--prefix', 'docopt_'],
-    docopt_params={'docopt_teardown': False},
+    docopt_params={'DOCOPT_TEARDOWN': False},
     bash=bash
   ) as run:
     code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
@@ -131,7 +131,7 @@ def test_doc_check(monkeypatch, bash):
 
 
 def test_no_doc_check(monkeypatch, bash):
-  with temp_script('echo_ship_name.sh', docopt_params={'docopt_doc_check': False}, bash=bash) as (script, run):
+  with temp_script('echo_ship_name.sh', docopt_params={'DOCOPT_DOC_CHECK': False}, bash=bash) as (script, run):
     invoke_docopt(monkeypatch, program_params=[script.name])
     with open(script.name, 'r') as h:
       contents = h.read()

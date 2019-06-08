@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-docopt_program_version='0.1.5'
+DOCOPT_PROGRAM_VERSION='0.1.5'
 
 doc="Usage: echo_ship_name.sh ship new <name>...
 "
