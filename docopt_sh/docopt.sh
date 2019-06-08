@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 docopt() {
+  "LIBRARY SOURCE"
   docopt_usage="DOC VALUE"
   docopt_digest="DOC DIGEST"
   docopt_short_usage="${docopt_usage:"SHORT USAGE START":"SHORT USAGE LENGTH"}"

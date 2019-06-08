@@ -1,7 +1,9 @@
 import re
+import os
 from io import StringIO
 from . import bash_eval_script, patched_script, invoke_docopt, temp_script
 from docopt_sh.script import Script
+from tempfile import NamedTemporaryFile
 
 
 def test_arg(monkeypatch, capsys, bash):
@@ -166,3 +168,21 @@ def test_cleanup(monkeypatch, capsys, bash):
       assert '=' in line
       name, val = line.split('=', 1)
       assert not name.startswith('docopt')
+
+
+def test_library(monkeypatch, capsys, bash):
+  library = NamedTemporaryFile(mode='w', delete=False)
+  try:
+    captured = invoke_docopt(monkeypatch, capsys, program_params=['generate-library'])
+    library.write(captured.out)
+    library.close()
+    with patched_script(
+      monkeypatch, capsys, 'echo_ship_name.sh',
+      program_params=['--library', library.name],
+      bash=bash
+    ) as run:
+      code, out, err = run('ship', 'new', 'Britannica')
+      assert code == 0
+      assert out == 'Britannica\n'
+  finally:
+    os.unlink(library.name)

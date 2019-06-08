@@ -6,31 +6,47 @@ from collections import OrderedDict
 class Code(object):
 
   def __init__(self, code):
-    self.code = code
+    self._code = self._get_list(code)
+
+  @property
+  def code(self):
+    return self._code
 
   def minify(self, max_line_length):
     return minify(str(self), max_line_length)
 
-  def __str__(self):
-    if type(self.code) is list:
-      return '\n'.join(map(str, self.code))
-    elif type(self.code) is OrderedDict:
-      return '\n'.join(map(str, list(self.code.values())))
-    elif type(self.code) is str:
-      return self.code
-    elif isinstance(self.code, Function):
-      return str(self.code)
+  def _get_list(self, elem):
+    if type(elem) is list:
+      return elem
+    elif type(elem) is OrderedDict:
+      return list(elem.values())
+    elif type(elem) is str:
+      return [elem]
+    elif isinstance(elem, Function):
+      return [elem]
+    elif type(elem) is Code:
+      return elem.code
     else:
-      raise Exception('Unhandled data-type: %s' % type(self.code))
+      raise Exception('Unhandled data-type: %s' % type(elem))
+
+  def __add__(self, other):
+    return Code(self.code + self._get_list(other))
+
+  def __str__(self):
+    return '\n'.join(map(str, self.code))
 
 
-class Function(object):
+class Function(Code):
 
   def __init__(self, name):
     self.name = name
 
+  @property
+  def code(self):
+    return [str(self)]
+
   def __str__(self):
-    return '{name}(){{\n{body}\n}}'.format(name=self.name, body=self.body)
+    return '{name}(){{\n{body}\n}}\n'.format(name=self.name, body=self.body)
 
   def __repr__(self):
     lines = self.body.split('\n')
@@ -116,7 +132,7 @@ def minify(parser_str, max_length):
   lines = remove_leading_spaces(lines)
   lines = remove_empty_lines(lines)
   lines = remove_newlines(lines, max_length)
-  return '\n'.join(lines)
+  return '\n'.join(lines) + '\n'
 
 
 def remove_leading_spaces(lines):

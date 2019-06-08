@@ -36,7 +36,8 @@ Notes:
 
 def docopt_sh(params):
   if params['generate-library']:
-    pass
+    parser = Parser(params)
+    sys.stdout.write('#!/usr/bin/env bash\n\n' + str(parser.generate_library()))
   else:
     try:
       if params['SCRIPT'] is None:
@@ -49,7 +50,7 @@ def docopt_sh(params):
       script.validate_script_locations()
       parser = Parser(params)
       if params['--parser']:
-        sys.stdout.write(parser.generate_full_parser(script))
+        sys.stdout.write(parser.generate(script))
       else:
         patched_script = script.patch(parser)
         if params['SCRIPT'] is None:

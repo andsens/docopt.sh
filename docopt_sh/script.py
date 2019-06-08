@@ -41,7 +41,7 @@ class Script(object):
       "{start}{guard_begin}\n{parser}{guard_end}\n{end}".format(
         start=self.contents[:self.parser.start],
         guard_begin="# docopt parser below, refresh this parser with `%s`" % parser.settings.refresh_command,
-        parser=parser.generate_full_parser(self),
+        parser=parser.generate(self),
         guard_end="# docopt parser above, refresh this parser with `%s`" % parser.settings.refresh_command,
         end=self.contents[self.parser.end:],
       )
