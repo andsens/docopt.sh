@@ -29,17 +29,17 @@ fi
     # variables setup
     option_nodes = [o for o in self.leaf_nodes if o.type is Option]
     body += '''
-_do_av=("$@")
-_do_sh=({options_short})
-_do_lo=({options_long})
-_do_ac=({options_argcount})
-_do_pn=({param_names})
-_do_pp=()
-_do_pv=()
-_lft=()
-_do_tm=false
+docopt_argv=("$@")
+docopt_shorts=({options_short})
+docopt_longs=({options_long})
+docopt_argcount=({options_argcount})
+docopt_param_names=({param_names})
+docopt_parsed_params=()
+docopt_parsed_values=()
+docopt_left=()
+docopt_testmatch=false
 local var
-for var in "${{_do_pn[@]}}"; do
+for var in "${{docopt_param_names[@]}}"; do
   unset "$var"
 done
 '''.format(
@@ -48,35 +48,35 @@ done
       options_argcount=' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
       param_names=' '.join([node.variable_name for node in self.leaf_nodes]),
     )
-    # parse _do_av
+    # parse docopt_argv
     body += '''
 local arg
-while [[ ${#_do_av[@]} -gt 0 ]]; do
-  if [[ ${_do_av[0]} = "--" ]]; then
-    for arg in "${_do_av[@]}"; do
-      _do_pp+=('a')
-      _do_pv+=("$arg")
+while [[ ${#docopt_argv[@]} -gt 0 ]]; do
+  if [[ ${docopt_argv[0]} = "--" ]]; then
+    for arg in "${docopt_argv[@]}"; do
+      docopt_parsed_params+=('a')
+      docopt_parsed_values+=("$arg")
     done
     break
-  elif [[ ${_do_av[0]} = --* ]]; then
-    _do_long
-  elif [[ ${_do_av[0]} = -* && ${_do_av[0]} != "-" ]]; then
-    _do_shorts
+  elif [[ ${docopt_argv[0]} = --* ]]; then
+    docopt_parse_long
+  elif [[ ${docopt_argv[0]} = -* && ${docopt_argv[0]} != "-" ]]; then
+    docopt_parse_shorts
   else
 '''
     if self.settings.options_first:
       body += '''
-    for arg in "${_do_av[@]}"; do
-      _do_pp+=('a')
-      _do_pv+=("$arg")
+    for arg in "${docopt_argv[@]}"; do
+      docopt_parsed_params+=('a')
+      docopt_parsed_values+=("$arg")
     done
     break
 '''
     else:
       body += '''
-    _do_pp+=('a')
-    _do_pv+=("${_do_av[0]}")
-    _do_av=("${_do_av[@]:1}")
+    docopt_parsed_params+=('a')
+    docopt_parsed_values+=("${docopt_argv[0]}")
+    docopt_argv=("${docopt_argv[@]:1}")
 '''
     body += '''
   fi
@@ -88,9 +88,9 @@ done
       body += 'local idx'
     if self.settings.add_help:
       body += '''
-for idx in "${{_do_pp[@]}}"; do
+for idx in "${{docopt_parsed_params[@]}}"; do
   [[ $idx = 'a' ]] && continue
-  if [[ ${{_do_sh[$idx]}} = "-h" || ${{_do_lo[$idx]}} = "--help" ]]; then
+  if [[ ${{docopt_shorts[$idx]}} = "-h" || ${{docopt_longs[$idx]}} = "--help" ]]; then
     printf -- "{template}" "${docname}"
     exit 0
   fi
@@ -101,41 +101,43 @@ done
       )
     if self.settings.add_version:
       body += '''
-for idx in "${_do_pp[@]}"; do
+for idx in "${docopt_parsed_params[@]}"; do
   [[ $idx = 'a' ]] && continue
-  if [[ ${_do_lo[$idx]} = "--version" ]]; then
+  if [[ ${docopt_longs[$idx]} = "--version" ]]; then
     printf "%s\\n" "$version"
     exit 0
   fi
 done
 '''
 
-    # setup $_lft
+    # setup $docopt_left
     body += '''
 local i=0
-while [[ $i -lt ${#_do_pp[@]} ]]; do
-  _lft+=("$i")
+while [[ $i -lt ${#docopt_parsed_params[@]} ]]; do
+  docopt_left+=("$i")
   ((i++))
 done
 '''
     # run the parser
     body += '''
-if ! {root} || [ ${{#_lft[@]}} -gt 0 ]; then
-  _do_err
+if ! {root} || [ ${{#docopt_left[@]}} -gt 0 ]; then
+  docopt_error
 fi
 '''.format(root=self.root_node.body)
     # defaults
     if len(self.leaf_nodes) > 0:
       body += '''
-_do_def
+docopt_defaults
 '''
 
     # teardown
     if self.settings.add_teardown:
       body += '''
-unset _do_av _do_sh _do_lo _do_ac _do_pn _lft _do_pp _do_pv _do_tm
-unset -f _do_eith _do_oom _do_opt _do_req _do_cmd _do_sw _do_val _do_def \\
-_do_err _do_long _do_shorts docopt
+unset docopt_argv docopt_shorts docopt_longs docopt_argcount docopt_param_names \\
+docopt_left docopt_parsed_params docopt_parsed_values docopt_testmatch
+unset -f docopt_either docopt_oneormore docopt_optional docopt_required \\
+docopt_command docopt_switch docopt_value docopt_defaults \\
+docopt_error docopt_parse_long docopt_parse_shorts docopt
 '''
 
     body += '''

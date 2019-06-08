@@ -3,7 +3,7 @@ from .. import Function
 
 class Required(Function):
 
-  name = '_do_req'
+  name = 'docopt_required'
 
   def __init__(self, settings):
     super(Required, self).__init__(settings, Required.name)
@@ -11,23 +11,23 @@ class Required(Function):
   @property
   def body(self):
     body = '''
-local init_lft=("${_lft[@]}")
-local p
-local unset_tm=true
-$_do_tm && unset_tm=false
-_do_tm=true
-for p in "$@"; do
-  if ! "_do$p"; then
-    _lft=("${init_lft[@]}")
-    $unset_tm && _do_tm=false
+local initial_left=("${docopt_left[@]}")
+local node
+local unset_testmatch=true
+$docopt_testmatch && unset_testmatch=false
+docopt_testmatch=true
+for node in "$@"; do
+  if ! "$node"; then
+    docopt_left=("${initial_left[@]}")
+    $unset_testmatch && docopt_testmatch=false
     return 1
   fi
 done
-if $unset_tm; then
-  _do_tm=false
-  _lft=("${init_lft[@]}")
-  for p in "$@"; do
-    "_do$p"
+if $unset_testmatch; then
+  docopt_testmatch=false
+  docopt_left=("${initial_left[@]}")
+  for node in "$@"; do
+    "$node"
   done
 fi
 return 0

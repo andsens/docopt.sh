@@ -3,7 +3,7 @@ from .. import Function
 
 class Command(Function):
 
-  name = '_do_cmd'
+  name = 'docopt_command'
 
   def __init__(self, settings):
     super(Command, self).__init__(settings, Command.name)
@@ -16,14 +16,14 @@ class Command(Function):
     body = '''
 local i
 local name=${2:-$1}
-for i in "${!_lft[@]}"; do
-  local l=${_lft[$i]}
-  if [[ ${_do_pp[$l]} = 'a' ]]; then
-    if [[ ${_do_pv[$l]} != "$name" ]]; then
+for i in "${!docopt_left[@]}"; do
+  local l=${docopt_left[$i]}
+  if [[ ${docopt_parsed_params[$l]} = 'a' ]]; then
+    if [[ ${docopt_parsed_values[$l]} != "$name" ]]; then
       return 1
     fi
-    _lft=("${_lft[@]:0:$i}" "${_lft[@]:((i+1))}")
-    $_do_tm && return 0
+    docopt_left=("${docopt_left[@]:0:$i}" "${docopt_left[@]:((i+1))}")
+    $docopt_testmatch && return 0
     if [[ $3 = true ]]; then
       eval "(($1++))"
     else

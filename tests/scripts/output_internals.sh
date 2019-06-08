@@ -22,6 +22,6 @@ Options:
 
 docopt "$@"
 
-echo ${_do_pn[@]}
-echo ${_do_pp[@]}
-echo ${_do_pv[@]}
+echo ${docopt_param_names[@]}
+echo ${docopt_parsed_params[@]}
+echo ${docopt_parsed_values[@]}

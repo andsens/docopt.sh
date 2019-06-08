@@ -32,7 +32,7 @@ class DocoptUsecaseTestFile(pytest.File):
     program_template = '''
 doc="{doc}"
 docopt "$@"
-for var in "${{_do_pn[@]}}"; do declare -p "$var"; done
+for var in "${{docopt_param_names[@]}}"; do declare -p "$var"; done
 '''
     for name, doc, cases in self._parse_test(raw):
       name = self.fspath.purebasename

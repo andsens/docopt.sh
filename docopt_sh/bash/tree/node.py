@@ -8,7 +8,7 @@ class Node(Function):
   def __init__(self, settings, pattern, idx):
     self.type = type(pattern)
     self.idx = idx
-    super(Node, self).__init__(settings, '_do' + str(idx))
+    super(Node, self).__init__(settings, 'docopt_node_' + str(idx))
 
 
 class BranchNode(Node):
@@ -17,12 +17,12 @@ class BranchNode(Node):
     super(BranchNode, self).__init__(settings, pattern, idx)
     from . import helper_map
     self.helper_name = helper_map[self.type].name
-    self.child_indexes = map(lambda child: function_map[child].idx, pattern.children)
+    self.child_names = map(lambda child: function_map[child].name, pattern.children)
 
   @property
   def body(self):
     # minify arg list by only specifying node idx
-    body = ' '.join([self.helper_name] + list(map(str, self.child_indexes)))
+    body = ' '.join([self.helper_name] + list(map(str, self.child_names)))
     return body
 
 

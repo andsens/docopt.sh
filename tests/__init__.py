@@ -12,7 +12,8 @@ def bash_eval_script(script, argv, bash=None):
   process = subprocess.run(
     [executable, '-c', 'set - %s; eval "$(cat)"' % argv],
     input=script.encode('utf-8'),
-    stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    timeout=2
   )
   return process.returncode, process.stdout.decode('utf-8'), process.stderr.decode('utf-8')
 

@@ -3,7 +3,7 @@ from .. import Function
 
 class Optional(Function):
 
-  name = '_do_opt'
+  name = 'docopt_optional'
 
   def __init__(self, settings):
     super(Optional, self).__init__(settings, Optional.name)
@@ -11,9 +11,9 @@ class Optional(Function):
   @property
   def body(self):
     body = '''
-local p
-for p in "$@"; do
-  "_do$p"
+local node
+for node in "$@"; do
+  "$node"
 done
 return 0
 '''

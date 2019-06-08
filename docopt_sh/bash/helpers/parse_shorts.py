@@ -4,14 +4,14 @@ from .. import Function
 class ParseShorts(Function):
 
   def __init__(self, settings):
-    super(ParseShorts, self).__init__(settings, '_do_shorts')
+    super(ParseShorts, self).__init__(settings, 'docopt_parse_shorts')
 
   @property
   def body(self):
     body = '''
-local token=${_do_av[0]}
+local token=${docopt_argv[0]}
 local value
-_do_av=("${_do_av[@]:1}")
+docopt_argv=("${docopt_argv[@]:1}")
 [[ $token = -* && $token != --* ]] || assert_fail
 local rem=${token#-}
 while [[ -n $rem ]]; do
@@ -20,7 +20,7 @@ while [[ -n $rem ]]; do
   local i=0
   local similar=()
   local match=false
-  for o in "${_do_sh[@]}"; do
+  for o in "${docopt_shorts[@]}"; do
     if [[ $o = "$short" ]]; then
       similar+=("$short")
       [[ $match = false ]] && match=$i
@@ -28,23 +28,23 @@ while [[ -n $rem ]]; do
     ((i++))
   done
   if [[ ${#similar[@]} -gt 1 ]]; then
-    _do_err "$(printf "%s is specified ambiguously %d times" \\
+    docopt_error "$(printf "%s is specified ambiguously %d times" \\
       "$short" "${#similar[@]}")"
   elif [[ ${#similar[@]} -lt 1 ]]; then
-    match=${#_do_sh[@]}
+    match=${#docopt_shorts[@]}
     value=true
-    _do_sh+=("$short")
-    _do_lo+=('')
-    _do_ac+=(0)
+    docopt_shorts+=("$short")
+    docopt_longs+=('')
+    docopt_argcount+=(0)
   else
     value=false
-    if [[ ${_do_ac[$match]} -ne 0 ]]; then
+    if [[ ${docopt_argcount[$match]} -ne 0 ]]; then
       if [[ $rem = '' ]]; then
-        if [[ ${#_do_av[@]} -eq 0 || ${_do_av[0]} = '--' ]]; then
-          _do_err "$(printf "%s requires argument" "$short")"
+        if [[ ${#docopt_argv[@]} -eq 0 || ${docopt_argv[0]} = '--' ]]; then
+          docopt_error "$(printf "%s requires argument" "$short")"
         fi
-        value=${_do_av[0]}
-        _do_av=("${_do_av[@]:1}")
+        value=${docopt_argv[0]}
+        docopt_argv=("${docopt_argv[@]:1}")
       else
         value=$rem
         rem=''
@@ -54,8 +54,8 @@ while [[ -n $rem ]]; do
       value=true
     fi
   fi
-  _do_pp+=("$match")
-  _do_pv+=("$value")
+  docopt_parsed_params+=("$match")
+  docopt_parsed_values+=("$value")
 done
 '''
     return body

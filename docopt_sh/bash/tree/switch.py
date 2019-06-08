@@ -3,7 +3,7 @@ from .. import Function
 
 class Switch(Function):
 
-  name = '_do_sw'
+  name = 'docopt_switch'
 
   def __init__(self, settings):
     super(Switch, self).__init__(settings, Switch.name)
@@ -15,11 +15,11 @@ class Switch(Function):
     # $3=should the value be incremented?
     body = '''
 local i
-for i in "${!_lft[@]}"; do
-  local l=${_lft[$i]}
-  if [[ ${_do_pp[$l]} = "$2" ]]; then
-    _lft=("${_lft[@]:0:$i}" "${_lft[@]:((i+1))}")
-    $_do_tm && return 0
+for i in "${!docopt_left[@]}"; do
+  local l=${docopt_left[$i]}
+  if [[ ${docopt_parsed_params[$l]} = "$2" ]]; then
+    docopt_left=("${docopt_left[@]:0:$i}" "${docopt_left[@]:((i+1))}")
+    $docopt_testmatch && return 0
     if [[ $3 = true ]]; then
       eval "(($1++))"
     else

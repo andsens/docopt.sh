@@ -4,16 +4,16 @@ from .. import Function
 class ParseLong(Function):
 
   def __init__(self, settings):
-    super(ParseLong, self).__init__(settings, '_do_long')
+    super(ParseLong, self).__init__(settings, 'docopt_parse_long')
 
   @property
   def body(self):
     body = '''
-local token=${_do_av[0]}
+local token=${docopt_argv[0]}
 local long=${token%%=*}
 local value=${token#*=}
 local argcount
-_do_av=("${_do_av[@]:1}")
+docopt_argv=("${docopt_argv[@]:1}")
 [[ $token = --* ]] || assert_fail
 if [[ $token = *=* ]]; then
   eq='='
@@ -24,7 +24,7 @@ fi
 local i=0
 local similar=()
 local match=false
-for o in "${_do_lo[@]}"; do
+for o in "${docopt_longs[@]}"; do
   if [[ $o = "$long" ]]; then
     similar+=("$long")
     [[ $match = false ]] && match=$i
@@ -33,7 +33,7 @@ for o in "${_do_lo[@]}"; do
 done
 if [[ $match = false ]]; then
   i=0
-  for o in "${_do_lo[@]}"; do
+  for o in "${docopt_longs[@]}"; do
     if [[ $o = $long* ]]; then
       similar+=("$long")
       [[ $match = false ]] && match=$i
@@ -42,33 +42,33 @@ if [[ $match = false ]]; then
   done
 fi
 if [[ ${#similar[@]} -gt 1 ]]; then
-  _do_err "$(printf "%s is not a unique prefix: %s?" \\
+  docopt_error "$(printf "%s is not a unique prefix: %s?" \\
     "$long" "${similar[*]}")"
 elif [[ ${#similar[@]} -lt 1 ]]; then
   [[ $eq = '=' ]] && argcount=1 || argcount=0
-  match=${#_do_sh[@]}
+  match=${#docopt_shorts[@]}
   [[ $argcount -eq 0 ]] && value=true
-  _do_sh+=('')
-  _do_lo+=("$long")
-  _do_ac+=("$argcount")
+  docopt_shorts+=('')
+  docopt_longs+=("$long")
+  docopt_argcount+=("$argcount")
 else
-  if [[ ${_do_ac[$match]} -eq 0 ]]; then
+  if [[ ${docopt_argcount[$match]} -eq 0 ]]; then
     if [[ $value != false ]]; then
-      _do_err "$(printf "%s must not have an argument" \\
-        "${_do_lo[$match]}")"
+      docopt_error "$(printf "%s must not have an argument" \\
+        "${docopt_longs[$match]}")"
     fi
   elif [[ $value = false ]]; then
-    if [[ ${#_do_av[@]} -eq 0 || ${_do_av[0]} = '--' ]]; then
-      _do_err "$(printf "%s requires argument" "$long")"
+    if [[ ${#docopt_argv[@]} -eq 0 || ${docopt_argv[0]} = '--' ]]; then
+      docopt_error "$(printf "%s requires argument" "$long")"
     fi
-    value=${_do_av[0]}
-    _do_av=("${_do_av[@]:1}")
+    value=${docopt_argv[0]}
+    docopt_argv=("${docopt_argv[@]:1}")
   fi
   if [[ $value = false ]]; then
     value=true
   fi
 fi
-_do_pp+=("$match")
-_do_pv+=("$value")
+docopt_parsed_params+=("$match")
+docopt_parsed_values+=("$value")
 '''
     return body
