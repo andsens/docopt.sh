@@ -49,6 +49,7 @@ def docopt_sh(params):
     else:
       with open(params['SCRIPT'], 'r') as h:
         script = Script(h.read(), params['SCRIPT'])
+    script.validate_script_locations()
     parser = Parser(script, params)
     if params['--only-parser']:
       sys.stdout.write(str(parser))

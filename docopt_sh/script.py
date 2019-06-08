@@ -14,7 +14,6 @@ class Script(object):
     self.parser = Parser(self.contents, self.doc)
     self.invocation = Invocation(self.contents, self.parser)
     self.version = Version(self.contents, self.invocation)
-    self.validate_script_locations()
 
   def validate_script_locations(self):
     if not self.doc.present:
