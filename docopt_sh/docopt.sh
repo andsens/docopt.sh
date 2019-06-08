@@ -34,13 +34,12 @@ docopt_do_teardown() {
   for ((i=0; i<=max_node_idx; i++)); do
     unset -f "docopt_node_$i"
   done
-  unset docopt_usage docopt_digest docopt_short_usage docopt_shorts \
-  docopt_longs docopt_argcount docopt_param_names docopt_argv docopt_left \
-  docopt_parsed_params docopt_parsed_values docopt_testmatch
-  unset -f docopt docopt_parse \
-  docopt_either docopt_oneormore docopt_optional docopt_required \
-  docopt_command docopt_switch docopt_value docopt_error \
-  docopt_parse_long docopt_parse_shorts docopt_node_root docopt_do_teardown
+  unset docopt_usage docopt_digest docopt_shorts docopt_longs docopt_argcount \
+  docopt_param_names docopt_argv docopt_left docopt_parsed_params \
+  docopt_parsed_values docopt_testmatch
+  unset -f docopt docopt_parse docopt_either docopt_oneormore docopt_optional \
+  docopt_required docopt_command docopt_switch docopt_value docopt_parse_long \
+  docopt_parse_shorts docopt_node_root docopt_do_teardown
 }
 
 docopt_either() {

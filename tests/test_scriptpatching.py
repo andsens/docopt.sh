@@ -163,11 +163,15 @@ def test_cleanup(monkeypatch, capsys, bash):
   with patched_script(monkeypatch, capsys, 'all_vars.sh', bash=bash) as run:
     code, out, err = run('ship', 'new', 'Britannica')
     assert code == 0
-    allowed = ['docopt_program_version']
+    allowed_vars = ['docopt_program_version', 'docopt_short_usage']
+    allowed_fns = ['docopt_error']
     for line in out.strip().split('\n'):
-      assert '=' in line
-      name, val = line.split('=', 1)
-      assert not name.startswith('docopt') or name in allowed
+      if '=' in line:
+        name, val = line.split('=', 1)
+        assert not name.startswith('docopt') or name in allowed_vars
+      elif '()' in line:
+        name, rest = line.split(' ', 1)
+        assert not name.startswith('docopt') or name in allowed_fns
 
 
 def test_library(monkeypatch, capsys, bash):

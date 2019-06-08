@@ -28,3 +28,21 @@ Notes:
   If the script has a $version defined anywhere before the invocation of docopt
   --version will automatically output the value of that variable.
 ```
+
+```
+  $docopt_program_version  The string to print when --version is specified
+                           (default: none/disabled)
+  $docopt_add_help         Set to `false` to not print usage on --help
+                           (default: true)
+  $docopt_options_first    Set to `true` to fail when options are specified
+                           after arguments/commands
+  $docopt_teardown         Set to `false` to prevent cleanup of
+                           $docopt_ variables (default: true)
+  $docopt_doc_check        Set to `false` to disable checking
+                           whether the parser matches the doc (default: true)
+  $docopt_lib_check        Set to `false` to disable checking whether the
+                           library version and the docopt parser version match
+
+
+  Use docopt_error to exit with an error message and show the short usage
+```
