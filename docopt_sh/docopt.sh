@@ -9,12 +9,29 @@ docopt() {
   docopt_longs=("LONGS")
   docopt_argcount=("ARGCOUNT")
   docopt_param_names=("PARAM NAMES")
+  "NODES"
   docopt_parse "$@"
   "DEFAULTS"
+  ${docopt_teardown:-true} && docopt_do_teardown "MAX NODE IDX"
+}
+
+docopt_do_teardown() {
+  local max_node_idx=$1
   local var
   for var in "${docopt_param_names[@]}"; do
     unset "docopt_var_$var"
   done
+  local i
+  for ((i=0; i<=max_node_idx; i++)); do
+    unset -f "docopt_node_$i"
+  done
+  unset docopt_usage docopt_digest docopt_short_usage docopt_shorts \
+  docopt_longs docopt_argcount docopt_param_names docopt_argv docopt_left \
+  docopt_parsed_params docopt_parsed_values docopt_testmatch
+  unset -f docopt docopt_parse \
+  docopt_either docopt_oneormore docopt_optional docopt_required \
+  docopt_command docopt_switch docopt_value docopt_error \
+  docopt_parse_long docopt_parse_shorts docopt_node_root docopt_do_teardown
 }
 
 docopt_either() {
@@ -338,14 +355,6 @@ docopt_parse() {
 
   if ! docopt_required root || [ ${#docopt_left[@]} -gt 0 ]; then
     docopt_error
-  fi
-
-  if ${docopt_teardown:-true}; then
-    unset docopt_argv docopt_shorts docopt_longs docopt_argcount docopt_param_names \
-    docopt_left docopt_parsed_params docopt_parsed_values docopt_testmatch
-    unset -f docopt_either docopt_oneormore docopt_optional docopt_required \
-    docopt_command docopt_switch docopt_value \
-    docopt_error docopt_parse_long docopt_parse_shorts docopt
   fi
   return 0
 }

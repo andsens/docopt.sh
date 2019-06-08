@@ -3,7 +3,7 @@ import re
 import hashlib
 from collections import OrderedDict
 from .doc_ast import DocAst, Option
-from .bash import HelperTemplate, Helper, bash_variable_value, bash_ifs_value, minify
+from .bash import HelperTemplate, Helper, indent, bash_variable_value, bash_ifs_value, minify
 
 
 class Parser(object):
@@ -18,10 +18,10 @@ class Parser(object):
         r'(?P<body>.*?)'
         r'\n+\}$'
       ), re.MULTILINE | re.IGNORECASE | re.DOTALL)
-    self.helper_templates = OrderedDict([])
+    self.function_templates = OrderedDict([])
     with open(os.path.join(os.path.dirname(__file__), 'docopt.sh'), 'r') as handle:
       for match in function_re.finditer(handle.read()):
-        self.helper_templates[match.group('name')] = HelperTemplate(match.group('name'), match.group('body'))
+        self.function_templates[match.group('name')] = HelperTemplate(match.group('name'), match.group('body'))
 
   @property
   def patched_script(self):
@@ -57,14 +57,15 @@ class Parser(object):
         '"LONGS"': ' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
         '"ARGCOUNT"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
         '"PARAM NAMES"': ' '.join([node.variable_name for node in self.doc_ast.leaf_nodes]),
-        '"DEFAULTS"': '\n  '.join(defaults)
+        '  "NODES"': indent('\n'.join(map(str, list(self.doc_ast.nodes)))),
+        '  "DEFAULTS"': indent('\n'.join(defaults)),
+        '"MAX NODE IDX"': str(max([n.idx for n in self.doc_ast.nodes if n is not self.doc_ast.root_node])),
       },
     }
-    helpers = OrderedDict([])
-    for name, tpl in self.helper_templates.items():
-      helpers[name] = Helper(tpl, replacements.get(name, {}))
-
-    parser_str = '\n'.join(map(str, list(self.doc_ast.nodes) + list(helpers.values())))
+    functions = OrderedDict([])
+    for name, tpl in self.function_templates.items():
+      functions[name] = Helper(tpl, replacements.get(name, {}))
+    parser_str = '\n'.join(map(str, functions.values()))
     if self.settings.minify:
       parser_str = minify(parser_str, self.settings.max_line_length)
     return parser_str + '\n'

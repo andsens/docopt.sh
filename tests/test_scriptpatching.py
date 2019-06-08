@@ -156,3 +156,13 @@ echo $((_x_ + _y_))
   code, out, err = bash_eval_script(captured.out, ['ship', 'shoot', '3', '1'], bash=bash)
   assert code == 0
   assert out == '4\n'
+
+
+def test_cleanup(monkeypatch, capsys, bash):
+  with patched_script(monkeypatch, capsys, 'all_vars.sh', bash=bash) as run:
+    code, out, err = run('ship', 'new', 'Britannica')
+    assert code == 0
+    for line in out.strip().split('\n'):
+      assert '=' in line
+      name, val = line.split('=', 1)
+      assert not name.startswith('docopt')

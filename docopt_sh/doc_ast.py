@@ -21,6 +21,7 @@ class DocAst(object):
         node_map[pattern] = BranchNode(settings, pattern, offset + idx, node_map)
     node_map[root].name = 'docopt_node_root'
 
+    self.root_node = node_map[root]
     self.node_map = node_map
     self.usage_match = usage_match.start(0), usage_match.end(0)
 

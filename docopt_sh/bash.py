@@ -45,6 +45,11 @@ class Helper(Function):
     return body
 
 
+def indent(script, level=1):
+  indentation = '  ' * level
+  return '\n'.join(map(lambda l: indentation + l, script.split('\n')))
+
+
 def bash_variable_name(name, prefix=''):
   name = name.replace('<', '_')
   name = name.replace('>', '_')
