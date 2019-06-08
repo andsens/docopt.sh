@@ -19,8 +19,7 @@ class DocAst(object):
     for idx, pattern in enumerate(iter(root)):
       if isinstance(pattern, BranchPattern):
         node_map[pattern] = BranchNode(settings, pattern, offset + idx, node_map)
-    self.root_node = node_map[root]
-    self.root_node.name = 'docopt_node_root'
+    node_map[root].name = 'docopt_node_root'
 
     self.node_map = node_map
     self.usage_match = usage_match.start(0), usage_match.end(0)

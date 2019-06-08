@@ -13,9 +13,9 @@ helper_map = {
 class Node(Function):
 
   def __init__(self, settings, pattern, idx):
+    self.settings = settings
     self.type = type(pattern)
     self.idx = idx
-    self.settings = settings
     super(Node, self).__init__('docopt_node_' + str(idx))
 
 
@@ -30,7 +30,7 @@ class BranchNode(Node):
   def body(self):
     # minify arg list by only specifying node idx
     body = ' '.join([self.helper_name] + list(map(str, self.child_indexes)))
-    return body
+    return '  ' + body
 
 
 class LeafNode(Node):
@@ -59,4 +59,4 @@ class LeafNode(Node):
     if self.helper_name == 'docopt_command' and args[0] == args[1] and len(args) == 2:
       args = [args[0]]
     body = ' '.join([self.helper_name] + args)
-    return body
+    return '  ' + body

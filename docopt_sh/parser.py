@@ -27,7 +27,15 @@ class Parser(object):
   def patched_script(self):
     return self.script.insert_parser(str(self), self.settings.refresh_command)
 
-  def generate_defaults(self):
+  def generate_parser(self):
+    usage_start, usage_end = self.doc_ast.usage_match
+    option_nodes = [o for o in self.doc_ast.leaf_nodes if o.type is Option]
+    doc_value_start, doc_value_end = self.settings.script.doc.in_string_value_match
+    doc_name = '${{{docname}:{start}:{end}}}'.format(
+      docname=self.settings.script.doc.name,
+      start=doc_value_start,
+      end=doc_value_end,
+    )
     defaults = []
     for node in self.doc_ast.leaf_nodes:
       if type(node.default_value) is list:
@@ -39,17 +47,6 @@ class Parser(object):
         docopt_name='docopt_var_' + node.variable_name,
         default=bash_variable_value(node.default_value)
       ))
-    return '\n  '.join(defaults)
-
-  def generate_parser(self):
-    usage_start, usage_end = self.doc_ast.usage_match
-    option_nodes = [o for o in self.doc_ast.leaf_nodes if o.type is Option]
-    doc_value_start, doc_value_end = self.settings.script.doc.in_string_value_match
-    doc_name = '${{{docname}:{start}:{end}}}'.format(
-      docname=self.settings.script.doc.name,
-      start=doc_value_start,
-      end=doc_value_end,
-    )
     replacements = {
       'docopt': {
         '"DOC VALUE"': doc_name,
@@ -60,7 +57,7 @@ class Parser(object):
         '"LONGS"': ' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
         '"ARGCOUNT"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
         '"PARAM NAMES"': ' '.join([node.variable_name for node in self.doc_ast.leaf_nodes]),
-        '"DEFAULTS"': self.generate_defaults()
+        '"DEFAULTS"': '\n  '.join(defaults)
       },
     }
     helpers = OrderedDict([])
