@@ -141,11 +141,11 @@ def test_no_doc_check(monkeypatch, bash):
     assert out == 'Olympia\n'
 
 
-def test_only_parser(monkeypatch, capsys, bash):
+def test_parser_only(monkeypatch, capsys, bash):
   with open('tests/scripts/naval_fate.sh') as h:
     script = h.read()
   doc = Script(script).doc.value
-  parser = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--only-parser'], stdin=StringIO(script)).out
+  parser = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser-only'], stdin=StringIO(script)).out
   program = '''
 doc="{doc}"
 {parser}

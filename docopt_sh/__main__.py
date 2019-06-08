@@ -20,7 +20,7 @@ Parser generation options:
   --line-length N  Maximum line length when minifying [default: 80]
 
 Other options:
-  --only-parser  Only output the parser to stdout
+  --parser-only  Output the code that goes between the comment guards to stdout
   -h --help      This help message
   --version      Version of this program
 
@@ -45,7 +45,7 @@ def docopt_sh(params):
         script = Script(h.read(), params['SCRIPT'])
     script.validate_script_locations()
     parser = Parser(script, params)
-    if params['--only-parser']:
+    if params['--parser-only']:
       sys.stdout.write(str(parser))
     else:
       patched_script = str(parser.patched_script)
