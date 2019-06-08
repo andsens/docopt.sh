@@ -1,7 +1,6 @@
 import os.path
 import re
 import hashlib
-from shlex import quote
 from collections import OrderedDict
 from .doc_ast import DocAst, Option
 from .bash import Code, HelperTemplate, Helper, indent, bash_variable_value, bash_ifs_value, minify
@@ -26,7 +25,7 @@ class Parser(object):
       return str(generated)
 
   def generate_main(self, script):
-    library_source = 'source %s' % quote(self.settings.library_path) if self.settings.library_path else ''
+    library_source = 'source %s' % self.settings.library_path if self.settings.library_path else ''
     doc_value_start, doc_value_end = script.doc.in_string_value_match
     doc_name = '${{{docname}:{start}:{end}}}'.format(
       docname=script.doc.name,
@@ -113,6 +112,7 @@ class ParserSettings(object):
 
   @property
   def refresh_command(self):
+    from shlex import quote
     command = 'docopt.sh'
     if self.docopt_params['--prefix'] != '':
       command += ' --prefix=' + quote(self.docopt_params['--prefix'])
