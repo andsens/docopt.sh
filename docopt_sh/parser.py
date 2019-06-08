@@ -63,10 +63,9 @@ class Parser(object):
         '"DEFAULTS"': self.generate_defaults()
       },
     }
-    helpers = OrderedDict({
-      name: Helper(tpl, replacements.get(name, {}))
-      for name, tpl in self.helper_templates.items()
-    })
+    helpers = OrderedDict([])
+    for name, tpl in self.helper_templates.items():
+      helpers[name] = Helper(tpl, replacements.get(name, {}))
 
     parser_str = '\n'.join(map(str, list(self.doc_ast.nodes) + list(helpers.values())))
     if self.settings.minify:
