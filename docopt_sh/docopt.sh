@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
 
-
 docopt() {
   docopt_usage="DOC VALUE"
   docopt_digest="DOC DIGEST"

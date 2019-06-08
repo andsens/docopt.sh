@@ -13,10 +13,10 @@ class Function(object):
   def __repr__(self):
     lines = self.body.split('\n')
     if len(lines) > 5:
-      shortend_body = '\n'.join(body[:2]) + '\n  ...\n' + '\n'.join(body[-2:])
+      shortened_body = '\n'.join(lines[:2]) + '\n  ...\n' + '\n'.join(lines[-2:])
     else:
-      shortened_body = body
-    return '{name}(){{\n{shortend_body}\n}}'.format(name=self.name, body=shortend_body)
+      shortened_body = self.body
+    return '{name}(){{\n{body}\n}}'.format(name=self.name, body=shortened_body)
 
 
 class HelperTemplate(Function):
@@ -24,6 +24,9 @@ class HelperTemplate(Function):
   def __init__(self, name, function_body):
     self.function_body = function_body
     super(HelperTemplate, self).__init__(name)
+
+  def render(self, replacements={}):
+    return Helper(self, replacements)
 
   @property
   def body(self):
