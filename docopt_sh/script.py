@@ -132,6 +132,8 @@ class Doc(ScriptLocation):
       script.contents,
       re.MULTILINE | re.IGNORECASE | re.DOTALL
     )
+    # re.IGNORECASE causes doc=, Doc= etc. to be matched, remove those matches
+    matches = filter(lambda m: m.group(0).startswith('DOC='), matches)
     super(Doc, self).__init__(script, matches, 0)
     self.value = self.match.group(2) if self.present else None
     self.stripped_value_boundaries = (
