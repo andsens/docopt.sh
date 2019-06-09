@@ -59,14 +59,13 @@ def replace_docopt_params(stream, docopt_params):
 
 @contextmanager
 def patched_script(monkeypatch, capsys, name, program_params=[], docopt_params={}, bash=None):
-  with monkeypatch.context() as m:
-    with open(os.path.join('tests/scripts', name)) as handle:
-      script = replace_docopt_params(handle, docopt_params)
+  with open(os.path.join('tests/scripts', name)) as handle:
+    script = replace_docopt_params(handle, docopt_params)
 
-    def run(*argv):
-      captured = invoke_docopt(m, capsys, stdin=script, program_params=program_params)
-      return bash_eval_script(captured.out, argv, bash=bash)
-    yield run
+  def run(*argv):
+    captured = invoke_docopt(monkeypatch, capsys, stdin=script, program_params=program_params)
+    return bash_eval_script(captured.out, argv, bash=bash)
+  yield run
 
 
 @contextmanager
