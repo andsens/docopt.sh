@@ -1,89 +1,40 @@
 import re
 from shlex import quote
 from collections import OrderedDict
+from collections.abc import Iterable
+from itertools import chain
 
 
 class Code(object):
 
   def __init__(self, code):
-    self._code = self._get_list(code)
+    self.code = self._get_iter(code)
 
-  @property
-  def code(self):
-    return self._code
+  def _get_iter(self, code):
+    if isinstance(code, str):
+      return iter([code])
+    else:
+      return iter(code)
 
   def minify(self, max_line_length):
-    return minify(str(self), max_line_length)
+    return Code(minify(str(self), max_line_length))
 
-  def _get_list(self, elem):
-    if type(elem) is list:
-      return elem
-    elif type(elem) is OrderedDict:
-      return list(elem.values())
-    elif type(elem) is str:
-      return [elem]
-    elif isinstance(elem, Function):
-      return [elem]
-    elif type(elem) is Code:
-      return elem.code
-    else:
-      raise Exception('Unhandled data-type: %s' % type(elem))
+  def replace(self, replacements):
+    def gen_replace():
+      for part in self.code:
+        for placeholder, replacement in replacements.items():
+          part = part.replace(placeholder, str(replacement))
+        yield part
+    return Code(gen_replace())
+
+  def __iter__(self):
+    return self.code
 
   def __add__(self, other):
-    return Code(self.code + self._get_list(other))
+    return Code(chain(self.code, self._get_iter(other)))
 
   def __str__(self):
-    return '\n'.join(map(str, self.code))
-
-
-class Function(Code):
-
-  def __init__(self, name):
-    self.name = name
-
-  @property
-  def code(self):
-    return [str(self)]
-
-  def __str__(self):
-    return '{name}(){{\n{body}\n}}\n'.format(name=self.name, body=self.body)
-
-  def __repr__(self):
-    lines = self.body.split('\n')
-    if len(lines) > 5:
-      shortened_body = '\n'.join(lines[:2]) + '\n  ...\n' + '\n'.join(lines[-2:])
-    else:
-      shortened_body = self.body
-    return '{name}(){{\n{body}\n}}'.format(name=self.name, body=shortened_body)
-
-
-class HelperTemplate(Function):
-
-  def __init__(self, name, function_body):
-    self.function_body = function_body
-    super(HelperTemplate, self).__init__(name)
-
-  def render(self, replacements={}):
-    return Helper(self, replacements)
-
-  @property
-  def body(self):
-    return self.function_body
-
-
-class Helper(Function):
-
-  def __init__(self, template, replacements):
-    self.template = template
-    self.replacements = replacements
-    super(Helper, self).__init__(template.name)
-
-  @property
-  def body(self):
-    body = self.template.function_body
-    for placeholder, replacement in self.replacements.items():
-      body = body.replace(placeholder, replacement)
-    return body
+    return '\n'.join(map(str, self))
 
 
 def indent(script, level=1):

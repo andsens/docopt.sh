@@ -9,17 +9,18 @@ docopt() {
   docopt_longs=("LONGS")
   docopt_argcount=("ARGCOUNT")
   docopt_param_names=("PARAM NAMES")
+  docopt_argv=("$@")
   "NODES"
-  docopt_parse "$@"
+  docopt_parse "ROOT NODE IDX"
   "DEFAULTS"
   ${DOCOPT_TEARDOWN:-true} && docopt_do_teardown "MAX NODE IDX"
 }
 
 lib_version_check() {
-if [[ $1 != '"VERSION"' && ${DOCOPT_LIB_CHECK:-true} != 'false' ]]; then
+if [[ $1 != '"LIBRARY VERSION"' && ${DOCOPT_LIB_CHECK:-true} != 'false' ]]; then
   printf "The version of the included docopt library (%s) \
 does not match the version of the invoking docopt parser (%s)\n" \
-    '"VERSION"' "$1" >&2
+    '"LIBRARY VERSION"' "$1" >&2
   exit 70
 fi
 }
@@ -39,7 +40,7 @@ docopt_do_teardown() {
   docopt_parsed_values docopt_testmatch
   unset -f docopt docopt_parse docopt_either docopt_oneormore docopt_optional \
   docopt_required docopt_command docopt_switch docopt_value docopt_parse_long \
-  docopt_parse_shorts docopt_node_root docopt_do_teardown
+  docopt_parse_shorts docopt_do_teardown
 }
 
 docopt_either() {
@@ -305,7 +306,7 @@ docopt_parse() {
     fi
   fi
 
-  docopt_argv=("$@")
+  local root_idx=$1
   docopt_parsed_params=()
   docopt_parsed_values=()
   docopt_left=()
@@ -361,7 +362,7 @@ docopt_parse() {
     ((i++))
   done
 
-  if ! docopt_required root || [ ${#docopt_left[@]} -gt 0 ]; then
+  if ! docopt_required "$root_idx" || [ ${#docopt_left[@]} -gt 0 ]; then
     docopt_error
   fi
   return 0

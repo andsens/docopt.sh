@@ -13,25 +13,16 @@ class DocAst(object):
     param_sort_order = [Option, Argument, Command]
     unique_params = list(OrderedDict.fromkeys(root.flat(*param_sort_order)))
     sorted_params = sorted(unique_params, key=lambda p: param_sort_order.index(type(p)))
+    # Enumerate leaf nodes first so that their function index & index in the params array match
     for idx, param in enumerate(sorted_params):
       node_map[param] = LeafNode(param, idx, name_prefix)
     offset = len(node_map)
     for idx, pattern in enumerate(iter(root)):
       if isinstance(pattern, BranchPattern):
         node_map[pattern] = BranchNode(pattern, offset + idx, node_map)
-    node_map[root].name = 'docopt_node_root'
 
     self.root_node = node_map[root]
-    self.node_map = node_map
-
-  @property
-  def nodes(self):
-    return self.node_map.values()
-
-  @property
-  def leaf_nodes(self):
-    from .node import LeafNode
-    return [node for node in self.nodes if type(node) is LeafNode]
+    self.nodes = node_map.values()
 
 
 def parse_doc(doc):

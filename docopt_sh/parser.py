@@ -6,7 +6,8 @@ import shlex
 from collections import OrderedDict
 from . import __version__, DocoptError
 from .doc_ast import DocAst, Option
-from .bash import Code, HelperTemplate, Helper, indent, bash_variable_value, bash_ifs_value, minify
+from .bash import Code, indent, bash_ifs_value, minify
+from .node import LeafNode
 
 log = logging.getLogger(__name__)
 
@@ -25,9 +26,8 @@ class Parser(object):
     if not self.parameters.library_path:
       generated = generated + self.generate_library()
     if self.parameters.minify:
-      return generated.minify(self.parameters.max_line_length)
-    else:
-      return str(generated)
+      generated = generated.minify(self.parameters.max_line_length)
+    return str(generated)
 
   def generate_main(self, script):
     if self.parameters.library_path:
@@ -48,18 +48,9 @@ class Parser(object):
       length=str(usage_end - usage_start),
     )
 
-    option_nodes = [o for o in doc_ast.leaf_nodes if o.type is Option]
-    defaults = []
-    for node in doc_ast.leaf_nodes:
-      if type(node.default_value) is list:
-        tpl = "[[ -z ${{{docopt_name}+x}} ]] && {name}={default} || {name}=(\"${{{docopt_name}[@]}}\")"
-      else:
-        tpl = "{name}=${{{docopt_name}:-{default}}}"
-      defaults.append(tpl.format(
-        name=node.variable_name,
-        docopt_name='docopt_var_' + node.variable_name,
-        default=bash_variable_value(node.default_value)
-      ))
+    leaf_nodes = [n for n in doc_ast.nodes if type(n) is LeafNode]
+    option_nodes = [node for node in leaf_nodes if type(node.pattern) is Option]
+
     replacements = {
       '"LIBRARY SOURCE"': library_source,
       '"DOC VALUE"': stripped_doc,
@@ -68,27 +59,22 @@ class Parser(object):
       '"SHORTS"': ' '.join([bash_ifs_value(o.pattern.short) for o in option_nodes]),
       '"LONGS"': ' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
       '"ARGCOUNT"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
-      '"PARAM NAMES"': ' '.join([node.variable_name for node in doc_ast.leaf_nodes]),
+      '"PARAM NAMES"': ' '.join([node.variable_name for node in leaf_nodes]),
       '  "NODES"': indent('\n'.join(map(str, list(doc_ast.nodes)))),
-      '  "DEFAULTS"': indent('\n'.join(defaults)),
-      '"MAX NODE IDX"': str(max([n.idx for n in doc_ast.nodes if n is not doc_ast.root_node])),
+      '  "DEFAULTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes])),
+      '"MAX NODE IDX"': max([n.idx for n in doc_ast.nodes]),
+      '"ROOT NODE IDX"': doc_ast.root_node.idx,
     }
-    return self.library.main.render(replacements)
+    return self.library.main.replace(replacements)
 
-  def generate_library(self, check_version=False):
-    functions = OrderedDict([])
-    replacements = {
-      'lib_version_check': {
-        '"VERSION"': __version__,
-      }
-    }
-    for name, tpl in self.library.functions.items():
-      functions[name] = tpl.render(replacements.get(name, {}))
-    if check_version:
-      functions['lib_version_check'] = Code(functions['lib_version_check'].body)
+  def generate_library(self, add_version_check=False):
+    functions = self.library.functions
+    if add_version_check:
+      functions['lib_version_check'] = functions['lib_version_check'].replace(
+        {'"LIBRARY VERSION"': __version__})
     else:
       del functions['lib_version_check']
-    return Code(functions)
+    return Code(functions.values())
 
 
 class Library(object):
@@ -104,11 +90,12 @@ class Library(object):
     with open(os.path.join(os.path.dirname(__file__), 'docopt.sh'), 'r') as handle:
       for match in function_re.finditer(handle.read()):
         name = match.group('name')
-        body = match.group('body')
         if name == 'docopt':
-          self.main = HelperTemplate(name, body)
+          self.main = Code(match.group(0))
+        elif name == 'lib_version_check':
+          self.functions[name] = Code(match.group('body'))
         else:
-          self.functions[name] = HelperTemplate(name, body)
+          self.functions[name] = Code(match.group(0))
 
 
 class ParserParameter(object):

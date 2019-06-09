@@ -46,7 +46,7 @@ Parameters:
 def docopt_sh(params):
   if params['generate-library']:
     parser = Parser(params)
-    sys.stdout.write('#!/usr/bin/env bash\n\n' + str(parser.generate_library(check_version=True)))
+    sys.stdout.write('#!/usr/bin/env bash\n\n' + str(parser.generate_library(add_version_check=True)))
   else:
     try:
       if params['SCRIPT'] is None:
