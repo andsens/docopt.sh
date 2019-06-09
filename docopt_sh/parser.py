@@ -128,7 +128,7 @@ class ParserParameter(object):
     self.script_value = script_value if defined_in_script else default
     self.merged_from_script = not defined_in_invocation and auto_params and defined_in_script
     self.value = self.script_value if self.merged_from_script else self.invocation_value
-    self.script_value_overridden = defined_in_script and self.value != self.script_value
+    self.changed = script_params is not None and self.value != self.script_value
 
   def __str__(self):
     return '%s=%s' % (self.name, shlex.quote(self.value))
@@ -153,7 +153,7 @@ class ParserParameters(object):
     params['--line-length'] = ParserParameter('--line-length', invocation_params, script_params, default='80')
     params['--library'] = ParserParameter('--library', invocation_params, script_params, default=None)
 
-    if params['--prefix'].script_value_overridden:
+    if params['--prefix'].changed:
       log.warning(
         'The parameter variable prefix is changing from `%s` to `%s`, '
         'make sure to check the variable names used in your script.',
@@ -162,7 +162,7 @@ class ParserParameters(object):
     merged_from_script = list(filter(lambda p: p.merged_from_script, params.values()))
     if merged_from_script:
       log.info(
-        'Adding `%s` from parser generation parameters detected in the script. '
+        'Adding `%s` from parser generation parameters that were detected in the script. '
         'Use --no-auto-params to disable this behavior.',
         ' '.join(map(str, merged_from_script))
       )
