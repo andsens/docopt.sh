@@ -23,19 +23,34 @@ class Script(object):
 
   def validate(self):
     if not self.doc.present:
-      raise DocoptScriptValidationError('Could not find variable containing usage doc.', self.doc)
+      raise DocoptScriptValidationError(
+        'Could not find variable containing usage doc. '
+        'Make sure your script contains a `DOC="... Usage: ..."` variable',
+        self.doc
+      )
     if self.doc.count > 1:
-      raise DocoptScriptValidationError('More than one variable containing usage doc found.', self.doc)
+      raise DocoptScriptValidationError(
+        'More than one variable containing usage doc found. '
+        'Search your script for `DOC=`, there should be only one such declaration.',
+        self.doc
+      )
+    guard_help = (
+        'Search your script for `# docopt parser below/above`, '
+        'there should be exactly one with `below` and one with `above` (in that order). '
+        'If in doubt, just delete anything that is not your code and try again.'
+    )
     if self.guards.top.count > 1:
-      raise DocoptScriptValidationError('Multiple docopt parser start guards found.', self.guards.top)
+      raise DocoptScriptValidationError(
+        'Multiple docopt parser top guards found. ' + guard_help, self.guards.top)
     if self.guards.bottom.count > 1:
-      raise DocoptScriptValidationError('Multiple docopt parser end guards found.', self.guards.bottom)
+      raise DocoptScriptValidationError(
+        'Multiple docopt parser bottom guards found.' + guard_help, self.guards.bottom)
     if self.guards.top.present and not self.guards.bottom.present:
         raise DocoptScriptValidationError(
-          'Parser begin guard found, but no end guard detected.', self.guards.top)
+          'Parser top guard found, but no bottom guard detected. ' + guard_help, self.guards.top)
     if self.guards.bottom.present and not self.guards.top.present:
       raise DocoptScriptValidationError(
-        'Parser end guard found, but no begin guard detected.', self.guards.bottom)
+        'Parser bottom guard found, but no top guard detected. ' + guard_help, self.guards.bottom)
     if self.invocation.count > 1:
       log.warning(
         '%s Multiple invocations of docopt found, check your script to make sure this is correct.',
@@ -115,7 +130,10 @@ class Doc(ScriptLocation):
     )
     super(Doc, self).__init__(script, matches, 0)
     self.value = self.match.group(2) if self.present else None
-    self.stripped_value_boundaries = self.match.start(2) - self.match.start(1), self.match.end(2) - self.match.start(1)
+    self.stripped_value_boundaries = (
+      self.match.start(2) - self.match.start(1),
+      self.match.end(2) - self.match.start(1)
+    ) if self.present else None
 
 
 class Guard(ScriptLocation):

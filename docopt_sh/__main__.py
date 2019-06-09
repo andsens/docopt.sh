@@ -56,7 +56,10 @@ def docopt_sh(params):
     try:
       if params['SCRIPT'] is None:
         if sys.stdin.isatty():
-          raise docopt.DocoptExit('Not reading from stdin when it is a tty.')
+          raise docopt.DocoptExit(
+            'Not reading from stdin when it is a tty. '
+            'Use either `docopt.sh script.sh` or `docopt.sh < script.sh`.'
+          )
         script = Script(sys.stdin.read())
       else:
         with open(params['SCRIPT'], 'r') as h:
