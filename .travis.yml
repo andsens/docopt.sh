@@ -1,5 +1,9 @@
 language: python
 
+cache:
+  directories:
+  - tests/bash-versions
+
 addons:
   apt:
     packages:
@@ -11,7 +15,7 @@ before_script:
 script:
 - bash --version
 - python3 --version
-- pytest
+- pytest --bash-version 3.2,4.0,4.1,4.2,4.3,4.4
 
 notifications:
   email:

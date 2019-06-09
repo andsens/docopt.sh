@@ -7,6 +7,10 @@ docopt.sh
 ``docopt.sh`` is a bash argument parser generator.
 Given a script it finds the ``docopt`` help text, parses it, generates a
 matching parser in bash, and then inserts it back into the original script.
+The resulting script is completely dependencyless (save for bash itself)
+and can be shipped without any additional files.
+
+The parser is compatible with bash 3.2 and upwards.
 
 Installation
 ------------
