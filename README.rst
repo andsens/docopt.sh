@@ -22,7 +22,7 @@ Install ``docopt.sh`` using pip:
 Quick example
 -------------
 
-Here is an abbreviated version of [Naval Fate](http://try.docopt.org/).
+Here is an abbreviated version of `Naval Fate <http://try.docopt.org/>`_.
 
 .. code-block:: sh
 
