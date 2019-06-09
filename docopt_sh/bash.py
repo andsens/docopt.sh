@@ -92,11 +92,7 @@ def indent(script, level=1):
 
 
 def bash_variable_name(name, prefix=''):
-  name = name.replace('<', '_')
-  name = name.replace('>', '_')
-  name = name.replace('-', '_')
-  name = name.replace(' ', '_')
-  return prefix + name
+  return prefix + re.sub(r'^[^a-z_]|[^a-z0-9_]', '_', name, 0, re.IGNORECASE)
 
 
 def bash_variable_value(value):
