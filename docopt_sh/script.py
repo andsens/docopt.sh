@@ -80,39 +80,21 @@ class ScriptLocation(object):
     self.matches = list(matches)
     self.match = self.matches[0] if self.matches else None
     self.offset = 0 if offset is None else offset
+    self.present = self.match is not None
+    self.count = len(self.matches)
+    self.start = self.match.start(0) + self.offset if self.present else None
+    self.end = self.match.end(0) + self.offset if self.present else None
+    self.line = self.script.contents[:self.start].count('\n') + 1
+    self.all = [self] + [ScriptLocation(self.script, iter([match]), self.offset) for match in self.matches[1:]]
+    if self.count == 0:
+      self.last = None
+    elif self.count == 1:
+      self.last = self
+    else:
+      self.last = ScriptLocation(self.script, iter([self.matches[-1]]), self.offset)
 
   def __len__(self):
     return self.end - self.start if self.present else 0
-
-  @property
-  def all(self):
-    return [ScriptLocation(self.script, iter([match]), self.offset) for match in self.matches]
-
-  @property
-  def last(self):
-    return ScriptLocation(self.script, iter([self.matches[-1]]), self.offset)
-
-  @property
-  def present(self):
-    return self.match is not None
-
-  @property
-  def count(self):
-    return len(self.matches)
-
-  @property
-  def start(self):
-    if self.present:
-      return self.match.start(0) + self.offset
-
-  @property
-  def end(self):
-    if self.present:
-      return self.match.end(0) + self.offset
-
-  @property
-  def line(self):
-    return self.script.contents[:self.start].count('\n') + 1
 
   def __str__(self):
     if not self.present:
@@ -132,37 +114,21 @@ class Doc(ScriptLocation):
       re.MULTILINE | re.IGNORECASE | re.DOTALL
     )
     super(Doc, self).__init__(script, matches, 0)
-
-  @property
-  def name(self):
-    if self.present:
-      return self.match.group(1)
-
-  @property
-  def value(self):
-    if self.present:
-      return self.match.group(3)
-
-  @property
-  def in_string_value_match(self):
-    return self.match.start(3) - self.match.start(2), self.match.end(3) - self.match.end(2)
+    self.name = self.match.group(1) if self.present else None
+    self.value = self.match.group(3) if self.present else None
+    self.value_boundaries = self.match.start(3) - self.match.start(2), self.match.end(3) - self.match.end(2)
 
 
 class Guard(ScriptLocation):
 
-  @property
-  def refresh_command(self):
-    if self.present:
-      return self.match.group(2)
-    else:
-      return None
-
-  @property
-  def refresh_command_params(self):
+  def __init__(self, script, matches, offset):
+    super(Guard, self).__init__(script, matches, offset)
+    self.refresh_command = self.match.group(2) if self.present else None
+    self.refresh_command_params = None
     if self.refresh_command is not None:
       from .__main__ import __doc__
       try:
-        return docopt.docopt(__doc__, shlex.split(self.refresh_command)[1:])
+        self.refresh_command_params = docopt.docopt(__doc__, shlex.split(self.refresh_command)[1:])
       except (docopt.DocoptLanguageError, docopt.DocoptExit):
         pass
 
@@ -197,35 +163,16 @@ class Guards(object):
       self.bottom = BottomGuard(script, self.top)
     else:
       self.bottom = BottomGuard(script, doc)
+    self.present = self.top.present and self.bottom.present
+    # The top.offset is to easily handle the absence of a parser
+    self.start = self.top.start if self.present else self.top.offset
+    self.end = self.bottom.end if self.present else self.top.offset
+    self.refresh_command_params = self.top.refresh_command_params
+    if self.refresh_command_params is None:
+      self.refresh_command_params = self.bottom.refresh_command_params
 
   def __len__(self):
     return self.end - self.start if self.present else 0
-
-  @property
-  def present(self):
-    return self.top.present and self.bottom.present
-
-  @property
-  def start(self):
-    if self.present:
-      return self.top.start
-    else:
-      # Convenience location to easily handle none-presence of parser
-      return self.top.offset
-
-  @property
-  def end(self):
-    if self.present:
-      return self.bottom.end
-    else:
-      return self.top.offset
-
-  @property
-  def refresh_command_params(self):
-    params = self.top.refresh_command_params
-    if params is None:
-      params = self.bottom.refresh_command_params
-    return params
 
 
 class Invocation(ScriptLocation):

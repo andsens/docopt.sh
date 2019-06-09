@@ -34,7 +34,7 @@ class Parser(object):
       library_source = 'source %s \'%s\'' % (self.parameters.library_path, __version__)
     else:
       library_source = ''
-    doc_value_start, doc_value_end = script.doc.in_string_value_match
+    doc_value_start, doc_value_end = script.doc.value_boundaries
     doc_name = '${{{docname}:{start}:{end}}}'.format(
       docname=script.doc.name,
       start=doc_value_start,
