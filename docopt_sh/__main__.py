@@ -12,8 +12,8 @@ log = logging.getLogger(root_name)
 
 __doc__ = pkg_doc + """
 Usage:
-  docopt.sh generate-library
   docopt.sh [options] [SCRIPT]
+  docopt.sh generate-library
 
 Options:
   --line-length N    Max line length when minifying (0 to disable, default: 80)
@@ -21,17 +21,15 @@ Options:
                      the static parts using `source SRC`, use `generate-library`
                      to create that file
   --no-auto-params   Disable auto-detection parser generation parameters
-  --parser           Output parser instead of inserting it in the script
-  -h --help          This help message
-  --version          Version of this program
+  --parser           Output the parser instead of inserting it in the script
 
 Note:
   You can pass the script on stdin as well,
   docopt.sh will then output the modified script to stdout.
 
 Parameters:
-  You can set the following global variables before invoking docopt with
-  `docopt "$@"` to change the behavior of docopt.
+  You can set the global variables before invoking docopt with `docopt "$@"`
+  to change the behavior of the parser. Consult the readme for advanced options.
 
   $DOCOPT_PROGRAM_VERSION  The string to print when --version is specified
                            [default: none/disabled]
@@ -43,7 +41,9 @@ Parameters:
 
 
 def docopt_sh(params):
-  if params['generate-library']:
+  # `generate-library` will never be true because it is specified after [SCRIPT]
+  # which matches it first. We want it in that order though, but there's a simple workaround:
+  if params['SCRIPT'] == 'generate-library':
     parser = Parser(params)
     sys.stdout.write('#!/usr/bin/env bash\n\n' + str(parser.generate_library(add_version_check=True)))
   else:
