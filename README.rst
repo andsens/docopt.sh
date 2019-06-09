@@ -93,7 +93,7 @@ The file will now look like this:
     $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
     exit 0
 
-To try it our we run `naval_fate.sh`
+To try it out we run ``naval_fate.sh``
 
 .. code-block::
 
@@ -105,8 +105,8 @@ Refreshing the parser
 ---------------------
 
 ``docopt.sh`` embeds a hash of the help text into the parser to ensure that the
-two always match. In order to update the parser simply run ``docopt.sh`` again,
-the existing parser will be replaced with a new one.
+two always match. In order to update the parser, simply run ``docopt.sh`` again.
+The existing parser will be replaced with a new one.
 If the parser was generated with any particular options, these options will be
 re-applied unless instructed otherwise with ``--no-auto-params``
 (``docopt.sh`` also embeds the command line options it was used with).
@@ -120,7 +120,7 @@ re-applied unless instructed otherwise with ``--no-auto-params``
     in the script. Use --no-auto-params to disable this behavior.
     The parser in naval_fate.sh is already up-to-date.
 
-Not that once you have generated the parser, you can move the codeblock to
+Note that once you have generated the parser, you can move the codeblock to
 any other place in your script. The generator will automatically find the code
 and replace it in-place.
 
@@ -129,13 +129,43 @@ Parser output
 
 Names of arguments, commands, and options are mapped by replacing everything
 that is not an alphanumeric character or an underscore with an underscore.
-This means ``--speed`` becomes ``$__speed`` and ``<name>`` becomes ``_name_``,
-while ``NAME`` stays as ``$NAME`` and ``set`` stays as ``$set``.
+This means ``--speed`` becomes ``$__speed``, ``-f`` becomes ``$_f``, and
+``<name>`` becomes ``_name_``, while ``NAME`` stays as ``$NAME`` and
+``set`` stays as ``$set``.
 
-Any valueless parameter (commands & options without values) get the values
-``true`` or ``false``. Parameters with values get the values as strings.
-If a command, argument, or an option can be specified more than once, the value
-will be an array of strings.
+Commands and switches (options without arguments) become ``true`` or ``false``.
+If a command or switch can be specified more than once, the value will be an
+integer that has been incremented the number of times the parameter was
+specified.
+
+Arguments and options with values get the values as strings.
+If an argument or option with a value can be specified more that once,
+the value will be an array of strings.
+
+To clarify, given this doc and invocation:
+
+.. code-block::
+
+    Usage:
+      program -v... -s --val=VAL multicmd... command ARG ARGS...
+
+    $ program -vvv -s --val XY multicmd multicmd command A 1 2 3
+
+The variables and their values will be:
+
+.. code-block::
+
+    _v=3 # -vvv
+    _s=true # -s
+    __val=XY # --val XY
+    __val=true # --val
+    multicmd=2 # multicmd multicmd
+    command=true # command
+    ARG=A # A
+    ARGS=(1 2 3) # 1 2 3
+
+You can use ``$DOCOPT_PREFIX`` to change the above output by prefixing the
+variable names. See `parser options`_ for more details.
 
 Commandline options
 -------------------
@@ -165,6 +195,9 @@ The commandline options are:
 
 Parser options
 --------------
+
+Parser options change the behavior of the parser in various ways. They all have
+in common that they must be specified *before* invoking ``docopt "$@"``.
 
 +-----------------------------+---------------------------------------------+
 |           Option            |                 Description                 |
