@@ -10,7 +10,18 @@ matching parser in bash, and then inserts it back into the original script.
 The resulting script is completely dependencyless (save for bash itself)
 and can be shipped without any additional files.
 
-The parser is compatible with bash 3.2 and upwards.
+The parser is compatible with bash 3.2+.
+
+* `Installation`_
+* `Quick example`_
+* `Refreshing the parser`_
+* `Parser output`_
+* `Commandline options`_
+* `Parser options`_
+* `Exiting with a usage message`_
+* `Library mode`_
+* `Testing`_
+
 
 Installation
 ------------
@@ -113,6 +124,19 @@ Not that once you have generated the parser, you can move the codeblock to
 any other place in your script. The generator will automatically find the code
 and replace it in-place.
 
+Parser output
+-------------
+
+Names of arguments, commands, and options are mapped by replacing everything
+that is not an alphanumeric character or an underscore with an underscore.
+This means ``--speed`` becomes ``$__speed`` and ``<name>`` becomes ``_name_``,
+while ``NAME`` stays as ``$NAME`` and ``set`` stays as ``$set``.
+
+Any valueless parameter (commands & options without values) get the values
+``true`` or ``false``. Parameters with values get the values as strings.
+If a command, argument, or an option can be specified more than once, the value
+will be an array of strings.
+
 Commandline options
 -------------------
 
@@ -172,21 +196,6 @@ Parser options
 |                             | See `Library mode`_ for more details.       |
 +-----------------------------+---------------------------------------------+
 
-
-Parser output
--------------
-
-Names of arguments, commands, and options are mapped by replacing everything
-that is not an alphanumeric character or an underscore with an underscore.
-This means ``--speed`` becomes ``$__speed`` and ``<name>`` becomes ``_name_``,
-while ``NAME`` stays as ``$NAME`` and ``set`` stays as ``$set``.
-
-Any valueless parameter (commands & options without values) get the values
-``true`` or ``false``. Parameters with values get the values as strings.
-If a command, argument, or an option can be specified more than once, the value
-will be an array of strings.
-
-
 Exiting with a usage message
 ----------------------------
 
@@ -194,7 +203,6 @@ Oftentimes additional verification of parameters is necessary (e.g. when an
 option value is an enum). In those cases you can use ``docopt_error "message"``
 in order to output a message for the user, followed by the short usage help
 (i.e. without extended options), followed by ``exit 1``.
-
 
 Library mode
 ------------
@@ -212,6 +220,9 @@ parser into your script with ``docopt.sh --library DEST SCRIPT``. The generator
 will then automatically add a `source DEST` to the parser. Make sure to quote
 your library path if it contains spaces like so
 ``docopt.sh --library '"/path with spaces/docopt-lib.sh"'``.
+Once that is done, you do not need to specify ``--library`` on subsequent
+refreshes of the parser, ``docopt.sh`` will automatically glean the previously
+used parameters from your script and re-apply them.
 
 Note that ``--library`` can be any valid bash expression, meaning you can use
 things like ``"$(dirname "$0")"``.
@@ -222,3 +233,16 @@ parser exits with an error.
 
 Testing
 -------
+
+``docopt.sh`` uses pytest_ for testing. You can run the testsuite by running
+``pytest``.
+
+All usecases_ from the original docopt are used to validate correctness.
+Per default pytest uses the bash version that is installed on the system to
+run the tests. However, you can specify multiple alternate versions using
+``--bash-version <versions>``, where ``<versions>`` is a comma-separated list
+of bash version of the form ``3.2,4.0,4.1`` etc..
+
+
+.. _pytest: https://pytest.org/
+.. _usecases: https://github.com/andsens/docopt.sh/blob/c254d766a8eda8537bd5438b6ff22e005de4b586/tests/usecases.txt
