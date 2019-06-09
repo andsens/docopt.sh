@@ -16,7 +16,6 @@ Usage:
   docopt.sh [options] [SCRIPT]
 
 Options:
-  --prefix PREFIX    Parameter variable name prefix (default: "")
   --line-length N    Max line length when minifying (0 to disable, default: 80)
   --library -l SRC   Generates only the dynamic part of the parser and includes
                      the static parts using `source SRC`, use `generate-library`

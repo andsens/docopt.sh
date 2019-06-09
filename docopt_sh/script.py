@@ -17,8 +17,8 @@ class Script(object):
     self.guards = Guards(self, self.doc)
     self.invocation = Invocation(self, self.guards)
     self.options = [Option(self, name) for name in [
-      'DOCOPT_PROGRAM_VERSION', 'DOCOPT_ADD_HELP', 'DOCOPT_OPTIONS_FIRST',
-      'DOCOPT_TEARDOWN', 'DOCOPT_DOC_CHECK', 'DOCOPT_LIB_CHECK'
+      'DOCOPT_ADD_HELP', 'DOCOPT_PROGRAM_VERSION', 'DOCOPT_OPTIONS_FIRST',
+      'DOCOPT_PREFIX', 'DOCOPT_TEARDOWN', 'DOCOPT_DOC_CHECK', 'DOCOPT_LIB_CHECK'
     ]]
 
   def validate(self):
@@ -146,7 +146,7 @@ class TopGuard(ScriptLocation):
 
   def __init__(self, script, doc):
     matches = re.finditer(
-      r'# docopt parser below, refresh this parser with `([^`]+)`\n',
+      r'# docopt parser below(, refresh this parser with `([^`]+)`)?.*\n',
       script.contents[doc.end:],
       re.MULTILINE
     )
@@ -157,18 +157,17 @@ class BottomGuard(ScriptLocation):
 
   def __init__(self, script, top):
     matches = re.finditer(
-      r'# docopt parser above, complete command for generating this parser is `([^`]+)`\n',
+      r'# docopt parser above(, complete command for generating this parser is `([^`]+)`)?.*\n',
       script.contents[top.end:],
       re.MULTILINE
     )
     super(BottomGuard, self).__init__(script, matches, top.end)
-    self.refresh_command = self.match.group(1) if self.present else None
     self.refresh_command_params = None
-    if self.refresh_command is not None:
+    if self.present and self.match.group(2) is not None:
       from .__main__ import __doc__
       try:
-        self.refresh_command_params = docopt.docopt(__doc__, shlex.split(self.refresh_command)[1:])
-      except (docopt.DocoptLanguageError, docopt.DocoptExit):
+        self.refresh_command_params = docopt.docopt(__doc__, shlex.split(self.match.group(2))[1:])
+      except (docopt.DocoptLanguageError, docopt.DocoptExit) as e:
         pass
 
 
@@ -205,7 +204,7 @@ class Option(ScriptLocation):
     if self.count > 1:
       # Override parent class selection of first match, previous assignments
       # would be overwritten so it's the last match that has an effect
-      self.match = matches[-1]
+      self.match = self.matches[-1]
 
 
 class DocoptScriptValidationError(DocoptError):

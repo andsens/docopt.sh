@@ -12,6 +12,7 @@ docopt() {
   docopt_argv=("$@")
   "NODES"
   docopt_parse "ROOT NODE IDX"
+  local docopt_prefix=${DOCOPT_PREFIX:-''}
   "DEFAULTS"
   ${DOCOPT_TEARDOWN:-true} && docopt_do_teardown "MAX NODE IDX"
 }
@@ -300,7 +301,8 @@ docopt_parse() {
     local doc_hash
     doc_hash=$(printf "%s" "$docopt_doc" | shasum -a 256)
     if [[ ${doc_hash:0:5} != "$docopt_digest" ]]; then
-      printf "The current usage doc (%s) does not match what the parser was generated with (%s)\n" \
+      printf "The current usage doc (%s) does not match what the parser was \
+generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \
         "${doc_hash:0:5}" "$docopt_digest" >&2
       exit 70
     fi

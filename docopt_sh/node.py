@@ -36,7 +36,7 @@ class BranchNode(Node):
 
 class LeafNode(Node):
 
-  def __init__(self, pattern, idx, name_prefix):
+  def __init__(self, pattern, idx):
     default_value = pattern.value
     if type(pattern) is Option:
       helper_name = 'docopt_switch' if type(default_value) in [bool, int] else 'docopt_value'
@@ -47,13 +47,9 @@ class LeafNode(Node):
     else:
       helper_name = 'docopt_value'
       needle = 'a'
-    self.variable_name = bash_variable_name(pattern.name, name_prefix)
-    args = [self.variable_name, bash_ifs_value(needle)]
+    self.variable_name = bash_variable_name(pattern.name)
 
-    if type(default_value) is list:
-      default_tpl = "[[ -z ${{{docopt_name}+x}} ]] && {name}={default} || {name}=(\"${{{docopt_name}[@]}}\")"
-    else:
-      default_tpl = "{name}=${{{docopt_name}:-{default}}}"
+    args = [self.variable_name, bash_ifs_value(needle)]
     if type(default_value) in [list, int]:
       args.append(bash_ifs_value(True))
     elif helper_name == 'docopt_command' and args[0] == args[1]:
@@ -62,6 +58,14 @@ class LeafNode(Node):
       helper=helper_name,
       args=' '.join(args),
     )
+
+    if type(default_value) is list:
+      default_tpl = (
+        '[[ -z ${{{docopt_name}+x}} ]] && eval "${{docopt_prefix}}"\'{name}={default}\' '
+        '|| eval "${{docopt_prefix}}"\'{name}=("${{{docopt_name}[@]}}")\''
+      )
+    else:
+      default_tpl = 'eval "${{docopt_prefix}}"\'{name}=${{{docopt_name}:-{default}}}\''
     self.default_assignment = default_tpl.format(
       name=self.variable_name,
       docopt_name='docopt_var_' + self.variable_name,

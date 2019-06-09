@@ -100,14 +100,13 @@ def test_no_teardown(monkeypatch, capsys, bash):
 
 def test_prefix(monkeypatch, capsys, bash):
   with patched_script(
-    monkeypatch, capsys, 'output_internals.sh',
-    program_params=['--prefix', 'docopt_'],
-    docopt_params={'DOCOPT_TEARDOWN': False},
+    monkeypatch, capsys, 'prefixed_echo.sh',
+    docopt_params={'DOCOPT_PREFIX': 'prefix_', 'DOCOPT_TEARDOWN': False},
     bash=bash
   ) as run:
-    code, out, err = run('ship', 'Titanic', 'move', '1', '--speed', '6', '4')
+    code, out, err = run('ship', 'new', 'Titanic')
     assert code == 0
-    assert 'docopt_shoot' in out
+    assert out == 'Titanic\n'
 
 
 def test_patch_file(monkeypatch, bash):
@@ -126,7 +125,10 @@ def test_doc_check(monkeypatch, bash):
     with open(script.name, 'w') as h:
       h.write(contents)
     code, out, err = run('ship', 'new', 'Olympia')
-    regex = r'^The current usage doc \([^)]+\) does not match what the parser was generated with \([^)]+\)\n$'
+    regex = (
+      r'^The current usage doc \([^)]+\) does not match what the parser was '
+      r'generated with \([^)]+\)\nRun `docopt.sh` to refresh the parser.\n$'
+    )
     assert re.match(regex, err) is not None
 
 
@@ -204,16 +206,15 @@ def test_library_version(monkeypatch, capsys, bash):
 
 
 def test_auto_params(monkeypatch, capsys, bash):
-  with temp_script(
-      'output_internals.sh',
-      docopt_params={'DOCOPT_TEARDOWN': False},
-      bash=bash
-  ) as (script, run):
-    out = invoke_docopt(monkeypatch, capsys=capsys, program_params=[script.name, '--prefix', 'xy'])
+  with temp_script('output_internals.sh', bash=bash) as (script, run):
+    out = invoke_docopt(monkeypatch, capsys=capsys, program_params=[script.name, '--line-length', '20'])
     code, out, err = run('ship', 'shoot', '3', '1')
     assert code == 0
-    assert 'xyshoot' in out.split('\n')[0].split(' ')
+    first_run = None
+    with open(script.name, 'r') as handle:
+      first_run = handle.read()
     invoke_docopt(monkeypatch, program_params=[script.name])
     code, out, err = run('ship', 'shoot', '3', '1')
     assert code == 0
-    assert 'xyshoot' in out.split('\n')[0].split(' ')
+    with open(script.name, 'r') as handle:
+      assert first_run == handle.read()

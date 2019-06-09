@@ -18,9 +18,6 @@ class Parser(object):
     self.parameters = parser_parameters
     self.library = Library()
 
-  def patched_script(self):
-    return self.script.insert_parser(str(self), self.parameters.refresh_command)
-
   def generate(self, script):
     generated = self.generate_main(script)
     if not self.parameters.library_path:
@@ -41,7 +38,7 @@ class Parser(object):
       length=doc_value_end - doc_value_start,
     )
 
-    doc_ast = DocAst(script.doc.value, self.parameters.name_prefix)
+    doc_ast = DocAst(script.doc.value)
     usage_start, usage_end = doc_ast.usage_match
     usage_doc = '${{DOC:{start}:{length}}}'.format(
       start=str(doc_value_start + usage_start),
@@ -136,16 +133,9 @@ class ParserParameters(object):
       script_params = None
 
     params = OrderedDict([])
-    params['--prefix'] = ParserParameter('--prefix', invocation_params, script_params, default='')
     params['--line-length'] = ParserParameter('--line-length', invocation_params, script_params, default='80')
     params['--library'] = ParserParameter('--library', invocation_params, script_params, default=None)
 
-    if params['--prefix'].changed:
-      log.warning(
-        'The parameter variable prefix is changing from `%s` to `%s`, '
-        'make sure to check the variable names used in your script.',
-        params['--prefix'].script_value, params['--prefix'].invocation_value
-      )
     merged_from_script = list(filter(lambda p: p.merged_from_script, params.values()))
     if merged_from_script:
       log.info(
@@ -154,15 +144,12 @@ class ParserParameters(object):
         ' '.join(map(str, merged_from_script))
       )
 
-    self.name_prefix = params['--prefix'].value
     self.max_line_length = int(params['--line-length'].value)
     self.library_path = params['--library'].value
     self.minify = self.max_line_length > 0
 
     command = ['docopt.sh']
     command_short = ['docopt.sh']
-    if params['--prefix'].defined:
-      command.append(str(params['--prefix']))
     if params['--line-length'].defined:
       command.append(str(params['--line-length']))
     if params['--library'].defined:

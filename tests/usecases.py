@@ -18,16 +18,16 @@ class DocoptUsecaseTestFile(pytest.File):
     raw = self.fspath.open().read()
     index = 1
     params = ParserParameters({
-      '--prefix': '_',
       '--line-length': None,
       '--library': None,
       '--no-auto-params': False,
     })
     program_template = '''
 DOC="{doc}"
+DOCOPT_PREFIX=_
 DOCOPT_TEARDOWN=false
 docopt "$@"
-for var in "${{docopt_param_names[@]}}"; do declare -p "$var"; done
+for var in "${{docopt_param_names[@]}}"; do declare -p "${{DOCOPT_PREFIX}}${{var}}"; done
 '''
     for name, doc, cases in self._parse_test(raw):
       name = self.fspath.purebasename
@@ -67,8 +67,8 @@ class DocoptUsecaseTest(pytest.Item):
     self.bash = bash
     if type(self.expect) is dict:
       self.expect = {
-        bash_variable_name(k, prefix='_'): bash_decl(
-          bash_variable_name(k, prefix='_'), v, bash_version=self.bash[0]
+        '_' + bash_variable_name(k): bash_decl(
+          '_' + bash_variable_name(k), v, bash_version=self.bash[0]
         )
         for k, v in self.expect.items()
       }
