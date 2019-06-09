@@ -109,6 +109,10 @@ re-applied unless instructed otherwise with ``--no-auto-params``
     in the script. Use --no-auto-params to disable this behavior.
     The parser in naval_fate.sh is already up-to-date.
 
+Not that once you have generated the parser, you can move the codeblock to
+any other place in your script. The generator will automatically find the code
+and replace it in-place.
+
 Commandline options
 -------------------
 
@@ -169,8 +173,18 @@ Parser options
 +-----------------------------+---------------------------------------------+
 
 
-Variable name mapping
----------------------
+Parser output
+-------------
+
+Names of arguments, commands, and options are mapped by replacing everything
+that is not an alphanumeric character or an underscore with an underscore.
+This means ``--speed`` becomes ``$__speed`` and ``<name>`` becomes ``_name_``,
+while ``NAME`` stays as ``$NAME`` and ``set`` stays as ``$set``.
+
+Any valueless parameter (commands & options without values) get the values
+``true`` or ``false``. Parameters with values get the values as strings.
+If a command, argument, or an option can be specified more than once, the value
+will be an array of strings.
 
 
 Exiting with a usage message
@@ -184,6 +198,27 @@ in order to output a message for the user, followed by the short usage help
 
 Library mode
 ------------
+
+Instead of inlining the entirety of the parser in your script, you can move the
+static parts to an external file and only insert the dynamic part into your
+script.
+
+To generate the library, run ``docopt.sh generate-library > DEST``.
+Note that the output is written to ``stdout``, so make sure to add that
+redirect.
+
+Once a library has been generated you can insert the dynamic part of your
+parser into your script with ``docopt.sh --library DEST SCRIPT``. The generator
+will then automatically add a `source DEST` to the parser. Make sure to quote
+your library path if it contains spaces like so
+``docopt.sh --library '"/path with spaces/docopt-lib.sh"'``.
+
+Note that ``--library`` can be any valid bash expression, meaning you can use
+things like ``"$(dirname "$0")"``.
+
+On every invocation ``docopt "$@"`` checks that the library version and the
+version of the dynamic part in the script match. If that is not the case, the
+parser exits with an error.
 
 Testing
 -------
