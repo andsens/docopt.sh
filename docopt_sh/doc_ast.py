@@ -5,7 +5,7 @@ from itertools import chain
 
 class DocAst(object):
 
-  def __init__(self, settings, doc):
+  def __init__(self, doc, name_prefix):
     from .node import BranchNode, LeafNode
     doc = doc
     root, self.usage_match = parse_doc(doc)
@@ -14,11 +14,11 @@ class DocAst(object):
     unique_params = list(OrderedDict.fromkeys(root.flat(*param_sort_order)))
     sorted_params = sorted(unique_params, key=lambda p: param_sort_order.index(type(p)))
     for idx, param in enumerate(sorted_params):
-      node_map[param] = LeafNode(settings, param, idx)
+      node_map[param] = LeafNode(param, idx, name_prefix)
     offset = len(node_map)
     for idx, pattern in enumerate(iter(root)):
       if isinstance(pattern, BranchPattern):
-        node_map[pattern] = BranchNode(settings, pattern, offset + idx, node_map)
+        node_map[pattern] = BranchNode(pattern, offset + idx, node_map)
     node_map[root].name = 'docopt_node_root'
 
     self.root_node = node_map[root]

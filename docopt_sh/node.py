@@ -12,8 +12,7 @@ helper_map = {
 
 class Node(Function):
 
-  def __init__(self, settings, pattern, idx):
-    self.settings = settings
+  def __init__(self, pattern, idx):
     self.type = type(pattern)
     self.idx = idx
     super(Node, self).__init__('docopt_node_' + str(idx))
@@ -21,8 +20,8 @@ class Node(Function):
 
 class BranchNode(Node):
 
-  def __init__(self, settings, pattern, idx, function_map):
-    super(BranchNode, self).__init__(settings, pattern, idx)
+  def __init__(self, pattern, idx, function_map):
+    super(BranchNode, self).__init__(pattern, idx)
     self.helper_name = helper_map[self.type]
     self.child_indexes = map(lambda child: function_map[child].idx, pattern.children)
 
@@ -35,8 +34,8 @@ class BranchNode(Node):
 
 class LeafNode(Node):
 
-  def __init__(self, settings, pattern, idx):
-    super(LeafNode, self).__init__(settings, pattern, idx)
+  def __init__(self, pattern, idx, name_prefix):
+    super(LeafNode, self).__init__(pattern, idx)
     self.default_value = pattern.value
     self.pattern = pattern
     if self.type is Option:
@@ -49,7 +48,7 @@ class LeafNode(Node):
       self.helper_name = 'docopt_value'
       self.needle = 'a'
     self.multiple = type(self.default_value) in [list, int]
-    self.variable_name = bash_variable_name(pattern.name, settings.name_prefix)
+    self.variable_name = bash_variable_name(pattern.name, name_prefix)
 
   @property
   def body(self):

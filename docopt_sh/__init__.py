@@ -6,3 +6,9 @@ docopt.sh - Bash argument parser generator.
 
 __all__ = ['docopt_sh']
 __version__ = '0.8.6'
+
+
+class DocoptError(Exception):
+  def __init__(self, message, exit_code=1):
+    self.message = message
+    self.exit_code = exit_code

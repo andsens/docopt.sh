@@ -4,7 +4,7 @@ import pytest
 import subprocess
 import shlex
 from docopt_sh.script import Script
-from docopt_sh.parser import Parser
+from docopt_sh.parser import ParserParameters, Parser
 from docopt_sh.bash import bash_variable_name
 from . import bash_eval_script, bash_decl
 
@@ -17,16 +17,12 @@ class DocoptUsecaseTestFile(pytest.File):
   def collect(self):
     raw = self.fspath.open().read()
     index = 1
-    params = {
-      'generate-library': False,
-      'SCRIPT': None,
+    params = ParserParameters({
       '--prefix': '_',
-      '--line-length': '0',
-      '--parser': False,
+      '--line-length': None,
       '--library': None,
-      '--help': False,
-      '--version': False,
-    }
+      '--no-auto-params': False,
+    })
     program_template = '''
 doc="{doc}"
 DOCOPT_TEARDOWN=false

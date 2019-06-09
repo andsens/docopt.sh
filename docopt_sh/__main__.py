@@ -2,11 +2,12 @@
 import sys
 import re
 import os
-from docopt import docopt, DocoptExit
-from . import __doc__ as pkg_doc, __version__
-from .script import Script, DocoptScriptValidationError
-from .parser import Parser, Library
+import copy
+import docopt
 import logging
+from . import __doc__ as pkg_doc, DocoptError, __version__
+from .parser import ParserParameters, Parser
+from .script import Script
 
 logging.basicConfig(
   level=logging.INFO,
@@ -20,12 +21,13 @@ Usage:
   docopt.sh [options] [SCRIPT]
 
 Options:
-  --prefix PREFIX    Parameter variable name prefix [default: ]
-  --line-length N    Max line length when minifying (0 to disable) [default: 80]
+  --prefix PREFIX    Parameter variable name prefix (default: "")
+  --line-length N    Max line length when minifying (0 to disable, default: 80)
+  --library -l SRC   Generates only the dynamic part of the parser and includes
+                     the static parts using `source SRC`, use `generate-library`
+                     to create that file
+  --no-auto-params   Disable auto-detection parser generation parameters
   --parser           Output parser instead of inserting it in the script
-  --library -l PATH  Generates only the dynamic part of the parser and includes
-                     the static parts from a file located at PATH,
-                     use `generate-library` to create that file.
   -h --help          This help message
   --version          Version of this program
 
@@ -54,13 +56,16 @@ def docopt_sh(params):
     try:
       if params['SCRIPT'] is None:
         if sys.stdin.isatty():
-          raise DocoptExit('Not reading from stdin when it is a tty')
+          raise docopt.DocoptExit('Not reading from stdin when it is a tty.')
         script = Script(sys.stdin.read())
       else:
         with open(params['SCRIPT'], 'r') as h:
           script = Script(h.read(), params['SCRIPT'])
-      script.validate_script_locations()
-      parser = Parser(params)
+      script.validate()
+
+      parser_parameters = ParserParameters(params, script)
+      parser = Parser(parser_parameters)
+
       if params['--parser']:
         sys.stdout.write(parser.generate(script))
       else:
@@ -71,17 +76,16 @@ def docopt_sh(params):
           with open(params['SCRIPT'], 'w') as h:
             h.write(str(patched_script))
           if patched_script == script:
-            log.warning('The parser in %s is already up-to-date', params['SCRIPT'])
+            log.warning('The parser in %s is already up-to-date.', params['SCRIPT'])
           else:
-            log.info('%s has been updated', params['SCRIPT'])
-    except DocoptScriptValidationError as e:
-      print(str(e))
-      # Exit code 74: input/output error (sysexits.h)
-      sys.exit(74)
+            log.info('%s has been updated.', params['SCRIPT'])
+    except DocoptError as e:
+      log.error(str(e))
+      sys.exit(e.exit_code)
 
 
 def main():
-  params = docopt(__doc__)
+  params = docopt.docopt(__doc__)
   docopt_sh(params)
 
 if __name__ == '__main__':
