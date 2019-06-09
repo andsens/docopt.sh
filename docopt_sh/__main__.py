@@ -1,19 +1,14 @@
 #!/usr/bin/env python3
 import sys
-import re
 import os
-import copy
 import docopt
 import logging
-from . import __doc__ as pkg_doc, DocoptError, __version__
+import termcolor
+from . import __doc__ as pkg_doc, __name__ as root_name, DocoptError, __version__
 from .parser import ParserParameters, Parser
 from .script import Script
 
-logging.basicConfig(
-  level=logging.INFO,
-  format='%(message)s'
-)
-log = logging.getLogger(__name__)
+log = logging.getLogger(root_name)
 
 __doc__ = pkg_doc + """
 Usage:
@@ -79,7 +74,7 @@ def docopt_sh(params):
           with open(params['SCRIPT'], 'w') as h:
             h.write(str(patched_script))
           if patched_script == script:
-            log.warning('The parser in %s is already up-to-date.', params['SCRIPT'])
+            log.info('The parser in %s is already up-to-date.', params['SCRIPT'])
           else:
             log.info('%s has been updated.', params['SCRIPT'])
     except DocoptError as e:
@@ -87,7 +82,27 @@ def docopt_sh(params):
       sys.exit(e.exit_code)
 
 
+def setup_logging():
+  level_colors = {
+    logging.ERROR: 'red',
+    logging.WARN: 'yellow',
+  }
+
+  class ColorFormatter(logging.Formatter):
+
+    def format(self, record):
+        record.msg = termcolor.colored(record.msg, level_colors.get(record.levelno, None))
+        return super(ColorFormatter, self).format(record)
+
+  stderr = logging.StreamHandler(sys.stderr)
+  if os.isatty(2):
+    stderr.setFormatter(ColorFormatter())
+  log.setLevel(level=logging.INFO)
+  log.addHandler(stderr)
+
+
 def main():
+  setup_logging()
   params = docopt.docopt(__doc__)
   docopt_sh(params)
 
