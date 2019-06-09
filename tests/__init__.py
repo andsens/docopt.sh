@@ -77,11 +77,11 @@ def temp_script(name, docopt_params={}, bash=None):
   try:
     file.write(script)
     file.close()
+    executable = 'bash' if bash is None else bash[1]
 
-    def run(args):
-      executable = 'bash' if bash is None else bash[1]
+    def run(*args):
       process = subprocess.run(
-        [executable, file.name] + args,
+        [executable, file.name] + list(args),
         stdout=subprocess.PIPE, stderr=subprocess.PIPE
       )
       return process.returncode, process.stdout.decode('utf-8'), process.stderr.decode('utf-8')
@@ -91,7 +91,7 @@ def temp_script(name, docopt_params={}, bash=None):
 
 
 @contextmanager
-def generated_library(monkeypatch, capsys=None, program_params=[]):
+def generated_library(monkeypatch, capsys, program_params=[]):
   file = NamedTemporaryFile(mode='w', delete=False)
   try:
     captured = invoke_docopt(monkeypatch, capsys, program_params=['generate-library'] + program_params)

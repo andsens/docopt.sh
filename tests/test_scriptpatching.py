@@ -36,7 +36,7 @@ def test_no_help(monkeypatch, capsys, bash):
 
 
 def test_version(monkeypatch, capsys, bash):
-  with patched_script(monkeypatch, capsys, 'echo_ship_name.sh') as run:
+  with patched_script(monkeypatch, capsys, 'echo_ship_name.sh', bash=bash) as run:
     code, out, err = run('--version')
     assert code == 0
     assert out == '0.1.5\n'
@@ -113,7 +113,7 @@ def test_prefix(monkeypatch, capsys, bash):
 def test_patch_file(monkeypatch, bash):
   with temp_script('echo_ship_name.sh', bash=bash) as (script, run):
     invoke_docopt(monkeypatch, program_params=[script.name])
-    code, out, err = run(['ship', 'new', 'Olympia'])
+    code, out, err = run('ship', 'new', 'Olympia')
     assert out == 'Olympia\n'
 
 
@@ -125,7 +125,7 @@ def test_doc_check(monkeypatch, bash):
     contents = contents.replace('ship new <name>', 'ship delete <name>')
     with open(script.name, 'w') as h:
       h.write(contents)
-    code, out, err = run(['ship', 'new', 'Olympia'])
+    code, out, err = run('ship', 'new', 'Olympia')
     regex = r'^The current usage doc \([^)]+\) does not match what the parser was generated with \([^)]+\)\n$'
     assert re.match(regex, err) is not None
 
@@ -138,7 +138,7 @@ def test_no_doc_check(monkeypatch, bash):
     contents = contents.replace('ship new <name>', 'ship delete <name>')
     with open(script.name, 'w') as h:
       h.write(contents)
-    code, out, err = run(['ship', 'new', 'Olympia'])
+    code, out, err = run('ship', 'new', 'Olympia')
     assert out == 'Olympia\n'
 
 
@@ -195,9 +195,25 @@ def test_library_version(monkeypatch, capsys, bash):
       contents = re.sub(r"source (\S+) '([^']+)'", r"source \1 '0.0.0'", contents)
       with open(script.name, 'w') as h:
         h.write(contents)
-      code, out, err = run(['ship', 'new', 'Olympia'])
+      code, out, err = run('ship', 'new', 'Olympia')
       regex = (
         r'^The version of the included docopt library \([^)]+\) does not '
         r'match the version of the invoking docopt parser \(0\.0\.0\)\n$'
       )
       assert re.match(regex, err) is not None
+
+
+def test_auto_params(monkeypatch, capsys, bash):
+  with temp_script(
+      'output_internals.sh',
+      docopt_params={'DOCOPT_TEARDOWN': False},
+      bash=bash
+  ) as (script, run):
+    out = invoke_docopt(monkeypatch, capsys=capsys, program_params=[script.name, '--prefix', 'xy'])
+    code, out, err = run('ship', 'shoot', '3', '1')
+    assert code == 0
+    assert 'xyshoot' in out.split('\n')[0].split(' ')
+    invoke_docopt(monkeypatch, program_params=[script.name])
+    code, out, err = run('ship', 'shoot', '3', '1')
+    assert code == 0
+    assert 'xyshoot' in out.split('\n')[0].split(' ')
