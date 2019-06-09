@@ -6,7 +6,7 @@ addons:
     - python3-pip
 
 before_script:
-- pip3 install docopt pytest\>=4.4.2 pytest-xdist pytest-pep8
+- pip3 install docopt termcolor pytest\>=4.4.2 pytest-xdist pytest-pep8
 
 script:
 - bash --version

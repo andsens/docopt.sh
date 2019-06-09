@@ -1,6 +1,9 @@
 docopt.sh
 =========
 
+.. image:: https://travis-ci.org/andsens/docopt.sh.png?branch=master
+    :target: https://travis-ci.org/andsens/docopt.sh
+
 ``docopt.sh`` is a bash argument parser generator.
 Given a script it finds the ``docopt`` help text, parses it, generates a
 matching parser in bash, and then inserts it back into the original script.
