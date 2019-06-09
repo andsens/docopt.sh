@@ -74,9 +74,13 @@ class Script(object):
     return Script(
       "{start}{guard_begin}\n{parser}{guard_end}\n{end}".format(
         start=self.contents[:self.guards.start],
-        guard_begin="# docopt parser below, refresh this parser with `%s`" % parser.parameters.refresh_command,
+        guard_begin=(
+          "# docopt parser below, refresh this parser with `%s`"
+          % parser.parameters.refresh_command_short),
         parser=parser.generate(self),
-        guard_end="# docopt parser above, refresh this parser with `%s`" % parser.parameters.refresh_command,
+        guard_end=(
+          "# docopt parser above, complete command for generating this parser is `%s`"
+          % parser.parameters.refresh_command),
         end=self.contents[self.guards.end:],
       )
     )
@@ -136,11 +140,27 @@ class Doc(ScriptLocation):
     ) if self.present else None
 
 
-class Guard(ScriptLocation):
+class TopGuard(ScriptLocation):
 
-  def __init__(self, script, matches, offset):
-    super(Guard, self).__init__(script, matches, offset)
-    self.refresh_command = self.match.group(2) if self.present else None
+  def __init__(self, script, doc):
+    matches = re.finditer(
+      r'# docopt parser below, refresh this parser with `([^`]+)`\n',
+      script.contents[doc.end:],
+      re.MULTILINE
+    )
+    super(TopGuard, self).__init__(script, matches, doc.end)
+
+
+class BottomGuard(ScriptLocation):
+
+  def __init__(self, script, top):
+    matches = re.finditer(
+      r'# docopt parser above, complete command for generating this parser is `([^`]+)`\n',
+      script.contents[top.end:],
+      re.MULTILINE
+    )
+    super(BottomGuard, self).__init__(script, matches, top.end)
+    self.refresh_command = self.match.group(1) if self.present else None
     self.refresh_command_params = None
     if self.refresh_command is not None:
       from .__main__ import __doc__
@@ -148,28 +168,6 @@ class Guard(ScriptLocation):
         self.refresh_command_params = docopt.docopt(__doc__, shlex.split(self.refresh_command)[1:])
       except (docopt.DocoptLanguageError, docopt.DocoptExit):
         pass
-
-
-class TopGuard(Guard):
-
-  def __init__(self, script, doc):
-    matches = re.finditer(
-      r'# docopt parser below(, refresh this parser with `([^`]+)`)?\n',
-      script.contents[doc.end:],
-      re.MULTILINE
-    )
-    super(TopGuard, self).__init__(script, matches, doc.end)
-
-
-class BottomGuard(Guard):
-
-  def __init__(self, script, top):
-    matches = re.finditer(
-      r'# docopt parser above(, refresh this parser with `([^`]+)`)?\n',
-      script.contents[top.end:],
-      re.MULTILINE
-    )
-    super(BottomGuard, self).__init__(script, matches, top.end)
 
 
 class Guards(object):
@@ -184,9 +182,6 @@ class Guards(object):
     # The top.offset is to easily handle the absence of a parser
     self.start = self.top.start if self.present else self.top.offset
     self.end = self.bottom.end if self.present else self.top.offset
-    self.refresh_command_params = self.top.refresh_command_params
-    if self.refresh_command_params is None:
-      self.refresh_command_params = self.bottom.refresh_command_params
 
   def __len__(self):
     return self.end - self.start if self.present else 0

@@ -138,7 +138,7 @@ class ParserParameters(object):
 
   def __init__(self, invocation_params, script=None):
     if script is not None:
-      script_params = script.guards.refresh_command_params
+      script_params = script.guards.bottom.refresh_command_params
       if script_params is None:
         if script.guards.present and not invocation_params['--no-auto-params']:
           raise DocoptError(
@@ -174,6 +174,7 @@ class ParserParameters(object):
     self.shorten_names = self.minify and self.library_path is not None
 
     command = ['docopt.sh']
+    command_short = ['docopt.sh']
     if params['--prefix'].defined:
       command.append(str(params['--prefix']))
     if params['--line-length'].defined:
@@ -182,6 +183,9 @@ class ParserParameters(object):
       command.append(str(params['--library']))
     if script is not None and script.path:
       command.append(os.path.basename(script.path))
+      command_short.append(os.path.basename(script.path))
     else:
       command.append('<FILE')
+      command_short.append('<FILE')
     self.refresh_command = ' '.join(command)
+    self.refresh_command_short = ' '.join(command_short)
