@@ -1,8 +1,10 @@
 """
 docopt.sh - Bash argument parser generator.
-  This program looks for a docopt usage string
-  in a script and appends a matching parser to it.
+  This program looks for `DOC="... Usage​: ..."`  in a script
+  and appends a matching parser to it.
 """
+# The "... Usage: ..." above contains a zero-width space between `Usage` and `:`
+# in order to prevent docopt from parsing it as a `usage:`` section
 
 __all__ = ['docopt_sh']
 __version__ = '0.8.6'

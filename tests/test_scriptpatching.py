@@ -148,7 +148,7 @@ def test_parser_only(monkeypatch, capsys, bash):
   doc = Script(script).doc.value
   parser = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser'], stdin=StringIO(script)).out
   program = '''
-doc="{doc}"
+DOC="{doc}"
 {parser}
 docopt "$@"
 echo $((_x_ + _y_))
@@ -163,7 +163,7 @@ def test_cleanup(monkeypatch, capsys, bash):
   with patched_script(monkeypatch, capsys, 'all_vars.sh', bash=bash) as run:
     code, out, err = run('ship', 'new', 'Britannica')
     assert code == 0
-    allowed_vars = ['docopt_program_version', 'docopt_short_usage']
+    allowed_vars = ['docopt_program_version', 'docopt_usage']
     allowed_fns = ['docopt_error']
     for line in out.strip().split('\n'):
       if '=' in line:

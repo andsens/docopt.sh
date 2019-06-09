@@ -34,14 +34,20 @@ class Parser(object):
       library_source = 'source %s \'%s\'' % (self.parameters.library_path, __version__)
     else:
       library_source = ''
-    doc_value_start, doc_value_end = script.doc.value_boundaries
-    doc_name = '${{{docname}:{start}:{end}}}'.format(
-      docname=script.doc.name,
+
+    doc_value_start, doc_value_end = script.doc.stripped_value_boundaries
+    stripped_doc = '${{DOC:{start}:{length}}}'.format(
       start=doc_value_start,
-      end=doc_value_end,
+      length=doc_value_end - doc_value_start,
     )
+
     doc_ast = DocAst(script.doc.value, self.parameters.name_prefix)
     usage_start, usage_end = doc_ast.usage_match
+    usage_doc = '${{DOC:{start}:{length}}}'.format(
+      start=str(doc_value_start + usage_start),
+      length=str(usage_end - usage_start),
+    )
+
     option_nodes = [o for o in doc_ast.leaf_nodes if o.type is Option]
     defaults = []
     for node in doc_ast.leaf_nodes:
@@ -56,10 +62,9 @@ class Parser(object):
       ))
     replacements = {
       '"LIBRARY SOURCE"': library_source,
-      '"DOC VALUE"': doc_name,
+      '"DOC VALUE"': stripped_doc,
+      '"DOC USAGE"': usage_doc,
       '"DOC DIGEST"': hashlib.sha256(script.doc.value.encode('utf-8')).hexdigest()[0:5],
-      '"SHORT USAGE START"': str(usage_start),
-      '"SHORT USAGE LENGTH"': str(usage_end - usage_start),
       '"SHORTS"': ' '.join([bash_ifs_value(o.pattern.short) for o in option_nodes]),
       '"LONGS"': ' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
       '"ARGCOUNT"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),

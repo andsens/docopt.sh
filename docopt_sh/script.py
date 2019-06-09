@@ -109,14 +109,13 @@ class Doc(ScriptLocation):
 
   def __init__(self, script):
     matches = re.finditer(
-      r'([a-zA-Z_][a-zA-Z_0-9]*)="(\s*)(.*?\bUsage:.+?)(\s*)"(\n|;)',
+      r'DOC="(\s*)(.*?Usage:.+?)(\s*)"(\n|;)',
       script.contents,
       re.MULTILINE | re.IGNORECASE | re.DOTALL
     )
     super(Doc, self).__init__(script, matches, 0)
-    self.name = self.match.group(1) if self.present else None
-    self.value = self.match.group(3) if self.present else None
-    self.value_boundaries = self.match.start(3) - self.match.start(2), self.match.end(3) - self.match.end(2)
+    self.value = self.match.group(2) if self.present else None
+    self.stripped_value_boundaries = self.match.start(2) - self.match.start(1), self.match.end(2) - self.match.start(1)
 
 
 class Guard(ScriptLocation):

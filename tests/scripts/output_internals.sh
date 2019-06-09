@@ -2,7 +2,7 @@
 
 DOCOPT_PROGRAM_VERSION='1.5.2'
 
-doc="Naval Fate.
+DOC="Naval Fate.
 
 Usage:
   naval_fate.py ship new <name>...

@@ -2,9 +2,9 @@
 
 docopt() {
   "LIBRARY SOURCE"
-  docopt_usage="DOC VALUE"
+  docopt_doc="DOC VALUE"
+  docopt_usage="DOC USAGE"
   docopt_digest="DOC DIGEST"
-  docopt_short_usage="${docopt_usage:"SHORT USAGE START":"SHORT USAGE LENGTH"}"
   docopt_shorts=("SHORTS")
   docopt_longs=("LONGS")
   docopt_argcount=("ARGCOUNT")
@@ -34,7 +34,7 @@ docopt_do_teardown() {
   for ((i=0; i<=max_node_idx; i++)); do
     unset -f "docopt_node_$i"
   done
-  unset docopt_usage docopt_digest docopt_shorts docopt_longs docopt_argcount \
+  unset docopt_doc docopt_digest docopt_shorts docopt_longs docopt_argcount \
   docopt_param_names docopt_argv docopt_left docopt_parsed_params \
   docopt_parsed_values docopt_testmatch
   unset -f docopt docopt_parse docopt_either docopt_oneormore docopt_optional \
@@ -290,14 +290,14 @@ docopt_parse_long() {
 
 docopt_error() {
   [[ -n $1 ]] && printf "%s\n" "$1"
-  printf "%s\n" "${docopt_short_usage}"
+  printf "%s\n" "${docopt_usage}"
   exit 1
 }
 
 docopt_parse() {
   if ${DOCOPT_DOC_CHECK:-true}; then
     local doc_hash
-    doc_hash=$(printf "%s" "$docopt_usage" | shasum -a 256)
+    doc_hash=$(printf "%s" "$docopt_doc" | shasum -a 256)
     if [[ ${doc_hash:0:5} != "$docopt_digest" ]]; then
       printf "The current usage doc (%s) does not match what the parser was generated with (%s)\n" \
         "${doc_hash:0:5}" "$docopt_digest" >&2
@@ -340,7 +340,7 @@ docopt_parse() {
     for idx in "${docopt_parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
       if [[ ${docopt_shorts[$idx]} = "-h" || ${docopt_longs[$idx]} = "--help" ]]; then
-        printf -- "%s\n" "$docopt_usage"
+        printf -- "%s\n" "$docopt_doc"
         exit 0
       fi
     done

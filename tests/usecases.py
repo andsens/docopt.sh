@@ -24,7 +24,7 @@ class DocoptUsecaseTestFile(pytest.File):
       '--no-auto-params': False,
     })
     program_template = '''
-doc="{doc}"
+DOC="{doc}"
 DOCOPT_TEARDOWN=false
 docopt "$@"
 for var in "${{docopt_param_names[@]}}"; do declare -p "$var"; done
