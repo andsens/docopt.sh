@@ -19,12 +19,13 @@ class Code(object):
   def minify(self, max_line_length):
     return Code(minify(str(self), max_line_length))
 
-  def replace(self, replacements):
+  def replace_literal(self, replacements):
     def gen_replace():
       for part in self.code:
+        code = str(part)
         for placeholder, replacement in replacements.items():
-          part = part.replace(placeholder, str(replacement))
-        yield part
+          code = code.replace(placeholder, str(replacement))
+        yield code
     return Code(gen_replace())
 
   def __iter__(self):

@@ -65,12 +65,12 @@ class Parser(object):
       '"MAX NODE IDX"': max([n.idx for n in doc_ast.nodes]),
       '"ROOT NODE IDX"': doc_ast.root_node.idx,
     }
-    return self.library.main.replace(replacements)
+    return self.library.main.replace_literal(replacements)
 
   def generate_library(self, add_version_check=False):
     functions = self.library.functions
     if add_version_check:
-      functions['lib_version_check'] = functions['lib_version_check'].replace(
+      functions['lib_version_check'] = functions['lib_version_check'].replace_literal(
         {'"LIBRARY VERSION"': __version__})
     else:
       del functions['lib_version_check']
@@ -158,7 +158,6 @@ class ParserParameters(object):
     self.max_line_length = int(params['--line-length'].value)
     self.library_path = params['--library'].value
     self.minify = self.max_line_length > 0
-    self.shorten_names = self.minify and self.library_path is not None
 
     command = ['docopt.sh']
     command_short = ['docopt.sh']

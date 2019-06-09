@@ -179,10 +179,10 @@ docopt_parse_shorts() {
   local value
   docopt_argv=("${docopt_argv[@]:1}")
   [[ $token = -* && $token != --* ]] || assert_fail
-  local rem=${token#-}
-  while [[ -n $rem ]]; do
-    local short="-${rem:0:1}"
-    rem="${rem:1}"
+  local remaining=${token#-}
+  while [[ -n $remaining ]]; do
+    local short="-${remaining:0:1}"
+    remaining="${remaining:1}"
     local i=0
     local similar=()
     local match=false
@@ -205,15 +205,15 @@ docopt_parse_shorts() {
     else
       value=false
       if [[ ${docopt_argcount[$match]} -ne 0 ]]; then
-        if [[ $rem = '' ]]; then
+        if [[ $remaining = '' ]]; then
           if [[ ${#docopt_argv[@]} -eq 0 || ${docopt_argv[0]} = '--' ]]; then
             docopt_error "$(printf "%s requires argument" "$short")"
           fi
           value=${docopt_argv[0]}
           docopt_argv=("${docopt_argv[@]:1}")
         else
-          value=$rem
-          rem=''
+          value=$remaining
+          remaining=''
         fi
       fi
       if [[ $value = false ]]; then
