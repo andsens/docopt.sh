@@ -7,7 +7,7 @@ docopt.sh - Bash argument parser generator.
 # in order to prevent docopt from parsing it as a `usage:`` section
 
 __all__ = ['docopt_sh']
-__version__ = '0.9.1'
+__version__ = '0.9.5'
 
 
 class DocoptError(Exception):
