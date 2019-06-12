@@ -1,49 +1,25 @@
 import subprocess
 import shlex
-from tempfile import NamedTemporaryFile
 import os
 import io
+from tempfile import NamedTemporaryFile
+from collections import namedtuple
 from contextlib import contextmanager
 from docopt_sh.__main__ import main as docopt_sh_main
 from docopt_sh.bash import bash_variable_value
 
+Usecase = namedtuple('Usecase', ['line', 'bash', 'doc', 'prog', 'argv', 'expect'])
 
-def bash_eval_script(script, argv, bash=None):
+
+def bash_eval_script(bash, script, argv):
   argv = ' '.join(map(shlex.quote, argv))
-  executable = 'bash' if bash is None else bash[1]
   process = subprocess.run(
-    [executable, '-c', 'set - %s; eval "$(cat)"' % argv],
+    [bash[1], '-c', 'set - %s; eval "$(cat)"' % argv],
     input=script.encode('utf-8'),
     stdout=subprocess.PIPE, stderr=subprocess.PIPE,
     timeout=2
   )
   return process.returncode, process.stdout.decode('utf-8'), process.stderr.decode('utf-8')
-
-
-def bash_decl(name, value, bash_version=None):
-  if value is None or type(value) in (bool, int, str):
-    return 'declare -- {name}={value}'.format(name=name, value=bash_decl_value(value, bash_version))
-  if type(value) is list:
-    return 'declare -a {name}={value}'.format(name=name, value=bash_decl_value(value, bash_version))
-  raise Exception('Unknown value type %s' % type(value))
-
-
-def bash_decl_value(value, bash_version=None):
-  if value is None:
-    return '""'
-  if type(value) is bool:
-    return '"true"' if value else '"false"'
-  if type(value) is int:
-    return '"{value}"'.format(value=value)
-  if type(value) is str:
-    return '"{value}"'.format(value=shlex.quote(value).strip("'"))
-  if type(value) is list:
-    list_tpl = '({value})'
-    if bash_version is not None and (int(bash_version[0]) < 4 or int(bash_version[2]) < 4):
-      list_tpl = "'({value})'"
-    return list_tpl.format(value=' '.join('[{i}]={value}'.format(
-      i=i, value=bash_decl_value(v, bash_version)) for i, v in enumerate(value))
-    )
 
 
 def declare_quote(value):
@@ -57,30 +33,32 @@ def replace_docopt_params(stream, docopt_params):
   return io.StringIO(script)
 
 
-@contextmanager
-def patched_script(monkeypatch, capsys, name, program_params=[], docopt_params={}, bash=None):
+def patch_stream(monkeypatch, capsys, stream, program_params=[], docopt_params={}):
+  stream = replace_docopt_params(stream, docopt_params)
+  captured = invoke_docopt(monkeypatch, capsys, stdin=stream, program_params=program_params + ['-'])
+
+  def run(bash, *argv):
+    return bash_eval_script(bash, captured.out, argv)
+  return run
+
+
+def patch_file(monkeypatch, capsys, name, program_params=[], docopt_params={}):
   with open(os.path.join('tests/scripts', name)) as handle:
-    script = replace_docopt_params(handle, docopt_params)
-
-  def run(*argv):
-    captured = invoke_docopt(monkeypatch, capsys, stdin=script, program_params=program_params + ['-'])
-    return bash_eval_script(captured.out, argv, bash=bash)
-  yield run
+    return patch_stream(monkeypatch, capsys, handle, program_params, docopt_params)
 
 
 @contextmanager
-def temp_script(name, docopt_params={}, bash=None):
+def temp_file(name, docopt_params={}):
   with open(os.path.join('tests/scripts', name)) as handle:
     script = replace_docopt_params(handle, docopt_params).read()
   file = NamedTemporaryFile(mode='w', delete=False)
   try:
     file.write(script)
     file.close()
-    executable = 'bash' if bash is None else bash[1]
 
-    def run(*args):
+    def run(bash, *args):
       process = subprocess.run(
-        [executable, file.name] + list(args),
+        [bash[1], file.name] + list(args),
         stdout=subprocess.PIPE, stderr=subprocess.PIPE
       )
       return process.returncode, process.stdout.decode('utf-8'), process.stderr.decode('utf-8')

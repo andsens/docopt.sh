@@ -5,7 +5,8 @@ import tarfile
 import subprocess
 import re
 import glob
-from .usecases import DocoptUsecaseTestFile
+import json
+from . import Usecase
 
 log = logging.getLogger(__name__)
 
@@ -32,15 +33,57 @@ def pytest_sessionstart(session):
     session.config.bash_versions = [(version, executable)]
 
 
-def pytest_collect_file(path, parent):
-  if path.basename == 'usecases.txt':
-    return DocoptUsecaseTestFile(path, parent)
-
-
 def pytest_generate_tests(metafunc):
   if 'bash' in metafunc.fixturenames:
     if metafunc.config.bash_versions:
       metafunc.parametrize('bash', metafunc.config.bash_versions)
+  if 'usecase' in metafunc.fixturenames:
+    with open(os.path.join(os.path.dirname(__file__), 'usecases.txt'), 'r') as handle:
+      contents = handle.read()
+    metafunc.parametrize('usecase', [usecase for usecase in parse_usecases(contents)])
+
+
+def pytest_assertrepr_compare(config, op, left, right):
+  if isinstance(left, Usecase) and isinstance(right, Usecase) and op == '==':
+    error = ['Usecase on line %d failed' % left.line]
+    error.append('bash: %s' % left.bash)
+    error.append('%s' % left.doc)
+    error.append('$ %s %s' % (left.prog, left.argv))
+    if isinstance(left.expect, str) or isinstance(right.expect, str):
+      error.append('%s != %s' % (repr(left.expect), repr(right.expect)))
+    else:
+      for key, value in left.expect.items():
+        if key in right.expect:
+          if value != right.expect[key]:
+            error.append('%s != %s' % (repr(value), repr(right.expect[key])))
+        else:
+          error.append('%s != (key %s not found)' % (repr(value), key))
+      for key, value in right.expect.items():
+        if key not in left.expect:
+          error.append('(key %s not found) != %s' % (key, repr(value)))
+    return error
+
+
+def parse_usecases(raw):
+  fixture_pattern = re.compile(r'r"""(?P<doc>[^"]+)""".*?(?=r""")', re.DOTALL)
+  case_pattern = re.compile(
+    r'\$ (?P<prog>[^\n ]+)( (?P<argv>[^\n]+))?\n(?P<expect>[^\n]+?)(?P<comment>\s*#[^\n]*)?\n\n')
+  for fixture_match in fixture_pattern.finditer(raw):
+    line_offset = raw[:fixture_match.start(0)].count('\n') + 1
+    fixture = fixture_match.group(0)
+    doc = fixture_match.group('doc')
+    for case_match in case_pattern.finditer(fixture):
+      line = line_offset + fixture[:case_match.start(0)].count('\n')
+      case = case_match.group(0)
+      prog = case_match.group('prog')
+      argv = case_match.group('argv')
+      argv = argv if argv else ''
+      try:
+        expect = json.loads(case_match.group('expect'))
+      except json.decoder.JSONDecodeError as e:
+        json_line = line_offset + fixture[:case_match.start('expect')].count('\n')
+        raise Exception('Error on line %d:\n%s\n---\n%s' % (json_line, case, str(e)))
+      yield Usecase(line, None, doc, prog, argv, expect)
 
 
 def get_system_bash():
