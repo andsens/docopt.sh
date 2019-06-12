@@ -12,7 +12,7 @@ log = logging.getLogger(root_name)
 
 __doc__ = pkg_doc + """
 Usage:
-  docopt.sh [options] [SCRIPT]
+  docopt.sh [options] (- | SCRIPT)
   docopt.sh generate-library
 
 Options:
@@ -24,8 +24,8 @@ Options:
   --parser           Output the parser instead of inserting it in the script
 
 Note:
-  You can pass the script on stdin as well,
-  docopt.sh will then output the modified script to stdout.
+  When reading the script from stdin (`-` instead of SCRIPT)
+  docopt.sh will output the modified script to stdout.
 
 Parameters:
   You can set the global variables before invoking docopt with `docopt "$@"`
@@ -48,12 +48,7 @@ def docopt_sh(params):
     sys.stdout.write('#!/usr/bin/env bash\n\n' + str(parser.generate_library(add_version_check=True)))
   else:
     try:
-      if params['SCRIPT'] is None:
-        if sys.stdin.isatty():
-          raise docopt.DocoptExit(
-            'Not reading from stdin when it is a tty. '
-            'Use either `docopt.sh script.sh` or `docopt.sh < script.sh`.'
-          )
+      if params['-']:
         script = Script(sys.stdin.read())
       else:
         with open(params['SCRIPT'], 'r') as h:
@@ -67,7 +62,7 @@ def docopt_sh(params):
         sys.stdout.write(parser.generate(script))
       else:
         patched_script = script.patch(parser)
-        if params['SCRIPT'] is None:
+        if params['-']:
           sys.stdout.write(str(patched_script))
         else:
           with open(params['SCRIPT'], 'w') as h:

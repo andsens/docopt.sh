@@ -63,7 +63,7 @@ def patched_script(monkeypatch, capsys, name, program_params=[], docopt_params={
     script = replace_docopt_params(handle, docopt_params)
 
   def run(*argv):
-    captured = invoke_docopt(monkeypatch, capsys, stdin=script, program_params=program_params)
+    captured = invoke_docopt(monkeypatch, capsys, stdin=script, program_params=program_params + ['-'])
     return bash_eval_script(captured.out, argv, bash=bash)
   yield run
 

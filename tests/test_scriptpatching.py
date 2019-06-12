@@ -148,14 +148,14 @@ def test_parser_only(monkeypatch, capsys, bash):
   with open('tests/scripts/naval_fate.sh') as h:
     script = h.read()
   doc = Script(script).doc.value
-  parser = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser'], stdin=StringIO(script)).out
+  parser = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)).out
   program = '''
 DOC="{doc}"
 {parser}
 docopt "$@"
 echo $((_x_ + _y_))
 '''.format(doc=doc, parser=parser)
-  captured = invoke_docopt(monkeypatch, capsys, stdin=StringIO(program))
+  captured = invoke_docopt(monkeypatch, capsys, program_params=['-'], stdin=StringIO(program))
   code, out, err = bash_eval_script(captured.out, ['ship', 'shoot', '3', '1'], bash=bash)
   assert code == 0
   assert out == '4\n'

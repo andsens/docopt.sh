@@ -158,7 +158,9 @@ class ParserParameters(object):
       command.append(os.path.basename(script.path))
       command_short.append(os.path.basename(script.path))
     else:
+      command.append('-')
       command.append('<FILE')
+      command_short.append('-')
       command_short.append('<FILE')
     self.refresh_command = ' '.join(command)
     self.refresh_command_short = ' '.join(command_short)
