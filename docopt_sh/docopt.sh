@@ -1,20 +1,28 @@
 #!/usr/bin/env bash
 
 docopt() {
-  "LIBRARY SOURCE"
-  docopt_doc="DOC VALUE"
   docopt_usage="DOC USAGE"
-  docopt_digest="DOC DIGEST"
-  docopt_shorts=("SHORTS")
-  docopt_longs=("LONGS")
-  docopt_argcount=("ARGCOUNT")
-  docopt_param_names=("PARAM NAMES")
-  docopt_argv=("$@")
-  "NODES"
-  docopt_parse "ROOT NODE IDX"
-  local docopt_prefix=${DOCOPT_PREFIX:-''}
-  "DEFAULTS"
-  ${DOCOPT_TEARDOWN:-true} && docopt_do_teardown "MAX NODE IDX"
+  docopt_run() {
+    "LIBRARY SOURCE"
+    docopt_doc="DOC VALUE"
+    docopt_digest="DOC DIGEST"
+    docopt_shorts=("SHORTS")
+    docopt_longs=("LONGS")
+    docopt_argcount=("ARGCOUNT")
+    "NODES"
+    docopt_parse "ROOT NODE IDX" "$@"
+  }
+  local out
+  if out=$(docopt_run "$@"); then
+    eval "$out"
+    local docopt_prefix=${DOCOPT_PREFIX:-''}
+    "DEFAULTS"
+  else
+    local ret=$?
+    echo "$out"
+    [ $ret -eq 85 ] && exit 0 || exit $ret
+  fi
+  docopt_do_teardown
 }
 
 lib_version_check() {
@@ -24,24 +32,6 @@ does not match the version of the invoking docopt parser (%s)\n" \
     '"LIBRARY VERSION"' "$1" >&2
   exit 70
 fi
-}
-
-docopt_do_teardown() {
-  local max_node_idx=$1
-  local var
-  for var in "${docopt_param_names[@]}"; do
-    unset "docopt_var_$var"
-  done
-  local i
-  for ((i=0; i<=max_node_idx; i++)); do
-    unset -f "docopt_node_$i"
-  done
-  unset docopt_doc docopt_digest docopt_shorts docopt_longs docopt_argcount \
-  docopt_param_names docopt_argv docopt_left docopt_parsed_params \
-  docopt_parsed_values docopt_testmatch
-  unset -f docopt docopt_parse docopt_either docopt_oneormore docopt_optional \
-  docopt_required docopt_command docopt_switch docopt_value docopt_parse_long \
-  docopt_parse_shorts docopt_do_teardown
 }
 
 docopt_either() {
@@ -296,6 +286,12 @@ docopt_error() {
   exit 1
 }
 
+docopt_do_teardown() {
+  unset -f docopt docopt_run docopt_parse docopt_either docopt_oneormore \
+  docopt_optional docopt_required docopt_command docopt_switch docopt_value \
+  docopt_parse_long docopt_parse_shorts docopt_do_teardown
+}
+
 docopt_parse() {
   if ${DOCOPT_DOC_CHECK:-true}; then
     local doc_hash
@@ -309,6 +305,8 @@ generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \
   fi
 
   local root_idx=$1
+  shift
+  docopt_argv=("$@")
   docopt_parsed_params=()
   docopt_parsed_values=()
   docopt_left=()
@@ -344,7 +342,7 @@ generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \
       [[ $idx = 'a' ]] && continue
       if [[ ${docopt_shorts[$idx]} = "-h" || ${docopt_longs[$idx]} = "--help" ]]; then
         printf -- "%s\n" "$docopt_doc"
-        exit 0
+        exit 85
       fi
     done
   fi
@@ -353,7 +351,7 @@ generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \
       [[ $idx = 'a' ]] && continue
       if [[ ${docopt_longs[$idx]} = "--version" ]]; then
         printf "%s\n" "$DOCOPT_PROGRAM_VERSION"
-        exit 0
+        exit 85
       fi
     done
   fi
@@ -367,5 +365,6 @@ generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \
   if ! docopt_required "$root_idx" || [ ${#docopt_left[@]} -gt 0 ]; then
     docopt_error
   fi
+  [[ -n ${!docopt_var_*} ]] && declare -p "${!docopt_var_@}"
   return 0
 }

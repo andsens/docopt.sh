@@ -77,24 +77,6 @@ def test_options_first_fail(monkeypatch, capsys, bash):
   assert out[:6] == 'Usage:'
 
 
-def test_teardown(monkeypatch, capsys, bash):
-  run = patch_file(monkeypatch, capsys, 'output_internals.sh')
-  code, out, err = run(bash, 'ship', 'shoot', '3', '1')
-  assert err == ''
-  assert code == 0
-  assert out == '\n\n\n'
-
-
-def test_no_teardown(monkeypatch, capsys, bash):
-  run = patch_file(
-    monkeypatch, capsys, 'output_internals.sh',
-    docopt_params={'DOCOPT_TEARDOWN': False}
-  )
-  code, out, err = run(bash, 'ship', 'shoot', '3', '1')
-  assert code == 0
-  assert '\n'.join(out.split('\n')[1:]) == 'a a a a\nship shoot 3 1\n'
-
-
 def test_prefix(monkeypatch, capsys, bash):
   run = patch_file(
     monkeypatch, capsys, 'prefixed_echo.sh',
@@ -157,19 +139,19 @@ echo $((_x_ + _y_))
   assert out == '4\n'
 
 
-def test_cleanup(monkeypatch, capsys, bash):
+def test_teardown(monkeypatch, capsys, bash):
   run = patch_file(monkeypatch, capsys, 'all_vars.sh')
   code, out, err = run(bash, 'ship', 'new', 'Britannica')
   assert code == 0
-  allowed_vars = ['docopt_program_version', 'docopt_usage']
+  allowed_vars = ['DOCOPT_PROGRAM_VERSION', 'docopt_usage']
   allowed_fns = ['docopt_error']
   for line in out.strip().split('\n'):
     if '=' in line:
       name, val = line.split('=', 1)
-      assert not name.startswith('docopt') or name in allowed_vars
+      assert not name.lower().startswith('docopt') or name in allowed_vars
     elif '()' in line:
       name, rest = line.split(' ', 1)
-      assert not name.startswith('docopt') or name in allowed_fns
+      assert not name.lower().startswith('docopt') or name in allowed_fns
 
 
 def test_library(monkeypatch, capsys, bash):
@@ -201,7 +183,7 @@ def test_library_version(monkeypatch, capsys, bash):
 
 
 def test_auto_params(monkeypatch, capsys, bash):
-  with temp_file('output_internals.sh') as (script, run):
+  with temp_file('naval_fate.sh') as (script, run):
     out = invoke_docopt(monkeypatch, capsys=capsys, program_params=[script.name, '--line-length', '20'])
     code, out, err = run(bash, 'ship', 'shoot', '3', '1')
     assert code == 0

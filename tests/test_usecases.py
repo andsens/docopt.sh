@@ -10,18 +10,20 @@ def test_usecase(monkeypatch, capsys, usecase, bash):
 
 
 def run_usecase(monkeypatch, capsys, usecase, bash):
-  line, _, doc, prog, argv, expect = usecase
+  lineno, _, doc, prog, argv, expect = usecase
   program_template = '''
 DOC="{doc}"
 "DOCOPT PARAMS"
 docopt "$@"
-for var in "${{docopt_param_names[@]}}"; do declare -p "${{DOCOPT_PREFIX}}${{var}}"; done
+if [[ -n ${{!_usecase_*}} ]]; then
+  declare -p "${{!_usecase_@}}"
+fi
 '''
   program = program_template.format(doc=doc)
   run = patch_stream(
     monkeypatch, capsys,
     io.StringIO(program),
-    docopt_params={'DOCOPT_PREFIX': '_', 'DOCOPT_TEARDOWN': False}
+    docopt_params={'DOCOPT_PREFIX': '_usecase_', 'DOCOPT_TEARDOWN': False}
   )
   code, out, err = run(bash, *shlex.split(argv))
   if code == 0:
@@ -33,19 +35,19 @@ for var in "${{docopt_param_names[@]}}"; do declare -p "${{DOCOPT_PREFIX}}${{var
       result = {}
   else:
     result = 'user-error'
-  return Usecase(line, bash[0], doc, prog, argv, result)
+  return Usecase(lineno, bash[0], doc, prog, argv, result)
 
 
 def convert_to_bash(bash, usecase):
-  line, _, doc, prog, argv, expect = usecase
+  lineno, _, doc, prog, argv, expect = usecase
   if expect == 'user-error':
     declarations = expect
   else:
     declarations = {}
     for key, value in expect.items():
-      var = '_' + re.sub(r'^[^a-z_]|[^a-z0-9_]', '_', key, 0, re.IGNORECASE)
+      var = '_usecase_' + re.sub(r'^[^a-z_]|[^a-z0-9_]', '_', key, 0, re.IGNORECASE)
       declarations[var] = bash_decl(bash[0], var, value)
-  return Usecase(line, bash[0], doc, prog, argv, declarations)
+  return Usecase(lineno, bash[0], doc, prog, argv, declarations)
 
 
 def bash_decl(bash_version, name, value):
@@ -72,16 +74,3 @@ def bash_decl_value(bash_version, value):
     return list_tpl.format(value=' '.join('[{i}]={value}'.format(
       i=i, value=bash_decl_value(bash_version, v)) for i, v in enumerate(value))
     )
-
-# def repr_failure(self, excinfo):
-#   """Called when self.runtest() raises an exception."""
-#   if isinstance(excinfo.value, DocoptUsecaseTestException):
-#     return "\n".join((
-#       "usecase execution failed:",
-#       self.doc.rstrip(),
-#       "$ %s %s" % (self.prog, self.argv),
-#       "result> %s" % json.dumps(excinfo.value.args[1]),
-#       "expect> %s" % json.dumps(self.expect),
-#     ))
-#   else:
-#     super().repr_failure(excinfo)

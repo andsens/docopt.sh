@@ -57,8 +57,8 @@ class Parser(object):
       '"LONGS"': ' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
       '"ARGCOUNT"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
       '"PARAM NAMES"': ' '.join([node.variable_name for node in leaf_nodes]),
-      '  "NODES"': indent('\n'.join(map(str, list(doc_ast.nodes)))),
-      '  "DEFAULTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes])),
+      '    "NODES"': indent('\n'.join(map(str, list(doc_ast.nodes))), level=2),
+      '    "DEFAULTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes]), level=2),
       '"MAX NODE IDX"': max([n.idx for n in doc_ast.nodes]),
       '"ROOT NODE IDX"': doc_ast.root_node.idx,
     }
@@ -81,7 +81,7 @@ class Library(object):
         r'^(?P<name>[a-z_][a-z0-9_]*)\(\)\s*\{'
         r'\n+'
         r'(?P<body>.*?)'
-        r'\n+\}$'
+        r'\n+\}\n$'
       ), re.MULTILINE | re.IGNORECASE | re.DOTALL)
     self.functions = OrderedDict([])
     with open(os.path.join(os.path.dirname(__file__), 'docopt.sh'), 'r') as handle:

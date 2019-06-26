@@ -215,9 +215,6 @@ in common that they must be specified *before* invoking ``docopt "$@"``.
 | ``$DOCOPT_PREFIX``          | Prefixes all variable names with the        |
 |                             | specified value (default: ``""``)           |
 +-----------------------------+---------------------------------------------+
-| ``$DOCOPT_TEARDOWN``        | Set to ``false`` to prevent cleanup of      |
-|                             | $docopt_ variables (default: ``true``)      |
-+-----------------------------+---------------------------------------------+
 | ``$DOCOPT_DOC_CHECK``       | Set to ``false`` to disable checking        |
 |                             | whether the parser matches the doc          |
 |                             | (default: ``true``)                         |
@@ -264,8 +261,11 @@ On every invocation ``docopt "$@"`` checks that the library version and the
 version of the dynamic part in the script match. If that is not the case, the
 parser exits with an error.
 
+Developers
+----------
+
 Testing
--------
+~~~~~~~
 
 ``docopt.sh`` uses pytest_ for testing. You can run the testsuite by running
 ``pytest``.
