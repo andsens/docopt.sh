@@ -29,10 +29,12 @@ fi
   if code == 0:
     expr = re.compile('^declare (--|-a) ([^=]+)=')
     out = out.strip('\n')
+    result = {}
     if out != '':
-      result = {expr.match(line).group(2): line for line in out.split('\n')}
-    else:
-      result = {}
+      for line in out.split('\n'):
+        if expr.match(line) is None:
+          raise Exception('Unable to match %s for usecase on line %d' % (line, lineno))
+        result[expr.match(line).group(2)] = line
   else:
     result = 'user-error'
   return Usecase(lineno, bash[0], doc, prog, argv, result)
