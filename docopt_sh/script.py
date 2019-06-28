@@ -63,7 +63,7 @@ class Script(object):
         self.invocation
       )
     for option in self.options:
-      if option.present and option.start > self.invocation.last.end:
+      if self.invocation.present and option.present and option.start > self.invocation.last.end:
         log.warning(
           '%s $%s has no effect when specified after invoking docopt, '
           'make sure to place docopt options before calling `docopt "$@"`.',
