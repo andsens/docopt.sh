@@ -33,8 +33,13 @@ docopt() {
     "DEFAULTS"
   else
     local ret=$?
-    echo "$out"
-    [ $ret -eq 85 ] && exit 0 || exit $ret
+    if [ $ret -eq 85 ]; then
+      echo "$out"
+      exit 0
+    else
+      echo "$out" >&2
+      exit $ret
+    fi
   fi
   docopt_do_teardown
 }
@@ -313,7 +318,7 @@ docopt_parse() {
     if [[ ${doc_hash:0:5} != "$docopt_digest" ]]; then
       printf "The current usage doc (%s) does not match what the parser was \
 generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \
-        "${doc_hash:0:5}" "$docopt_digest" >&2
+        "${doc_hash:0:5}" "$docopt_digest"
       exit 70
     fi
   fi

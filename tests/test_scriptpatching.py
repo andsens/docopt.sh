@@ -23,6 +23,7 @@ def test_help(monkeypatch, capsys, bash):
   code, out, err = run(bash, '--help')
   assert code == 0
   assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
+  assert err == ''
 
 
 def test_no_help(monkeypatch, capsys, bash):
@@ -32,7 +33,8 @@ def test_no_help(monkeypatch, capsys, bash):
   )
   code, out, err = run(bash, '--help')
   assert code == 1
-  assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
+  assert out == ''
+  assert err == 'Usage: echo_ship_name.sh ship new <name>...\n'
 
 
 def test_version(monkeypatch, capsys, bash):
@@ -48,7 +50,9 @@ def test_no_version(monkeypatch, capsys, bash):
     docopt_params={'DOCOPT_PROGRAM_VERSION': False}
   )
   code, out, err = run(bash, '--version')
-  assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
+  assert code == 1
+  assert out == ''
+  assert err == 'Usage: echo_ship_name.sh ship new <name>...\n'
 
 
 def test_options_anywhere(monkeypatch, capsys, bash):
@@ -74,7 +78,8 @@ def test_options_first_fail(monkeypatch, capsys, bash):
   )
   code, out, err = run(bash, 'ship', 'Titanic', 'move', '1', '--speed', '6', '4')
   assert code == 1
-  assert out[:6] == 'Usage:'
+  assert out == ''
+  assert err[:6] == 'Usage:'
 
 
 def test_prefix(monkeypatch, capsys, bash):
