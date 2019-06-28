@@ -28,8 +28,9 @@ Note:
   docopt.sh will output the modified script to stdout.
 
 Parameters:
-  You can set the global variables before invoking docopt with `docopt "$@"`
-  to change the behavior of the parser. Consult the readme for advanced options.
+  You can set the global variables before invoking docopt with
+  `eval "$(docopt "$@")"` to change the behavior of the parser.
+  Consult the readme for advanced options.
 
   $DOCOPT_PROGRAM_VERSION  The string to print when --version is specified
                            [default: none/disabled]

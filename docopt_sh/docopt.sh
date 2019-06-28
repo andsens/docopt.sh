@@ -1,22 +1,25 @@
 #!/usr/bin/env bash
 
 docopt() {
-  docopt_usage="DOC USAGE"
   docopt_run() {
     "LIBRARY SOURCE"
     docopt_doc="DOC VALUE"
+    docopt_usage="DOC USAGE"
     docopt_digest="DOC DIGEST"
     docopt_shorts=("SHORTS")
     docopt_longs=("LONGS")
     docopt_argcount=("ARGCOUNT")
     "NODES"
-    docopt_parse "ROOT NODE IDX" "$@"
-  }
-  local out
-  if out=$(docopt_run "$@" 2>&1); then
-    eval "$out"
+    docopt_parse "ROOT NODE IDX" "$@" || exit $?
+    # shellcheck disable=2016
+    printf 'docopt_exit() { [[ -n $1 ]] && printf "%%s\\n" "$1" >&2; printf "%%s\\n" ""DOC USAGE"" >&2; exit 1; }\n'
+    printf 'docopt_do_teardown\n'
+    # shellcheck disable=2157,2140
+    "HAS VARS" || return 0
+    # shellcheck disable=2034
+    local docopt_prefix=${DOCOPT_PREFIX:-''}
     # Workaround for bash-4.3 bug
-    # Explanation: The following script will not work in bash 4.3.0 (and only that version)
+    # The following script will not work in bash 4.3.0 (and only that version)
     # #!tests/bash-versions/bash-4.3/bash
     # fn() {
     #   decl=$(X=(A B); declare -p X)
@@ -24,24 +27,31 @@ docopt() {
     #   declare -p X
     # }
     # fn
+    local docopt_loops=1
+    [[ $BASH_VERSION =~ ^4.3 ]] && docopt_loops=2
+    # Adding "declare X" before "eval" fixes the issue, but we don't know the
+    # variable names, so instead we just output the `declare`s twice
+    # in bash-4.3.
 
-    # Adding "local X" before "eval" fixes the issue, but we don't know the variable
-    # names, so instead we just run the "eval" twice so that the variables are declared
-    # once we run the second eval.
-    eval "$out"
-    local docopt_prefix=${DOCOPT_PREFIX:-''}
+    # Unset exported variables from parent shell
+    unset "VAR NAMES"
     "DEFAULTS"
+    local docopt_i=0
+    for ((docopt_i=0;docopt_i<docopt_loops;docopt_i++)); do
+      declare -p "VAR NAMES"
+    done
+  }
+  local out
+  if out=$(docopt_run "$@" 2>&1); then
+    printf -- "%s\n" "$out"
   else
     local ret=$?
     if [ $ret -eq 85 ]; then
-      printf -- "%s\n" "$out"
-      exit 0
+      printf -- "cat <<'EOM'\n%s\nEOM\nexit 0\n" "$out"
     else
-      printf -- "%s\n" "$out" >&2
-      exit $ret
+      printf -- "cat <<'EOM' >&2\n%s\nEOM\nexit %d\n" "$out" "$ret"
     fi
   fi
-  docopt_do_teardown
 }
 
 lib_version_check() {
@@ -306,9 +316,9 @@ docopt_error() {
 }
 
 docopt_do_teardown() {
-  unset -f docopt docopt_run docopt_parse docopt_either docopt_oneormore \
+  unset -f docopt_run docopt_parse docopt_either docopt_oneormore \
   docopt_optional docopt_required docopt_command docopt_switch docopt_value \
-  docopt_parse_long docopt_parse_shorts docopt_do_teardown
+  docopt_parse_long docopt_parse_shorts docopt_error docopt_do_teardown
 }
 
 docopt_parse() {
@@ -384,6 +394,5 @@ generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \
   if ! docopt_required "$root_idx" || [ ${#docopt_left[@]} -gt 0 ]; then
     docopt_error
   fi
-  [[ -n ${!docopt_var_*} ]] && declare -p "${!docopt_var_@}"
   return 0
 }

@@ -3,7 +3,7 @@
 DOC="Usage: echo_ship_name.sh ship new <name>...
 "
 "DOCOPT PARAMS"
-docopt "$@"
+eval "$(docopt "$@")"
 
 if $prefix_ship && $prefix_new; then
   echo $prefix__name_

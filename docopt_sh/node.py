@@ -68,10 +68,13 @@ class LeafNode(Node):
         'fi'
       )
     else:
-      default_tpl = 'eval "${{docopt_prefix}}"\'{name}=${{{docopt_name}:-{default}}}\''
+      default_tpl = (
+        'eval "${{docopt_prefix}}"\'{name}=${{{docopt_name}:-{default}}}\''
+      )
     self.default_assignment = default_tpl.format(
       name=self.variable_name,
       docopt_name='docopt_var_' + self.variable_name,
       default=bash_variable_value(default_value)
     )
+    self.prefixed_variable_name = '${{docopt_prefix}}{name}'.format(name=self.variable_name)
     super(LeafNode, self).__init__(pattern, body, idx)

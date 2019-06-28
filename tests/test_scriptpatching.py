@@ -138,7 +138,7 @@ def test_parser_only(monkeypatch, capsys, bash):
   program = '''
 DOC="{doc}"
 {parser}
-docopt "$@"
+eval "$(docopt "$@")"
 echo $((_x_ + _y_))
 '''.format(doc=doc, parser=parser)
   captured = invoke_docopt(monkeypatch, capsys, program_params=['-'], stdin=StringIO(program))
@@ -152,7 +152,7 @@ def test_teardown(monkeypatch, capsys, bash):
   code, out, err = run(bash, 'ship', 'new', 'Britannica')
   assert code == 0
   allowed_vars = ['DOCOPT_PROGRAM_VERSION', 'docopt_usage']
-  allowed_fns = ['docopt_error']
+  allowed_fns = ['docopt', 'docopt_exit']
   for line in out.strip().split('\n'):
     if '=' in line:
       name, val = line.split('=', 1)

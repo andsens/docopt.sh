@@ -18,7 +18,7 @@ Options:
   --drifting    Drifting mine.
 "
 "DOCOPT PARAMS"
-docopt "$@"
+eval "$(docopt "$@")"
 
 if $ship == 'true' && $new == 'true'; then
   printf "Your new ship '%s' has been created.\n" "$_name_"

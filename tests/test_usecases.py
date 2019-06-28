@@ -14,7 +14,7 @@ def run_usecase(monkeypatch, capsys, usecase, bash):
   program_template = '''
 DOC="{doc}"
 "DOCOPT PARAMS"
-docopt "$@"
+eval "$(docopt "$@")"
 if [[ -n ${{!_usecase_*}} ]]; then
   declare -p "${{!_usecase_@}}"
 fi
@@ -23,7 +23,7 @@ fi
   run = patch_stream(
     monkeypatch, capsys,
     io.StringIO(program),
-    docopt_params={'DOCOPT_PREFIX': '_usecase_', 'DOCOPT_TEARDOWN': False}
+    docopt_params={'DOCOPT_PREFIX': '_usecase_'}
   )
   code, out, err = run(bash, *shlex.split(argv))
   if code == 0:

@@ -18,6 +18,6 @@ Options:
   --drifting    Drifting mine.
 "
 "DOCOPT PARAMS"
-docopt "$@"
+eval "$(docopt "$@")"
 
-declare
+declare -p

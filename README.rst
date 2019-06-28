@@ -42,6 +42,7 @@ Here is an abbreviated version of `Naval Fate <http://try.docopt.org/>`_.
 .. code-block:: sh
 
     #!/usr/bin/env bash
+
     DOC="Naval Fate.
 
     Usage:
@@ -52,10 +53,14 @@ Here is an abbreviated version of `Naval Fate <http://try.docopt.org/>`_.
       --speed=<kn>  Speed in knots [default: 10].
       --moored      Moored (anchored) mine.
       --drifting    Drifting mine."
-    docopt "$@"
-    $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
-    $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
-    exit 0
+
+    naval_fate() {
+      eval "$(docopt "$@")"
+      $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
+      $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
+      exit 0
+    }
+    naval_fate "$@"
 
 We can use ``docopt.sh`` to insert a matching parser:
 
@@ -88,10 +93,14 @@ The file will now look like this:
     done; if ! docopt_required root || [ ${#docopt_left[@]} -gt 0 ]; then
     docopt_error; fi; return 0; }
     # docopt parser above, complete command for generating this parser is `docopt.sh naval_fate.sh`
-    docopt "$@"
-    $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
-    $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
-    exit 0
+
+    naval_fate() {
+      eval "$(docopt "$@")"
+      $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
+      $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
+      exit 0
+    }
+    naval_fate "$@"
 
 To try it out we run ``naval_fate.sh``
 
@@ -100,13 +109,17 @@ To try it out we run ``naval_fate.sh``
     $ ./naval_fate.sh ship Olympia move 1 5 --speed 8
     The Olympia is now moving to 1,5 at 8 knots.
 
+Note that the variables ``$ship``, ``$move``, etc. are not set in the global
+scope, but rather contained the scope of the invoking function.
+You are however not restricted to calling ``eval "$(docopt "$@")"`` from a
+function, calling docopt outside of functions will work just fine.
 
 Refreshing the parser
 ---------------------
 
 ``docopt.sh`` embeds a hash of the help text into the parser to ensure that the
-two always match. In order to update the parser, simply run ``docopt.sh`` again.
-The existing parser will be replaced with a new one.
+two always match. In order to update the parser, simply run ``docopt.sh``
+again. The existing parser will be replaced with a new one.
 If the parser was generated with any particular options, these options will be
 re-applied unless instructed otherwise with ``--no-auto-params``
 (``docopt.sh`` also embeds the command line options it was used with).
@@ -170,9 +183,9 @@ variable names. See `parser options`_ for more details.
 Commandline options
 -------------------
 
-The commandline options of ``docopt.sh`` mostly change _how_ the parser is
-generated while options to ``docopt "$@"`` itself change the behavior of
-the parser.
+The commandline options of ``docopt.sh`` only change _how_ the parser is
+generated while options to ``eval "$(docopt "$@")"`` itself change the
+behavior of the parser.
 
 The commandline options are:
 
@@ -197,7 +210,8 @@ Parser options
 --------------
 
 Parser options change the behavior of the parser in various ways. They all have
-in common that they must be specified *before* invoking ``docopt "$@"``.
+in common that they must be specified *before* invoking
+``eval "$(docopt "$@")"``.
 
 +-----------------------------+---------------------------------------------+
 |           Option            |                 Description                 |
@@ -230,9 +244,10 @@ Exiting with a usage message
 ----------------------------
 
 Oftentimes additional verification of parameters is necessary (e.g. when an
-option value is an enum). In those cases you can use ``docopt_error "message"``
-in order to output a message for the user, followed by the short usage help
-(i.e. without extended options), followed by ``exit 1``.
+option value is an enum). In those cases you can use ``docopt_exit "message"``
+in order to output a message for the user, the function automatically appends
+a short usage help (i.e. without extended options) and then exits with
+code ``1``.
 
 Library mode
 ------------
@@ -257,9 +272,9 @@ used parameters from your script and re-apply them.
 Note that ``--library`` can be any valid bash expression, meaning you can use
 things like ``"$(dirname "$0")"``.
 
-On every invocation ``docopt "$@"`` checks that the library version and the
-version of the dynamic part in the script match. If that is not the case, the
-parser exits with an error.
+On every invocation docopt checks that the library version and the version of
+the dynamic part in the script match. The parser exits with an error if that
+is not the case.
 
 Developers
 ----------

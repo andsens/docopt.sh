@@ -6,10 +6,10 @@ Options:
   --color=auto|always|never  Wether to use colors in output [default: auto]
 "
 "DOCOPT PARAMS"
-docopt "$@"
+eval "$(docopt "$@")"
 
 if [[ $__color != auto && $__color != always && $__color != never ]]; then
-  docopt_error "--color must be auto, always, or never"
+  docopt_exit "--color must be auto, always, or never"
 fi
 
 if [[ $__color = "always" || $__color = "auto" && -t 1 ]]; then

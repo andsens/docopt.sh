@@ -59,14 +59,14 @@ class Script(object):
     if not self.invocation.present:
       log.warning(
         '%s No invocations of docopt found, check your script to make sure this is correct.\n'
-        'docopt.sh is invoked with `docopt "$@"`.',
+        'docopt.sh is invoked with `eval "$(docopt "$@")"`.',
         self.invocation
       )
     for option in self.options:
       if self.invocation.present and option.present and option.start > self.invocation.last.end:
         log.warning(
           '%s $%s has no effect when specified after invoking docopt, '
-          'make sure to place docopt options before calling `docopt "$@"`.',
+          'make sure to place docopt options before calling `eval "$(docopt "$@")"`.',
           option, option.name
         )
 
@@ -191,7 +191,7 @@ class Guards(object):
 class Invocation(ScriptLocation):
 
   def __init__(self, script, parser):
-    matches = re.finditer(r'docopt\s+"\$\@"', script.contents[parser.end:])
+    matches = re.finditer(r'eval "\$\(docopt\s+"\$\@"\)"', script.contents[parser.end:])
     super(Invocation, self).__init__(script, matches, parser.end)
 
 
