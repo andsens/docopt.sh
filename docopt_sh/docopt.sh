@@ -15,6 +15,20 @@ docopt() {
   local out
   if out=$(docopt_run "$@"); then
     eval "$out"
+    # Workaround for bash-4.3 bug
+    # Explanation: The following script will not work in bash 4.3.0 (and only that version)
+    # #!tests/bash-versions/bash-4.3/bash
+    # fn() {
+    #   decl=$(X=(A B); declare -p X)
+    #   eval "$decl"
+    #   declare -p X
+    # }
+    # fn
+
+    # Adding "local X" before "eval" fixes the issue, but we don't know the variable
+    # names, so instead we just run the "eval" twice so that the variables are declared
+    # once we run the second eval.
+    eval "$out"
     local docopt_prefix=${DOCOPT_PREFIX:-''}
     "DEFAULTS"
   else
