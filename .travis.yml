@@ -8,14 +8,16 @@ addons:
   apt:
     packages:
     - python3-pip
+    - freebsd-glue
 
 before_script:
 - pip3 install docopt termcolor pytest\>=4.4.2 pytest-xdist pytest-pep8
+- tests/get_bash.py 3.2 3.2.48 3.2.57 4.0 4.1 4.2 4.2.53 4.3 4.3.30 4.4
 
 script:
 - bash --version
 - python3 --version
-- pytest --bash-version 3.2,4.0,4.1,4.2,4.3,4.4
+- pytest --bash-version all
 
 notifications:
   email:

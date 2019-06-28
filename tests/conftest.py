@@ -1,7 +1,5 @@
 import logging
 import os
-import urllib.request
-import tarfile
 import subprocess
 import re
 import glob
@@ -110,30 +108,11 @@ def get_installed_bash_versions():
 
 
 def get_bash_version(version):
-  versions_path = 'tests/bash-versions'
-  if not os.path.exists(versions_path):
-    os.mkdir(versions_path)
-  version_path = os.path.join(versions_path, 'bash-%s' % version)
-  executable_path = os.path.join(version_path, 'bash')
+  executable_path = os.path.join(os.path.dirname(__file__), 'bash-versions/bash-%s/bash' % version)
   if not os.path.exists(executable_path):
-    log.warning('bash-%s executable not found in tests/bash-versions, downloading & compiling now' % version)
-    archive_path = os.path.join(versions_path, 'bash-%s.tar.gz' % version)
-    if os.path.exists(archive_path):
-      log.warning('%s already exists, skipping download' % archive_path)
-    else:
-      url = 'http://ftp.gnu.org/gnu/bash/bash-%s.tar.gz' % version
-      urllib.request.urlretrieve(url, archive_path)
-    if os.path.exists(version_path):
-      log.warning('%s already exists, skipping extraction' % version_path)
-    else:
-      with tarfile.open(archive_path) as archive:
-        archive.extractall(versions_path)
-    makefile_path = os.path.join(version_path, 'Makefile')
-    if os.path.exists(makefile_path):
-      log.warning('%s already exists, skipping ./configure' % makefile_path)
-    else:
-      process = subprocess.run('./configure', cwd=version_path)
-      process.check_returncode()
-    process = subprocess.run('make', cwd=version_path)
-    process.check_returncode()
+    raise Exception(
+      'bash-{version} is not installed. '
+      'Use `tests/get_bash.py {version}` to do that'
+      .format(version=version)
+    )
   return version, executable_path

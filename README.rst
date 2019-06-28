@@ -272,9 +272,16 @@ Testing
 
 All usecases_ from the original docopt are used to validate correctness.
 Per default pytest uses the bash version that is installed on the system to
-run the tests. However, you can specify multiple alternate versions using
+run the tests.
+
+However, you can specify multiple alternate versions using
 ``--bash-version <versions>``, where ``<versions>`` is a comma-separated list
-of bash version of the form ``3.2,4.0,4.1`` etc..
+of bash version of the form ``3.2,4.0,4.1`` etc.. These versions need to be
+downloaded and compiled first though, the process has been fully automated with
+``get_bash.py``, the scripts downloads, extracts, configures, and compiles the
+specified bash versions in the ``tests/bash-versions`` folder.
+Use ``--bash-version all`` to test with all the bash versions that are
+installed.
 
 
 .. _pytest: https://pytest.org/
