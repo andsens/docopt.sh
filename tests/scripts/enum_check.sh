@@ -8,7 +8,7 @@ Options:
 "DOCOPT PARAMS"
 docopt "$@"
 
-if [[ ! $__color =~ ^auto|always|never$ ]]; then
+if [[ $__color != auto && $__color != always && $__color != never ]]; then
   docopt_error "--color must be auto, always, or never"
 fi
 
