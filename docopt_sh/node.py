@@ -61,8 +61,11 @@ class LeafNode(Node):
 
     if type(default_value) is list:
       default_tpl = (
-        '[[ -z ${{{docopt_name}+x}} ]] && eval "${{docopt_prefix}}"\'{name}={default}\' '
-        '|| eval "${{docopt_prefix}}"\'{name}=("${{{docopt_name}[@]}}")\''
+        'if declare -p {docopt_name} >/dev/null 2>&1; then\n'
+        '  eval "${{docopt_prefix}}"\'{name}=("${{{docopt_name}[@]}}")\'\n'
+        'else\n'
+        '  eval "${{docopt_prefix}}"\'{name}={default}\'\n'
+        'fi'
       )
     else:
       default_tpl = 'eval "${{docopt_prefix}}"\'{name}=${{{docopt_name}:-{default}}}\''
