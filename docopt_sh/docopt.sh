@@ -13,7 +13,7 @@ docopt() {
     docopt_parse "ROOT NODE IDX" "$@" || exit $?
     # shellcheck disable=2016
     printf 'docopt_exit() { [[ -n $1 ]] && printf "%%s\\n" "$1" >&2; printf "%%s\\n" ""DOC USAGE"" >&2; exit 1; }\n'
-    printf 'docopt_do_teardown\n'
+    "OUTPUT TEARDOWN"
     # shellcheck disable=2157,2140
     "HAS VARS" || return 0
     # shellcheck disable=2034

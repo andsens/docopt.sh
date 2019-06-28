@@ -151,7 +151,7 @@ def test_teardown(monkeypatch, capsys, bash):
   run = patch_file(monkeypatch, capsys, 'all_vars.sh')
   code, out, err = run(bash, 'ship', 'new', 'Britannica')
   assert code == 0
-  allowed_vars = ['DOCOPT_PROGRAM_VERSION', 'docopt_usage']
+  allowed_vars = []
   allowed_fns = ['docopt', 'docopt_exit']
   for line in out.strip().split('\n'):
     if '=' in line:
@@ -170,7 +170,26 @@ def test_library(monkeypatch, capsys, bash):
     )
     code, out, err = run(bash, 'ship', 'new', 'Britannica')
     assert code == 0
+    assert err == ''
     assert out == 'Britannica\n'
+
+
+def test_library_teardown(monkeypatch, capsys, bash):
+  with generated_library(monkeypatch, capsys) as library:
+    run = patch_file(
+      monkeypatch, capsys, 'all_vars.sh',
+      program_params=['--library', library.name]
+    )
+    code, out, err = run(bash, 'ship', 'new', 'Britannica')
+    allowed_vars = []
+    allowed_fns = ['docopt', 'docopt_exit']
+    for line in out.strip().split('\n'):
+      if '=' in line:
+        name, val = line.split('=', 1)
+        assert not name.lower().startswith('docopt') or name in allowed_vars
+      elif '()' in line:
+        name, rest = line.split(' ', 1)
+        assert not name.lower().startswith('docopt') or name in allowed_fns
 
 
 def test_library_version(monkeypatch, capsys, bash):

@@ -50,6 +50,7 @@ class Parser(object):
 
     replacements = {
       '"LIBRARY SOURCE"': library_source,
+      '    "OUTPUT TEARDOWN"\n': '' if library_source else "    printf 'docopt_do_teardown\\n'\n",
       '"DOC VALUE"': stripped_doc,
       '"DOC USAGE"': usage_doc,
       '"DOC DIGEST"': hashlib.sha256(script.doc.value.encode('utf-8')).hexdigest()[0:5],
