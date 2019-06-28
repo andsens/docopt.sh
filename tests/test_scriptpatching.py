@@ -203,3 +203,11 @@ def test_auto_params(monkeypatch, capsys, bash):
     assert code == 0
     with open(script.name, 'r') as handle:
       assert first_run == handle.read()
+
+
+def test_error_fn(monkeypatch, capsys, bash):
+  run = patch_file(monkeypatch, capsys, 'enum_check.sh')
+  code, out, err = run(bash, '--color', 'sometimes')
+  assert code == 1
+  assert out == ''
+  assert err == '--color must be auto, always, or never\nUsage: enum_check.sh [options]\n'

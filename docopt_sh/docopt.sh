@@ -13,7 +13,7 @@ docopt() {
     docopt_parse "ROOT NODE IDX" "$@"
   }
   local out
-  if out=$(docopt_run "$@"); then
+  if out=$(docopt_run "$@" 2>&1); then
     eval "$out"
     # Workaround for bash-4.3 bug
     # Explanation: The following script will not work in bash 4.3.0 (and only that version)
@@ -34,10 +34,10 @@ docopt() {
   else
     local ret=$?
     if [ $ret -eq 85 ]; then
-      echo "$out"
+      printf -- "%s\n" "$out"
       exit 0
     else
-      echo "$out" >&2
+      printf -- "%s\n" "$out" >&2
       exit $ret
     fi
   fi
@@ -300,8 +300,8 @@ docopt_parse_long() {
 }
 
 docopt_error() {
-  [[ -n $1 ]] && printf "%s\n" "$1"
-  printf "%s\n" "${docopt_usage}"
+  [[ -n $1 ]] && printf "%s\n" "$1" >&2
+  printf "%s\n" "${docopt_usage}" >&2
   exit 1
 }
 
