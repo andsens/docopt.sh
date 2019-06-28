@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-DOCOPT_PROGRAM_VERSION='1.5.2'
-
 DOC="Naval Fate.
 
 Usage:

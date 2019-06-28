@@ -38,7 +38,10 @@ def test_no_help(monkeypatch, capsys, bash):
 
 
 def test_version(monkeypatch, capsys, bash):
-  run = patch_file(monkeypatch, capsys, 'echo_ship_name.sh')
+  run = patch_file(
+    monkeypatch, capsys, 'echo_ship_name.sh',
+    docopt_params={'DOCOPT_PROGRAM_VERSION': '0.1.5'}
+  )
   code, out, err = run(bash, '--version')
   assert code == 0
   assert out == '0.1.5\n'
