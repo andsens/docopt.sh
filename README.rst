@@ -199,7 +199,6 @@ The commandline options are:
 +-------------------------+----------------------------------------------+
 | ``--library -l SRC``    | Generates the dynamic part of the parser and |
 |                         | includes the static parts with `source SRC`. |
-|                         | See `Library mode`_ for more details.        |
 +-------------------------+----------------------------------------------+
 | ``--no-auto-params -P`` | Disable auto-detection of parser             |
 |                         | generation parameters                        |
