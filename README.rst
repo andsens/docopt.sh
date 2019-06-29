@@ -110,8 +110,8 @@ To try it out we run ``naval_fate.sh``
     $ ./naval_fate.sh ship Olympia move 1 5 --speed 8
     The Olympia is now moving to 1,5 at 8 knots.
 
-Note that the variables ``$ship``, ``$move``, etc. are not set globally, but
-rather contained to the scope of the invoking function.
+The variables ``$ship``, ``$move``, etc. are not set globally, but rather
+contained to the scope of the invoking function.
 You are however not restricted to calling ``eval "$(docopt "$@")"`` from a
 function, calling docopt outside of functions will work just fine and the
 variables will then be defined globally.
@@ -134,7 +134,7 @@ re-applied unless instructed otherwise with ``--no-auto-params``.
     in the script. Use --no-auto-params to disable this behavior.
     The parser in naval_fate.sh is already up-to-date.
 
-Note that once you have generated the parser, you can move the codeblock to
+Once you have generated the parser, you can move the codeblock to
 any other place in your script. The script patcher will automatically find
 the codeblock and replace it with an updated version.
 
@@ -262,9 +262,8 @@ Instead of inlining the entirety of the parser in your script, you can move the
 static parts to an external file and only insert the dynamic part into your
 script. This is particularly useful when you have multiple bash scripts in the
 same project that use ``docopt.sh``.
-
-To generate the library, run ``docopt.sh generate-library > DEST``.
-Note that the output is written to ``stdout``, so make sure to add that
+To generate the library run ``docopt.sh generate-library > DEST``.
+The output is written to ``stdout``, so make sure to add that
 redirect.
 
 Once a library has been generated you can insert the dynamic part of your
@@ -272,11 +271,11 @@ parser into your script with ``docopt.sh --library DEST SCRIPT``. The generator
 will then automatically add a ``source DEST`` to the parser. Make sure to quote
 your library path if it contains spaces like so
 ``docopt.sh --library '"/path with spaces/docopt-lib.sh"'``.
-Once that is done, you do not need to specify ``--library`` on subsequent
-refreshes of the parser, ``docopt.sh`` will automatically glean the previously
-used parameters from your script and re-apply them.
+You do not need to specify ``--library`` on subsequent refreshes of the parser,
+``docopt.sh`` will automatically glean the previously used parameters from your
+script and re-apply them.
 
-Note that ``--library`` can be any valid bash expression, meaning you can use
+``--library`` can be any valid bash expression, meaning you can use
 things like ``"$(dirname "$0")"``.
 
 On every invocation docopt checks that the library version and the version of
