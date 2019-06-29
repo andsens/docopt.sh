@@ -109,10 +109,11 @@ To try it out we run ``naval_fate.sh``
     $ ./naval_fate.sh ship Olympia move 1 5 --speed 8
     The Olympia is now moving to 1,5 at 8 knots.
 
-Note that the variables ``$ship``, ``$move``, etc. are not set in the global
-scope, but rather contained the scope of the invoking function.
+Note that the variables ``$ship``, ``$move``, etc. are not set globally, but
+rather contained to the scope of the invoking function.
 You are however not restricted to calling ``eval "$(docopt "$@")"`` from a
-function, calling docopt outside of functions will work just fine.
+function, calling docopt outside of functions will work just fine and the
+variables will then be defined globally.
 
 Refreshing the parser
 ---------------------
