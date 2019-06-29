@@ -20,7 +20,8 @@ The parser is compatible with bash 3.2+.
 * `Parser options`_
 * `Exiting with a usage message`_
 * `Library mode`_
-* `Testing`_
+* `Developers`_
+    * `Testing`_
 
 
 Installation
@@ -122,8 +123,7 @@ Refreshing the parser
 two always match. In order to update the parser, simply run ``docopt.sh``
 again. The existing parser will be replaced with a new one.
 If the parser was generated with any particular options, these options will be
-re-applied unless instructed otherwise with ``--no-auto-params``
-(``docopt.sh`` also embeds the command line options it was used with).
+re-applied unless instructed otherwise with ``--no-auto-params``.
 
 .. code-block::
 
@@ -135,28 +135,28 @@ re-applied unless instructed otherwise with ``--no-auto-params``
     The parser in naval_fate.sh is already up-to-date.
 
 Note that once you have generated the parser, you can move the codeblock to
-any other place in your script. The generator will automatically find the code
-and replace it in-place.
+any other place in your script. The script patcher will automatically find
+the codeblock and replace it with an updated version.
 
 Parser output
 -------------
 
 Names of arguments, commands, and options are mapped by replacing everything
-that is not an alphanumeric character or an underscore with an underscore.
+that is not an alphanumeric character with an underscore.
 This means ``--speed`` becomes ``$__speed``, ``-f`` becomes ``$_f``, and
 ``<name>`` becomes ``_name_``, while ``NAME`` stays as ``$NAME`` and
 ``set`` stays as ``$set``.
 
-Commands and switches (options without arguments) become ``true`` or ``false``.
-If a command or switch can be specified more than once, the value will be an
-integer that has been incremented the number of times the parameter was
-specified.
+Switches (options without arguments) and commands become ``true`` or ``false``.
+If a switch or command can be specified more than once, the resulting
+variable value will be an integer that has been incremented the number of times
+the parameter was specified.
 
-Arguments and options with values get the values as strings.
-If an argument or option with a value can be specified more that once,
+Options with values and regular arguments become strings.
+If an option with a value or an argument can be specified more that once,
 the value will be an array of strings.
 
-To clarify, given this doc and invocation:
+To clarify, given this (somewhat complex, but concise) doc and invocation:
 
 .. code-block::
 
@@ -179,14 +179,15 @@ The variables and their values will be:
     ARGS=(1 2 3) # 1 2 3
 
 You can use ``$DOCOPT_PREFIX`` to change the above output by prefixing the
-variable names. See `parser options`_ for more details.
+variable names (e.g. specifying ``DOCOPT_PREFIX=prog`` would change ``ARG``
+to ``progARG``). See `parser options`_ for other parser options.
 
 Commandline options
 -------------------
 
-The commandline options of ``docopt.sh`` only change _how_ the parser is
-generated while options to ``eval "$(docopt "$@")"`` itself change the
-behavior of the parser.
+The commandline options of ``docopt.sh`` only change *how* the parser is
+generated, while global variables specified before ``eval "$(docopt "$@")"``
+itself change the behavior of the parser.
 
 The commandline options are:
 
@@ -214,8 +215,8 @@ The commandline options are:
 Parser options
 --------------
 
-Parser options change the behavior of the parser in various ways. They all have
-in common that they must be specified *before* invoking
+Parser options change the behavior of the parser in various ways. These options
+are specified as global variables and must be specified *before* invoking
 ``eval "$(docopt "$@")"``.
 
 +-----------------------------+---------------------------------------------+
@@ -251,7 +252,7 @@ Exiting with a usage message
 Oftentimes additional verification of parameters is necessary (e.g. when an
 option value is an enum). In those cases you can use ``docopt_exit "message"``
 in order to output a message for the user, the function automatically appends
-a short usage help (i.e. without extended options) and then exits with
+a short usage message (i.e. the ``Usage:`` part of the doc) and then exits with
 code ``1``.
 
 Library mode
@@ -259,7 +260,8 @@ Library mode
 
 Instead of inlining the entirety of the parser in your script, you can move the
 static parts to an external file and only insert the dynamic part into your
-script.
+script. This is particularly useful when you have multiple bash scripts in the
+same project that use ``docopt.sh``.
 
 To generate the library, run ``docopt.sh generate-library > DEST``.
 Note that the output is written to ``stdout``, so make sure to add that
@@ -267,7 +269,7 @@ redirect.
 
 Once a library has been generated you can insert the dynamic part of your
 parser into your script with ``docopt.sh --library DEST SCRIPT``. The generator
-will then automatically add a `source DEST` to the parser. Make sure to quote
+will then automatically add a ``source DEST`` to the parser. Make sure to quote
 your library path if it contains spaces like so
 ``docopt.sh --library '"/path with spaces/docopt-lib.sh"'``.
 Once that is done, you do not need to specify ``--library`` on subsequent
@@ -287,19 +289,18 @@ Developers
 Testing
 ~~~~~~~
 
-``docopt.sh`` uses pytest_ for testing. You can run the testsuite by running
-``pytest``.
+``docopt.sh`` uses pytest_ for testing. You can run the testsuite by executing
+``pytest`` in the root of the project.
 
 All usecases_ from the original docopt are used to validate correctness.
 Per default pytest uses the bash version that is installed on the system to
 run the tests.
-
 However, you can specify multiple alternate versions using
 ``--bash-version <versions>``, where ``<versions>`` is a comma-separated list
-of bash version of the form ``3.2,4.0,4.1`` etc.. These versions need to be
-downloaded and compiled first though, the process has been fully automated with
-``get_bash.py``, the scripts downloads, extracts, configures, and compiles the
-specified bash versions in the ``tests/bash-versions`` folder.
+of bash versions (e.g. ``3.2,4.0,4.1``). These versions need to be
+downloaded and compiled first, which you can do with ``get_bash.py``.
+The script downloads, extracts, configures, and compiles the specified bash
+versions in the ``tests/bash-versions`` folder.
 Use ``--bash-version all`` to test with all the bash versions that are
 installed.
 
