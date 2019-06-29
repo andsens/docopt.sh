@@ -67,7 +67,7 @@ class Parser(object):
       '"ARGCOUNT"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
       '    "NODES"': indent('\n'.join(map(str, list(doc_ast.nodes))), level=2),
       '    "DEFAULTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes]), level=2),
-      '"VAR NAMES"': ' '.join(['"%s"' % node.prefixed_variable_name for node in leaf_nodes]),
+      '"VAR NAMES"': ' \\\n    '.join(['"%s"' % node.prefixed_variable_name for node in leaf_nodes]),
       '"HAS VARS"': bash_ifs_value(True if leaf_nodes else False),
       '"MAX NODE IDX"': max([n.idx for n in doc_ast.nodes]),
       '"ROOT NODE IDX"': doc_ast.root_node.idx,

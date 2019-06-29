@@ -12,7 +12,11 @@ docopt() {
     "NODES"
     docopt_parse "ROOT NODE IDX" "$@" || exit $?
     # shellcheck disable=2016
-    printf 'docopt_exit() { [[ -n $1 ]] && printf "%%s\\n" "$1" >&2; printf "%%s\\n" ""DOC USAGE"" >&2; exit 1; }\n'
+    cat <<<' docopt_exit() {
+  [[ -n $1 ]] && printf "%s\n" "$1" >&2
+  printf "%s\n" ""DOC USAGE"" >&2
+  exit 1
+}'
     "OUTPUT TEARDOWN"
     # shellcheck disable=2157,2140
     "HAS VARS" || return 0
@@ -38,7 +42,7 @@ docopt() {
     "DEFAULTS"
     local docopt_i=0
     for ((docopt_i=0;docopt_i<docopt_loops;docopt_i++)); do
-      declare -p "VAR NAMES"
+    declare -p "VAR NAMES"
     done
   }
   local out
