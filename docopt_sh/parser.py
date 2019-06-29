@@ -17,6 +17,14 @@ class Parser(object):
   def __init__(self, parser_parameters):
     self.parameters = parser_parameters
     self.library = Library()
+    self.shellcheck_ignores = [
+      '2016',  # Ignore unexpanded variables in single quotes (used for docopt_exit generation)
+    ]
+    if self.parameters.library_path:
+      self.shellcheck_ignores.extend([
+        '1091',  # Ignore library sourcing
+        '2034',  # Ignore unused vars (they refer to things in the library)
+      ])
 
   def generate(self, script):
     generated = self.generate_main(script)
