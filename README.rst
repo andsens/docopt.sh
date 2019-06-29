@@ -190,22 +190,26 @@ behavior of the parser.
 
 The commandline options are:
 
-+----------------------+----------------------------------------------+
-|        Option        |                 Description                  |
-+======================+==============================================+
-| ``--line-length N``  | Max line length when minifying.              |
-|                      | Disable with ``0`` (default: 80)             |
-+----------------------+----------------------------------------------+
-| ``--library -l SRC`` | Generates the dynamic part of the parser and |
-|                      | includes the static parts with `source SRC`. |
-|                      | See `Library mode`_ for more details.        |
-+----------------------+----------------------------------------------+
-| ``--no-auto-params`` | Disable auto-detection of parser             |
-|                      | generation parameters                        |
-+----------------------+----------------------------------------------+
-| ``--parser``         | Output the parser instead of inserting       |
-|                      | it in the script                             |
-+----------------------+----------------------------------------------+
++-------------------------+----------------------------------------------+
+|         Option          |                 Description                  |
++=========================+==============================================+
+| ``--line-length -n N``  | Max line length when minifying.              |
+|                         | Disable with ``0`` (default: 80)             |
++-------------------------+----------------------------------------------+
+| ``--library -l SRC``    | Generates the dynamic part of the parser and |
+|                         | includes the static parts with `source SRC`. |
+|                         | See `Library mode`_ for more details.        |
++-------------------------+----------------------------------------------+
+| ``--no-auto-params -P`` | Disable auto-detection of parser             |
+|                         | generation parameters                        |
++-------------------------+----------------------------------------------+
+| ``--parser -p``         | Output the parser instead of inserting       |
+|                         | it in the script                             |
++-------------------------+----------------------------------------------+
+| ``--help -h``           | Show the help screen                         |
++-------------------------+----------------------------------------------+
+| ``--version``           | Show docopt.sh version                       |
++-------------------------+----------------------------------------------+
 
 Parser options
 --------------

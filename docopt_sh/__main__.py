@@ -16,12 +16,14 @@ Usage:
   docopt.sh generate-library
 
 Options:
-  --line-length N    Max line length when minifying (0 to disable, default: 80)
-  --library -l SRC   Generates only the dynamic part of the parser and includes
-                     the static parts using `source SRC`, use `generate-library`
-                     to create that file
-  --no-auto-params   Disable auto-detection parser generation parameters
-  --parser           Output the parser instead of inserting it in the script
+  --line-length -n N   Max line length when minifying (0 to disable,default: 80)
+  --library -l SRC     Generates only the dynamic part of the parser and
+                       includes the static parts using `source SRC`.
+                       Use `generate-library` to create that file.
+  --no-auto-params -P  Disable auto-detection parser generation parameters
+  --parser -p          Output the parser instead of inserting it in the script
+  --help -h            Show this help screen
+  --version            Show the docopt.sh version
 
 Note:
   When reading the script from stdin (`-` instead of SCRIPT)
