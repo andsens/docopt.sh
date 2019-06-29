@@ -31,7 +31,7 @@ Install ``docopt.sh`` using pip:
 
 .. code-block::
 
-    pip3 install docopt-sh
+    sudo pip3 install docopt-sh
 
 
 Quick example
