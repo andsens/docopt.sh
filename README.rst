@@ -107,7 +107,7 @@ To try it out we run ``naval_fate.sh``
 The variables ``$ship``, ``$move``, etc. are not set globally, but rather
 contained to the scope of the invoking function.
 You are however not restricted to calling ``eval "$(docopt "$@")"`` from a
-function, calling docopt outside of functions will work just fine and the
+function, calling docopt outside of functions will work just as well and the
 variables will then be defined globally.
 
 Refreshing the parser
