@@ -43,9 +43,7 @@ Here is an abbreviated version of `Naval Fate <http://try.docopt.org/>`_.
 .. code-block:: sh
 
     #!/usr/bin/env bash
-
     DOC="Naval Fate.
-
     Usage:
       naval_fate.py ship <name> move <x> <y> [--speed=<kn>]
       naval_fate.py ship shoot <x> <y>
@@ -54,7 +52,6 @@ Here is an abbreviated version of `Naval Fate <http://try.docopt.org/>`_.
       --speed=<kn>  Speed in knots [default: 10].
       --moored      Moored (anchored) mine.
       --drifting    Drifting mine."
-
     naval_fate() {
       eval "$(docopt "$@")"
       $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
@@ -76,7 +73,6 @@ The file will now look like this:
 
     #!/usr/bin/env bash
     DOC="Naval Fate.
-
     Usage:
       naval_fate.py ship <name> move <x> <y> [--speed=<kn>]
       naval_fate.py ship shoot <x> <y>
@@ -86,15 +82,13 @@ The file will now look like this:
       --moored      Moored (anchored) mine.
       --drifting    Drifting mine."
     # docopt parser below, refresh this parser with `docopt.sh naval_fate.sh`
-    docopt(){ docopt_doc=${DOC:0:237}; docopt_usage=${DOC:13:97}
+    # shellcheck disable=2016
+    docopt() { docopt_run() { docopt_doc=${DOC:0:237}; docopt_usage=${DOC:13:97}
     docopt_digest=79f25; docopt_shorts=(''); docopt_longs=(--speed)
-    docopt_argcount=(1); docopt_param_names=(__speed _name_ _x_ _y_ ship move shoot)
-    docopt_node_0(){ docopt_value __speed 0; }; docopt_node_1(){
     ... more code ...
-    done; if ! docopt_required root || [ ${#docopt_left[@]} -gt 0 ]; then
+    done; if ! docopt_required "$root_idx" || [ ${#docopt_left[@]} -gt 0 ]; then
     docopt_error; fi; return 0; }
     # docopt parser above, complete command for generating this parser is `docopt.sh naval_fate.sh`
-
     naval_fate() {
       eval "$(docopt "$@")"
       $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
