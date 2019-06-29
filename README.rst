@@ -58,7 +58,7 @@ Here is an abbreviated version of `Naval Fate <http://try.docopt.org/>`_.
       eval "$(docopt "$@")"
       $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
       $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
-      exit 0
+      return 0
     }
     naval_fate "$@"
 
@@ -98,7 +98,7 @@ The file will now look like this:
       eval "$(docopt "$@")"
       $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
       $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
-      exit 0
+      return 0
     }
     naval_fate "$@"
 
