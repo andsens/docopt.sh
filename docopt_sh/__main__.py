@@ -45,7 +45,8 @@ def docopt_sh(params):
   # `generate-library` will never be true because it is specified after [SCRIPT]
   # which matches it first. We want it in that order though, but there's a simple workaround:
   if params['SCRIPT'] == 'generate-library':
-    parser = Parser(params)
+    parser_parameters = ParserParameters(params)
+    parser = Parser(parser_parameters)
     sys.stdout.write('#!/usr/bin/env bash\n\n' + str(parser.generate_library(add_version_check=True)))
   else:
     try:
