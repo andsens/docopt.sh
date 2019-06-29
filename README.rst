@@ -229,7 +229,7 @@ are specified as global variables and must be specified *before* invoking
 +-----------------------------+---------------------------------------------+
 | ``$DOCOPT_OPTIONS_FIRST``   | Set to ``true`` to fail when options are    |
 |                             | specified after arguments/commands          |
-|                             | (default: false)                            |
+|                             | (default: ``false``)                        |
 +-----------------------------+---------------------------------------------+
 | ``$DOCOPT_PREFIX``          | Prefixes all variable names with the        |
 |                             | specified value (default: ``""``)           |
@@ -242,7 +242,6 @@ are specified as global variables and must be specified *before* invoking
 |                             | whether the library version and the         |
 |                             | docopt parser version match                 |
 |                             | (default: ``true``)                         |
-|                             | See `Library mode`_ for more details.       |
 +-----------------------------+---------------------------------------------+
 
 Exiting with a usage message
