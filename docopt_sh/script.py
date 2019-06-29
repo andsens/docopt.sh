@@ -129,17 +129,18 @@ class Doc(ScriptLocation):
 
   def __init__(self, script):
     matches = re.finditer(
-      r'DOC="(\s*)(.*?Usage:.+?)(\s*)"(\n|;)',
+      r'DOC="((\s*)(.*?Usage:.+?)(\s*))"(\n|;)',
       script.contents,
       re.MULTILINE | re.IGNORECASE | re.DOTALL
     )
     # re.IGNORECASE causes doc=, Doc= etc. to be matched, remove those matches
     matches = filter(lambda m: m.group(0).startswith('DOC='), matches)
     super(Doc, self).__init__(script, matches, 0)
-    self.value = self.match.group(2) if self.present else None
+    self.raw_value = self.match.group(1) if self.present else None
+    self.value = self.match.group(3) if self.present else None
     self.stripped_value_boundaries = (
-      self.match.start(2) - self.match.start(1),
-      self.match.end(2) - self.match.start(1)
+      self.match.start(3) - self.match.start(2),
+      self.match.end(3) - self.match.start(2)
     ) if self.present else None
 
 

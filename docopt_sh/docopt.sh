@@ -328,7 +328,7 @@ docopt_do_teardown() {
 docopt_parse() {
   if ${DOCOPT_DOC_CHECK:-true}; then
     local doc_hash
-    doc_hash=$(printf "%s" "$docopt_doc" | shasum -a 256)
+    doc_hash=$(printf "%s" "$DOC" | shasum -a 256)
     if [[ ${doc_hash:0:5} != "$docopt_digest" ]]; then
       printf "The current usage doc (%s) does not match what the parser was \
 generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \

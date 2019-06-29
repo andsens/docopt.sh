@@ -61,7 +61,7 @@ class Parser(object):
       '    "OUTPUT TEARDOWN"\n': '' if library_source else "    printf 'docopt_do_teardown\\n'\n",
       '"DOC VALUE"': stripped_doc,
       '"DOC USAGE"': usage_doc,
-      '"DOC DIGEST"': hashlib.sha256(script.doc.value.encode('utf-8')).hexdigest()[0:5],
+      '"DOC DIGEST"': hashlib.sha256(script.doc.raw_value.encode('utf-8')).hexdigest()[0:5],
       '"SHORTS"': ' '.join([bash_ifs_value(o.pattern.short) for o in option_nodes]),
       '"LONGS"': ' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
       '"ARGCOUNT"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
