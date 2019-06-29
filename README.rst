@@ -4,13 +4,11 @@ docopt.sh
 .. image:: https://travis-ci.org/andsens/docopt.sh.png?branch=master
     :target: https://travis-ci.org/andsens/docopt.sh
 
-``docopt.sh`` is a bash argument parser generator.
+``docopt.sh`` is a bash argument parser generator for bash 3.2, and 4+.
 Given a script it finds the ``docopt`` help text, parses it, generates a
 matching parser in bash, and then inserts it back into the original script.
-The resulting script is completely dependencyless (save for bash itself)
-and can be shipped without any additional files.
-
-The parser is compatible with bash 3.2+.
+The patched script will have no dependencies and can be shipped as a single
+file.
 
 * `Installation`_
 * `Quick example`_
