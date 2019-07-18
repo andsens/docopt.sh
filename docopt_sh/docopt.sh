@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 docopt() {
+  set -e
   "LIBRARY"
   doc="DOC VALUE"
   usage="DOC USAGE"
@@ -83,7 +84,7 @@ oneormore() {
   local i=0
   local prev=${#left[@]}
   while "node_$1"; do
-    ((i++))
+    ((i++)) || true
     [[ $prev -eq ${#left[@]} ]] && break
     prev=${#left[@]}
   done
@@ -132,7 +133,7 @@ switch() {
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       $testmatch && return 0
       if [[ $3 = true ]]; then
-        eval "((var_$1++))"
+        eval "((var_$1++))" || true
       else
         eval "var_$1=true"
       fi
@@ -174,7 +175,7 @@ _command() {
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       $testmatch && return 0
       if [[ $3 = true ]]; then
-        eval "((var_$1++))"
+        eval "((var_$1++)) || true"
       else
         eval "var_$1=true"
       fi
@@ -201,7 +202,7 @@ parse_shorts() {
         similar+=("$short")
         [[ $match = false ]] && match=$i
       fi
-      ((i++))
+      ((i++)) || true
     done
     if [[ ${#similar[@]} -gt 1 ]]; then
       error "${short} is specified ambiguously ${#similar[@]} times"
@@ -255,7 +256,7 @@ parse_long() {
       similar+=("$long")
       [[ $match = false ]] && match=$i
     fi
-    ((i++))
+    ((i++)) || true
   done
   if [[ $match = false ]]; then
     i=0
@@ -264,7 +265,7 @@ parse_long() {
         similar+=("$long")
         [[ $match = false ]] && match=$i
       fi
-      ((i++))
+      ((i++)) || true
     done
   fi
   if [[ ${#similar[@]} -gt 1 ]]; then
@@ -382,7 +383,7 @@ Run \`docopt.sh\` to refresh the parser."
   local i=0
   while [[ $i -lt ${#parsed_params[@]} ]]; do
     left+=("$i")
-    ((i++))
+    ((i++)) || true
   done
 
   if ! required "$root_idx" || [ ${#left[@]} -gt 0 ]; then
