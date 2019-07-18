@@ -1,68 +1,55 @@
 #!/usr/bin/env bash
 
 docopt() {
-  docopt_run() {
-    "LIBRARY SOURCE"
-    docopt_doc="DOC VALUE"
-    docopt_usage="DOC USAGE"
-    docopt_digest="DOC DIGEST"
-    docopt_shorts=("SHORTS")
-    docopt_longs=("LONGS")
-    docopt_argcount=("ARGCOUNT")
-    "NODES"
-    docopt_parse "ROOT NODE IDX" "$@" || exit $?
-    # shellcheck disable=2016
-    cat <<<' docopt_exit() {
+  "LIBRARY SOURCE"
+  docopt_doc="DOC VALUE"
+  docopt_usage="DOC USAGE"
+  docopt_digest="DOC DIGEST"
+  docopt_shorts=("SHORTS")
+  docopt_longs=("LONGS")
+  docopt_argcount=("ARGCOUNT")
+  "NODES"
+  # shellcheck disable=2016
+  cat <<<' docopt_exit() {
   [[ -n $1 ]] && printf "%s\n" "$1" >&2
   printf "%s\n" ""DOC USAGE"" >&2
   exit 1
 }'
-    "OUTPUT TEARDOWN"
-    # shellcheck disable=2157,2140
-    "HAS VARS" || return 0
-    # shellcheck disable=2034
-    local docopt_prefix=${DOCOPT_PREFIX:-''}
-    # Workaround for bash-4.3 bug
-    # The following script will not work in bash 4.3.0 (and only that version)
-    # #!tests/bash-versions/bash-4.3/bash
-    # fn() {
-    #   decl=$(X=(A B); declare -p X)
-    #   eval "$decl"
-    #   declare -p X
-    # }
-    # fn
-    local docopt_loops=1
-    [[ $BASH_VERSION =~ ^4.3 ]] && docopt_loops=2
-    # Adding "declare X" before "eval" fixes the issue, but we don't know the
-    # variable names, so instead we just output the `declare`s twice
-    # in bash-4.3.
+  docopt_parse "ROOT NODE IDX" "$@"
+  "OUTPUT TEARDOWN"
+  # shellcheck disable=2157,2140
+  "HAS VARS" || return 0
+  # shellcheck disable=2034
+  local docopt_prefix=${DOCOPT_PREFIX:-''}
+  # Workaround for bash-4.3 bug
+  # The following script will not work in bash 4.3.0 (and only that version)
+  # #!tests/bash-versions/bash-4.3/bash
+  # fn() {
+  #   decl=$(X=(A B); declare -p X)
+  #   eval "$decl"
+  #   declare -p X
+  # }
+  # fn
+  local docopt_loops=1
+  [[ $BASH_VERSION =~ ^4.3 ]] && docopt_loops=2
+  # Adding "declare X" before "eval" fixes the issue, but we don't know the
+  # variable names, so instead we just output the `declare`s twice
+  # in bash-4.3.
 
-    # Unset exported variables from parent shell
-    unset "VAR NAMES"
-    "DEFAULTS"
-    local docopt_i=0
-    for ((docopt_i=0;docopt_i<docopt_loops;docopt_i++)); do
-    declare -p "VAR NAMES"
-    done
-  }
-  local out
-  if out=$(docopt_run "$@" 2>&1); then
-    printf -- "%s\n" "$out"
-  else
-    local ret=$?
-    if [ $ret -eq 85 ]; then
-      printf -- "cat <<'EOM'\n%s\nEOM\nexit 0\n" "$out"
-    else
-      printf -- "cat <<'EOM' >&2\n%s\nEOM\nexit %d\n" "$out" "$ret"
-    fi
-  fi
+  # Unset exported variables from parent shell
+  unset "VAR NAMES"
+  "DEFAULTS"
+  local docopt_i=0
+  for ((docopt_i=0;docopt_i<docopt_loops;docopt_i++)); do
+  declare -p "VAR NAMES"
+  done
 }
 
 lib_version_check() {
 if [[ $1 != '"LIBRARY VERSION"' && ${DOCOPT_LIB_CHECK:-true} != 'false' ]]; then
-  printf "The version of the included docopt library (%s) \
-does not match the version of the invoking docopt parser (%s)\n" \
-    '"LIBRARY VERSION"' "$1" >&2
+  printf -- "cat <<'EOM' >&2\nThe version of the included docopt library (%s) \
+does not match the version of the invoking docopt parser (%s)\nEOM\nexit 70\n" \
+    '"LIBRARY VERSION"' "$1"
   exit 70
 fi
 }
@@ -218,8 +205,7 @@ docopt_parse_shorts() {
       ((i++))
     done
     if [[ ${#similar[@]} -gt 1 ]]; then
-      docopt_error "$(printf "%s is specified ambiguously %d times" \
-        "$short" "${#similar[@]}")"
+      docopt_error "${short} is specified ambiguously ${#similar[@]} times"
     elif [[ ${#similar[@]} -lt 1 ]]; then
       match=${#docopt_shorts[@]}
       value=true
@@ -231,7 +217,7 @@ docopt_parse_shorts() {
       if [[ ${docopt_argcount[$match]} -ne 0 ]]; then
         if [[ $remaining = '' ]]; then
           if [[ ${#docopt_argv[@]} -eq 0 || ${docopt_argv[0]} = '--' ]]; then
-            docopt_error "$(printf "%s requires argument" "$short")"
+            docopt_error "${short} requires argument"
           fi
           value=${docopt_argv[0]}
           docopt_argv=("${docopt_argv[@]:1}")
@@ -283,8 +269,7 @@ docopt_parse_long() {
     done
   fi
   if [[ ${#similar[@]} -gt 1 ]]; then
-    docopt_error "$(printf "%s is not a unique prefix: %s?" \
-      "$long" "${similar[*]}")"
+    docopt_error "${long} is not a unique prefix: ${similar[*]}?"
   elif [[ ${#similar[@]} -lt 1 ]]; then
     [[ $eq = '=' ]] && argcount=1 || argcount=0
     match=${#docopt_shorts[@]}
@@ -295,12 +280,11 @@ docopt_parse_long() {
   else
     if [[ ${docopt_argcount[$match]} -eq 0 ]]; then
       if [[ $value != false ]]; then
-        docopt_error "$(printf "%s must not have an argument" \
-          "${docopt_longs[$match]}")"
+        docopt_error "${docopt_longs[$match]} must not have an argument"
       fi
     elif [[ $value = false ]]; then
       if [[ ${#docopt_argv[@]} -eq 0 || ${docopt_argv[0]} = '--' ]]; then
-        docopt_error "$(printf "%s requires argument" "$long")"
+        docopt_error "${long} requires argument"
       fi
       value=${docopt_argv[0]}
       docopt_argv=("${docopt_argv[@]:1}")
@@ -313,10 +297,23 @@ docopt_parse_long() {
   docopt_parsed_values+=("$value")
 }
 
+docopt_stdout() {
+  printf -- "cat <<'EOM'\n%s\nEOM\n" "$1"
+}
+
+docopt_stderr() {
+  printf -- "cat <<'EOM' >&2\n%s\nEOM\n" "$1"
+}
+
 docopt_error() {
-  [[ -n $1 ]] && printf "%s\n" "$1" >&2
-  printf "%s\n" "${docopt_usage}" >&2
-  exit 1
+  [[ -n $1 ]] && docopt_stderr "$1"
+  docopt_stderr "$docopt_usage"
+  docopt_return 1
+}
+
+docopt_return() {
+  printf -- "exit %d\n" "$1"
+  exit "$1"
 }
 
 docopt_do_teardown() {
@@ -330,10 +327,10 @@ docopt_parse() {
     local doc_hash
     doc_hash=$(printf "%s" "$DOC" | shasum -a 256)
     if [[ ${doc_hash:0:5} != "$docopt_digest" ]]; then
-      printf "The current usage doc (%s) does not match what the parser was \
-generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \
-        "${doc_hash:0:5}" "$docopt_digest"
-      exit 70
+      docopt_stderr "The current usage doc (${doc_hash:0:5}) does not match \
+what the parser was generated with (${docopt_digest})
+Run \`docopt.sh\` to refresh the parser."
+      docopt_return 70
     fi
   fi
 
@@ -374,8 +371,8 @@ generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \
     for idx in "${docopt_parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
       if [[ ${docopt_shorts[$idx]} = "-h" || ${docopt_longs[$idx]} = "--help" ]]; then
-        printf -- "%s\n" "$docopt_doc"
-        exit 85
+        docopt_stdout "$docopt_doc"
+        docopt_return 0
       fi
     done
   fi
@@ -383,8 +380,8 @@ generated with (%s)\nRun \`docopt.sh\` to refresh the parser.\n" \
     for idx in "${docopt_parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
       if [[ ${docopt_longs[$idx]} = "--version" ]]; then
-        printf "%s\n" "$DOCOPT_PROGRAM_VERSION"
-        exit 85
+        docopt_stdout "$DOCOPT_PROGRAM_VERSION"
+        docopt_return 0
       fi
     done
   fi

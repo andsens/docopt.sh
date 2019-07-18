@@ -206,6 +206,8 @@ def test_library_version(monkeypatch, capsys, bash):
         r'^The version of the included docopt library \([^)]+\) does not '
         r'match the version of the invoking docopt parser \(0\.0\.0\)\n$'
       )
+      assert out == ''
+      assert code == 70
       assert re.match(regex, err) is not None
 
 
