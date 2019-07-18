@@ -2,12 +2,12 @@
 
 docopt() {
   "LIBRARY"
-  docopt_doc="DOC VALUE"
-  docopt_usage="DOC USAGE"
-  docopt_digest="DOC DIGEST"
-  docopt_shorts=("SHORTS")
-  docopt_longs=("LONGS")
-  docopt_argcount=("ARGCOUNT")
+  doc="DOC VALUE"
+  usage="DOC USAGE"
+  digest="DOC DIGEST"
+  shorts=("SHORTS")
+  longs=("LONGS")
+  argcounts=("ARGCOUNT")
   "NODES"
   # shellcheck disable=2016
   cat <<<' docopt_exit() {
@@ -15,11 +15,11 @@ docopt() {
   printf "%s\n" ""DOC USAGE"" >&2
   exit 1
 }'
-  docopt_parse "ROOT NODE IDX" "$@"
+  parse "ROOT NODE IDX" "$@"
   # shellcheck disable=2157,2140
   "HAS VARS" || return 0
   # shellcheck disable=2034
-  local docopt_prefix=${DOCOPT_PREFIX:-''}
+  local prefix=${DOCOPT_PREFIX:-''}
   # Workaround for bash-4.3 bug
   # The following script will not work in bash 4.3.0 (and only that version)
   # #!tests/bash-versions/bash-4.3/bash
@@ -29,8 +29,8 @@ docopt() {
   #   declare -p X
   # }
   # fn
-  local docopt_loops=1
-  [[ $BASH_VERSION =~ ^4.3 ]] && docopt_loops=2
+  local declares=1
+  [[ $BASH_VERSION =~ ^4.3 ]] && declares=2
   # Adding "declare X" before "eval" fixes the issue, but we don't know the
   # variable names, so instead we just output the `declare`s twice
   # in bash-4.3.
@@ -38,8 +38,8 @@ docopt() {
   # Unset exported variables from parent shell
   unset "VAR NAMES"
   "DEFAULTS"
-  local docopt_i=0
-  for ((docopt_i=0;docopt_i<docopt_loops;docopt_i++)); do
+  local i=0
+  for ((i=0;i<declares;i++)); do
   declare -p "VAR NAMES"
   done
 }
@@ -53,39 +53,39 @@ does not match the version of the invoking docopt parser (%s)\nEOM\nexit 70\n" \
 fi
 }
 
-docopt_either() {
-  local initial_left=("${docopt_left[@]}")
+either() {
+  local initial_left=("${left[@]}")
   local best_match_idx
   local match_count
   local node_idx
   local unset_testmatch=true
-  $docopt_testmatch && unset_testmatch=false
-  docopt_testmatch=true
+  $testmatch && unset_testmatch=false
+  testmatch=true
   for node_idx in "$@"; do
-    if "docopt_node_$node_idx"; then
-      if [[ -z $match_count || ${#docopt_left[@]} -lt $match_count ]]; then
+    if "node_$node_idx"; then
+      if [[ -z $match_count || ${#left[@]} -lt $match_count ]]; then
         best_match_idx=$node_idx
-        match_count=${#docopt_left[@]}
+        match_count=${#left[@]}
       fi
     fi
-    docopt_left=("${initial_left[@]}")
+    left=("${initial_left[@]}")
   done
-  $unset_testmatch && docopt_testmatch=false
+  $unset_testmatch && testmatch=false
   if [[ -n $best_match_idx ]]; then
-    "docopt_node_$best_match_idx"
+    "node_$best_match_idx"
     return 0
   fi
-  docopt_left=("${initial_left[@]}")
+  left=("${initial_left[@]}")
   return 1
 }
 
-docopt_oneormore() {
+oneormore() {
   local i=0
-  local prev=${#docopt_left[@]}
-  while "docopt_node_$1"; do
+  local prev=${#left[@]}
+  while "node_$1"; do
     ((i++))
-    [[ $prev -eq ${#docopt_left[@]} ]] && break
-    prev=${#docopt_left[@]}
+    [[ $prev -eq ${#left[@]} ]] && break
+    prev=${#left[@]}
   done
   if [[ $i -ge 1 ]]; then
     return 0
@@ -93,48 +93,48 @@ docopt_oneormore() {
   return 1
 }
 
-docopt_optional() {
+optional() {
   local node_idx
   for node_idx in "$@"; do
-    "docopt_node_$node_idx"
+    "node_$node_idx"
   done
   return 0
 }
 
-docopt_required() {
-  local initial_left=("${docopt_left[@]}")
+required() {
+  local initial_left=("${left[@]}")
   local node_idx
   local unset_testmatch=true
-  $docopt_testmatch && unset_testmatch=false
-  docopt_testmatch=true
+  $testmatch && unset_testmatch=false
+  testmatch=true
   for node_idx in "$@"; do
-    if ! "docopt_node_$node_idx"; then
-      docopt_left=("${initial_left[@]}")
-      $unset_testmatch && docopt_testmatch=false
+    if ! "node_$node_idx"; then
+      left=("${initial_left[@]}")
+      $unset_testmatch && testmatch=false
       return 1
     fi
   done
   if $unset_testmatch; then
-    docopt_testmatch=false
-    docopt_left=("${initial_left[@]}")
+    testmatch=false
+    left=("${initial_left[@]}")
     for node_idx in "$@"; do
-      "docopt_node_$node_idx"
+      "node_$node_idx"
     done
   fi
   return 0
 }
 
-docopt_switch() {
+switch() {
   local i
-  for i in "${!docopt_left[@]}"; do
-    local l=${docopt_left[$i]}
-    if [[ ${docopt_parsed_params[$l]} = "$2" ]]; then
-      docopt_left=("${docopt_left[@]:0:$i}" "${docopt_left[@]:((i+1))}")
-      $docopt_testmatch && return 0
+  for i in "${!left[@]}"; do
+    local l=${left[$i]}
+    if [[ ${parsed_params[$l]} = "$2" ]]; then
+      left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
+      $testmatch && return 0
       if [[ $3 = true ]]; then
-        eval "((docopt_var_$1++))"
+        eval "((var_$1++))"
       else
-        eval "docopt_var_$1=true"
+        eval "var_$1=true"
       fi
       return 0
     fi
@@ -142,19 +142,19 @@ docopt_switch() {
   return 1
 }
 
-docopt_value() {
+value() {
   local i
-  for i in "${!docopt_left[@]}"; do
-    local l=${docopt_left[$i]}
-    if [[ ${docopt_parsed_params[$l]} = "$2" ]]; then
-      docopt_left=("${docopt_left[@]:0:$i}" "${docopt_left[@]:((i+1))}")
-      $docopt_testmatch && return 0
+  for i in "${!left[@]}"; do
+    local l=${left[$i]}
+    if [[ ${parsed_params[$l]} = "$2" ]]; then
+      left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
+      $testmatch && return 0
       local value
-      value=$(printf -- "%q" "${docopt_parsed_values[$l]}")
+      value=$(printf -- "%q" "${parsed_values[$l]}")
       if [[ $3 = true ]]; then
-        eval "docopt_var_$1+=($value)"
+        eval "var_$1+=($value)"
       else
-        eval "docopt_var_$1=$value"
+        eval "var_$1=$value"
       fi
       return 0
     fi
@@ -162,21 +162,21 @@ docopt_value() {
   return 1
 }
 
-docopt_command() {
+_command() {
   local i
   local name=${2:-$1}
-  for i in "${!docopt_left[@]}"; do
-    local l=${docopt_left[$i]}
-    if [[ ${docopt_parsed_params[$l]} = 'a' ]]; then
-      if [[ ${docopt_parsed_values[$l]} != "$name" ]]; then
+  for i in "${!left[@]}"; do
+    local l=${left[$i]}
+    if [[ ${parsed_params[$l]} = 'a' ]]; then
+      if [[ ${parsed_values[$l]} != "$name" ]]; then
         return 1
       fi
-      docopt_left=("${docopt_left[@]:0:$i}" "${docopt_left[@]:((i+1))}")
-      $docopt_testmatch && return 0
+      left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
+      $testmatch && return 0
       if [[ $3 = true ]]; then
-        eval "((docopt_var_$1++))"
+        eval "((var_$1++))"
       else
-        eval "docopt_var_$1=true"
+        eval "var_$1=true"
       fi
       return 0
     fi
@@ -184,11 +184,11 @@ docopt_command() {
   return 1
 }
 
-docopt_parse_shorts() {
-  local token=${docopt_argv[0]}
+parse_shorts() {
+  local token=${argv[0]}
   local value
-  docopt_argv=("${docopt_argv[@]:1}")
-  [[ $token = -* && $token != --* ]] || docopt_return 88
+  argv=("${argv[@]:1}")
+  [[ $token = -* && $token != --* ]] || _return 88
   local remaining=${token#-}
   while [[ -n $remaining ]]; do
     local short="-${remaining:0:1}"
@@ -196,7 +196,7 @@ docopt_parse_shorts() {
     local i=0
     local similar=()
     local match=false
-    for o in "${docopt_shorts[@]}"; do
+    for o in "${shorts[@]}"; do
       if [[ $o = "$short" ]]; then
         similar+=("$short")
         [[ $match = false ]] && match=$i
@@ -204,22 +204,22 @@ docopt_parse_shorts() {
       ((i++))
     done
     if [[ ${#similar[@]} -gt 1 ]]; then
-      docopt_error "${short} is specified ambiguously ${#similar[@]} times"
+      error "${short} is specified ambiguously ${#similar[@]} times"
     elif [[ ${#similar[@]} -lt 1 ]]; then
-      match=${#docopt_shorts[@]}
+      match=${#shorts[@]}
       value=true
-      docopt_shorts+=("$short")
-      docopt_longs+=('')
-      docopt_argcount+=(0)
+      shorts+=("$short")
+      longs+=('')
+      argcounts+=(0)
     else
       value=false
-      if [[ ${docopt_argcount[$match]} -ne 0 ]]; then
+      if [[ ${argcounts[$match]} -ne 0 ]]; then
         if [[ $remaining = '' ]]; then
-          if [[ ${#docopt_argv[@]} -eq 0 || ${docopt_argv[0]} = '--' ]]; then
-            docopt_error "${short} requires argument"
+          if [[ ${#argv[@]} -eq 0 || ${argv[0]} = '--' ]]; then
+            error "${short} requires argument"
           fi
-          value=${docopt_argv[0]}
-          docopt_argv=("${docopt_argv[@]:1}")
+          value=${argv[0]}
+          argv=("${argv[@]:1}")
         else
           value=$remaining
           remaining=''
@@ -229,18 +229,18 @@ docopt_parse_shorts() {
         value=true
       fi
     fi
-    docopt_parsed_params+=("$match")
-    docopt_parsed_values+=("$value")
+    parsed_params+=("$match")
+    parsed_values+=("$value")
   done
 }
 
-docopt_parse_long() {
-  local token=${docopt_argv[0]}
+parse_long() {
+  local token=${argv[0]}
   local long=${token%%=*}
   local value=${token#*=}
   local argcount
-  docopt_argv=("${docopt_argv[@]:1}")
-  [[ $token = --* ]] || docopt_return 88
+  argv=("${argv[@]:1}")
+  [[ $token = --* ]] || _return 88
   if [[ $token = *=* ]]; then
     eq='='
   else
@@ -250,7 +250,7 @@ docopt_parse_long() {
   local i=0
   local similar=()
   local match=false
-  for o in "${docopt_longs[@]}"; do
+  for o in "${longs[@]}"; do
     if [[ $o = "$long" ]]; then
       similar+=("$long")
       [[ $match = false ]] && match=$i
@@ -259,7 +259,7 @@ docopt_parse_long() {
   done
   if [[ $match = false ]]; then
     i=0
-    for o in "${docopt_longs[@]}"; do
+    for o in "${longs[@]}"; do
       if [[ $o = $long* ]]; then
         similar+=("$long")
         [[ $match = false ]] && match=$i
@@ -268,125 +268,125 @@ docopt_parse_long() {
     done
   fi
   if [[ ${#similar[@]} -gt 1 ]]; then
-    docopt_error "${long} is not a unique prefix: ${similar[*]}?"
+    error "${long} is not a unique prefix: ${similar[*]}?"
   elif [[ ${#similar[@]} -lt 1 ]]; then
     [[ $eq = '=' ]] && argcount=1 || argcount=0
-    match=${#docopt_shorts[@]}
+    match=${#shorts[@]}
     [[ $argcount -eq 0 ]] && value=true
-    docopt_shorts+=('')
-    docopt_longs+=("$long")
-    docopt_argcount+=("$argcount")
+    shorts+=('')
+    longs+=("$long")
+    argcounts+=("$argcount")
   else
-    if [[ ${docopt_argcount[$match]} -eq 0 ]]; then
+    if [[ ${argcounts[$match]} -eq 0 ]]; then
       if [[ $value != false ]]; then
-        docopt_error "${docopt_longs[$match]} must not have an argument"
+        error "${longs[$match]} must not have an argument"
       fi
     elif [[ $value = false ]]; then
-      if [[ ${#docopt_argv[@]} -eq 0 || ${docopt_argv[0]} = '--' ]]; then
-        docopt_error "${long} requires argument"
+      if [[ ${#argv[@]} -eq 0 || ${argv[0]} = '--' ]]; then
+        error "${long} requires argument"
       fi
-      value=${docopt_argv[0]}
-      docopt_argv=("${docopt_argv[@]:1}")
+      value=${argv[0]}
+      argv=("${argv[@]:1}")
     fi
     if [[ $value = false ]]; then
       value=true
     fi
   fi
-  docopt_parsed_params+=("$match")
-  docopt_parsed_values+=("$value")
+  parsed_params+=("$match")
+  parsed_values+=("$value")
 }
 
-docopt_stdout() {
+stdout() {
   printf -- "cat <<'EOM'\n%s\nEOM\n" "$1"
 }
 
-docopt_stderr() {
+stderr() {
   printf -- "cat <<'EOM' >&2\n%s\nEOM\n" "$1"
 }
 
-docopt_error() {
-  [[ -n $1 ]] && docopt_stderr "$1"
-  docopt_stderr "$docopt_usage"
-  docopt_return 1
+error() {
+  [[ -n $1 ]] && stderr "$1"
+  stderr "$usage"
+  _return 1
 }
 
-docopt_return() {
+_return() {
   printf -- "exit %d\n" "$1"
   exit "$1"
 }
 
-docopt_parse() {
+parse() {
   if ${DOCOPT_DOC_CHECK:-true}; then
     local doc_hash
     doc_hash=$(printf "%s" "$DOC" | shasum -a 256)
-    if [[ ${doc_hash:0:5} != "$docopt_digest" ]]; then
-      docopt_stderr "The current usage doc (${doc_hash:0:5}) does not match \
-what the parser was generated with (${docopt_digest})
+    if [[ ${doc_hash:0:5} != "$digest" ]]; then
+      stderr "The current usage doc (${doc_hash:0:5}) does not match \
+what the parser was generated with (${digest})
 Run \`docopt.sh\` to refresh the parser."
-      docopt_return 70
+      _return 70
     fi
   fi
 
   local root_idx=$1
   shift
-  docopt_argv=("$@")
-  docopt_parsed_params=()
-  docopt_parsed_values=()
-  docopt_left=()
-  docopt_testmatch=false
+  argv=("$@")
+  parsed_params=()
+  parsed_values=()
+  left=()
+  testmatch=false
 
   local arg
-  while [[ ${#docopt_argv[@]} -gt 0 ]]; do
-    if [[ ${docopt_argv[0]} = "--" ]]; then
-      for arg in "${docopt_argv[@]}"; do
-        docopt_parsed_params+=('a')
-        docopt_parsed_values+=("$arg")
+  while [[ ${#argv[@]} -gt 0 ]]; do
+    if [[ ${argv[0]} = "--" ]]; then
+      for arg in "${argv[@]}"; do
+        parsed_params+=('a')
+        parsed_values+=("$arg")
       done
       break
-    elif [[ ${docopt_argv[0]} = --* ]]; then
-      docopt_parse_long
-    elif [[ ${docopt_argv[0]} = -* && ${docopt_argv[0]} != "-" ]]; then
-      docopt_parse_shorts
+    elif [[ ${argv[0]} = --* ]]; then
+      parse_long
+    elif [[ ${argv[0]} = -* && ${argv[0]} != "-" ]]; then
+      parse_shorts
     elif ${DOCOPT_OPTIONS_FIRST:-false}; then
-      for arg in "${docopt_argv[@]}"; do
-        docopt_parsed_params+=('a')
-        docopt_parsed_values+=("$arg")
+      for arg in "${argv[@]}"; do
+        parsed_params+=('a')
+        parsed_values+=("$arg")
       done
       break
     else
-      docopt_parsed_params+=('a')
-      docopt_parsed_values+=("${docopt_argv[0]}")
-      docopt_argv=("${docopt_argv[@]:1}")
+      parsed_params+=('a')
+      parsed_values+=("${argv[0]}")
+      argv=("${argv[@]:1}")
     fi
   done
   local idx
   if ${DOCOPT_ADD_HELP:-true}; then
-    for idx in "${docopt_parsed_params[@]}"; do
+    for idx in "${parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
-      if [[ ${docopt_shorts[$idx]} = "-h" || ${docopt_longs[$idx]} = "--help" ]]; then
-        docopt_stdout "$docopt_doc"
-        docopt_return 0
+      if [[ ${shorts[$idx]} = "-h" || ${longs[$idx]} = "--help" ]]; then
+        stdout "$doc"
+        _return 0
       fi
     done
   fi
   if [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' ]]; then
-    for idx in "${docopt_parsed_params[@]}"; do
+    for idx in "${parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
-      if [[ ${docopt_longs[$idx]} = "--version" ]]; then
-        docopt_stdout "$DOCOPT_PROGRAM_VERSION"
-        docopt_return 0
+      if [[ ${longs[$idx]} = "--version" ]]; then
+        stdout "$DOCOPT_PROGRAM_VERSION"
+        _return 0
       fi
     done
   fi
 
   local i=0
-  while [[ $i -lt ${#docopt_parsed_params[@]} ]]; do
-    docopt_left+=("$i")
+  while [[ $i -lt ${#parsed_params[@]} ]]; do
+    left+=("$i")
     ((i++))
   done
 
-  if ! docopt_required "$root_idx" || [ ${#docopt_left[@]} -gt 0 ]; then
-    docopt_error
+  if ! required "$root_idx" || [ ${#left[@]} -gt 0 ]; then
+    error
   fi
   return 0
 }
