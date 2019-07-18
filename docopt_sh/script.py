@@ -99,7 +99,7 @@ class ScriptLocation(object):
     self.script = script
     self.matches = list(matches)
     self.match = self.matches[0] if self.matches else None
-    self.offset = 0 if offset is None else offset
+    self.offset = offset
     self.present = self.match is not None
     self.count = len(self.matches)
     self.start = self.match.start(0) + self.offset if self.present else None
@@ -146,24 +146,24 @@ class Doc(ScriptLocation):
 
 class TopGuard(ScriptLocation):
 
-  def __init__(self, script, doc):
+  def __init__(self, script):
     matches = re.finditer(
       r'# docopt parser below(, refresh this parser with `([^`]+)`)?.*\n',
-      script.contents[doc.end:],
+      script.contents,
       re.MULTILINE
     )
-    super(TopGuard, self).__init__(script, matches, doc.end)
+    super(TopGuard, self).__init__(script, matches, 0)
 
 
 class BottomGuard(ScriptLocation):
 
-  def __init__(self, script, top):
+  def __init__(self, script, offset):
     matches = re.finditer(
       r'# docopt parser above(, complete command for generating this parser is `([^`]+)`)?.*\n',
-      script.contents[top.end:],
+      script.contents[offset:],
       re.MULTILINE
     )
-    super(BottomGuard, self).__init__(script, matches, top.end)
+    super(BottomGuard, self).__init__(script, matches, offset)
     self.refresh_command_params = None
     if self.present and self.match.group(2) is not None:
       from .__main__ import __doc__
@@ -176,15 +176,16 @@ class BottomGuard(ScriptLocation):
 class Guards(object):
 
   def __init__(self, script, doc):
-    self.top = TopGuard(script, doc)
+    self.top = TopGuard(script)
     if self.top.present:
-      self.bottom = BottomGuard(script, self.top)
+      self.bottom = BottomGuard(script, self.top.end)
     else:
-      self.bottom = BottomGuard(script, doc)
+      self.bottom = BottomGuard(script, 0)
     self.present = self.top.present and self.bottom.present
-    # The top.offset is to easily handle the absence of a parser
-    self.start = self.top.start if self.present else self.top.offset
-    self.end = self.bottom.end if self.present else self.top.offset
+    # By defaulting start+end to doc.end the parse will be appended to
+    # the doc if it is absent
+    self.start = self.top.start if self.present else doc.end
+    self.end = self.bottom.end if self.present else doc.end
 
   def __len__(self):
     return self.end - self.start if self.present else 0
