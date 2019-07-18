@@ -174,6 +174,17 @@ def test_library(monkeypatch, capsys, bash):
     assert out == 'Britannica\n'
 
 
+def test_library_missing(monkeypatch, capsys, bash):
+  run = patch_file(
+    monkeypatch, capsys, 'echo_ship_name.sh',
+    program_params=['--library', 'bogus-path']
+  )
+  code, out, err = run(bash, 'ship', 'new', 'Britannica')
+  assert code == 1
+  assert re.match(r'^environment: line \d+: bogus-path: No such file or directory\n$', err) is not None
+  assert out == ''
+
+
 def test_library_teardown(monkeypatch, capsys, bash):
   with generated_library(monkeypatch, capsys) as library:
     run = patch_file(
