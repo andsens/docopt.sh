@@ -181,7 +181,7 @@ def test_library_missing(monkeypatch, capsys, bash):
   )
   code, out, err = run(bash, 'ship', 'new', 'Britannica')
   assert code == 1
-  assert re.match(r'^environment: line \d+: bogus-path: No such file or directory\n$', err) is not None
+  assert re.match(r'.*line \d+: bogus-path: No such file or directory\n$', err, re.IGNORECASE) is not None
   assert out == ''
 
 
