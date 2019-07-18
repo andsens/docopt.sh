@@ -28,17 +28,15 @@ class Parser(object):
 
   def generate(self, script):
     generated = self.generate_main(script)
-    if not self.parameters.library_path:
-      generated = generated + self.generate_library()
     if self.parameters.minify:
       generated = generated.minify(self.parameters.max_line_length)
     return str(generated)
 
   def generate_main(self, script):
     if self.parameters.library_path:
-      library_source = 'source %s \'%s\'' % (self.parameters.library_path, __version__)
+      library = '  source %s \'%s\'' % (self.parameters.library_path, __version__)
     else:
-      library_source = ''
+      library = indent(str(self.generate_library()), level=1)
 
     doc_value_start, doc_value_end = script.doc.stripped_value_boundaries
     stripped_doc = '${{DOC:{start}:{length}}}'.format(
@@ -57,8 +55,7 @@ class Parser(object):
     option_nodes = [node for node in leaf_nodes if type(node.pattern) is Option]
 
     replacements = {
-      '"LIBRARY SOURCE"': library_source,
-      '  "OUTPUT TEARDOWN"\n': '' if library_source else "    printf 'docopt_do_teardown\\n'\n",
+      '  "LIBRARY"': library,
       '"DOC VALUE"': stripped_doc,
       '"DOC USAGE"': usage_doc,
       '"DOC DIGEST"': hashlib.sha256(script.doc.raw_value.encode('utf-8')).hexdigest()[0:5],

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 docopt() {
-  "LIBRARY SOURCE"
+  "LIBRARY"
   docopt_doc="DOC VALUE"
   docopt_usage="DOC USAGE"
   docopt_digest="DOC DIGEST"
@@ -16,7 +16,6 @@ docopt() {
   exit 1
 }'
   docopt_parse "ROOT NODE IDX" "$@"
-  "OUTPUT TEARDOWN"
   # shellcheck disable=2157,2140
   "HAS VARS" || return 0
   # shellcheck disable=2034
@@ -314,12 +313,6 @@ docopt_error() {
 docopt_return() {
   printf -- "exit %d\n" "$1"
   exit "$1"
-}
-
-docopt_do_teardown() {
-  unset -f docopt_run docopt_parse docopt_either docopt_oneormore \
-  docopt_optional docopt_required docopt_command docopt_switch docopt_value \
-  docopt_parse_long docopt_parse_shorts docopt_error docopt_do_teardown
 }
 
 docopt_parse() {

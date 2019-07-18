@@ -88,7 +88,7 @@ def test_options_first_fail(monkeypatch, capsys, bash):
 def test_prefix(monkeypatch, capsys, bash):
   run = patch_file(
     monkeypatch, capsys, 'prefixed_echo.sh',
-    docopt_params={'DOCOPT_PREFIX': 'prefix_', 'DOCOPT_TEARDOWN': False}
+    docopt_params={'DOCOPT_PREFIX': 'prefix_'}
   )
   code, out, err = run(bash, 'ship', 'new', 'Titanic')
   assert code == 0

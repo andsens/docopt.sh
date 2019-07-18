@@ -18,7 +18,7 @@ class Script(object):
     self.invocation = Invocation(self, self.guards)
     self.options = [Option(self, name) for name in [
       'DOCOPT_ADD_HELP', 'DOCOPT_PROGRAM_VERSION', 'DOCOPT_OPTIONS_FIRST',
-      'DOCOPT_PREFIX', 'DOCOPT_TEARDOWN', 'DOCOPT_DOC_CHECK', 'DOCOPT_LIB_CHECK'
+      'DOCOPT_PREFIX', 'DOCOPT_DOC_CHECK', 'DOCOPT_LIB_CHECK'
     ]]
 
   def validate(self):
