@@ -33,12 +33,6 @@ class Parser(object):
       )
 
   def generate(self, script):
-    generated = self.generate_main(script)
-    if self.parameters.minify:
-      generated = generated.minify(self.parameters.max_line_length)
-    return str(generated)
-
-  def generate_main(self, script):
     if self.parameters.library_path:
       library = indent('''
 source {path} '{version}' || {{
@@ -81,7 +75,10 @@ source {path} '{version}' || {{
       '"MAX NODE IDX"': max([n.idx for n in doc_ast.nodes]),
       '"ROOT NODE IDX"': doc_ast.root_node.idx,
     }
-    return self.library.main.replace_literal(replacements)
+    main = self.library.main.replace_literal(replacements)
+    if self.parameters.minify:
+      main = main.minify(self.parameters.max_line_length)
+    return str(main)
 
   def generate_library(self, add_version_check=False):
     functions = self.library.functions
