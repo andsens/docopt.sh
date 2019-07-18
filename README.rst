@@ -18,6 +18,7 @@ file.
 * `Parser options`_
 * `Exiting with a usage message`_
 * `Library mode`_
+* `On-the-fly parser generation`_
 * `Developers`_
     * `Testing`_
 
@@ -271,6 +272,47 @@ things like ``"$(dirname "$0")"``.
 On every invocation docopt checks that the library version and the version of
 the dynamic part in the script match. The parser exits with an error if that
 is not the case.
+
+On-the-fly parser generation
+----------------------------
+
+**ATTENTION**: The method outlined below relies on ``docopt.sh`` being
+installed and is only intended for development use, do not release any scripts
+that use this method.
+
+When developing a new script you might add, modify, and remove parameters quite
+often. Having to refresh the parser with every change can quickly become
+cumbersome and interrupt your workflow. To avoid this you can use the
+``--parser`` flag to generate and then immediately ``eval`` the output in your
+script before invoking ``eval "$(docopt "$@")"``.
+
+The script from the introduction would look like this (only
+``eval "$(docopt.sh --parser "$0")"`` has been added):
+
+.. code-block:: sh
+
+    #!/usr/bin/env bash
+    DOC="Naval Fate.
+    Usage:
+      naval_fate.py ship <name> move <x> <y> [--speed=<kn>]
+      naval_fate.py ship shoot <x> <y>
+
+    Options:
+      --speed=<kn>  Speed in knots [default: 10].
+      --moored      Moored (anchored) mine.
+      --drifting    Drifting mine."
+    naval_fate() {
+      eval "$(docopt.sh --parser "$0")"
+      eval "$(docopt "$@")"
+      $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
+      $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
+      return 0
+    }
+    naval_fate "$@"
+
+Since ``docopt.sh`` is not patching the script, you also avoid any line number
+jumps in your IDE. However, remember to replace this with the proper parser
+before you ship the script.
 
 Developers
 ----------
