@@ -25,6 +25,12 @@ class Parser(object):
         '1091',  # Ignore library sourcing
         '2034',  # Ignore unused vars (they refer to things in the library)
       ])
+    if not self.parameters.library_path and self.parameters.minify:
+      # Ignore else .. if issue in parse_long,
+      # see https://github.com/koalaman/shellcheck/issues/1584 for more details
+      self.shellcheck_ignores.append(
+        '1075',
+      )
 
   def generate(self, script):
     generated = self.generate_main(script)
