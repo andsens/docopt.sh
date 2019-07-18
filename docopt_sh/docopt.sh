@@ -188,7 +188,7 @@ docopt_parse_shorts() {
   local token=${docopt_argv[0]}
   local value
   docopt_argv=("${docopt_argv[@]:1}")
-  [[ $token = -* && $token != --* ]] || assert_fail
+  [[ $token = -* && $token != --* ]] || docopt_return 88
   local remaining=${token#-}
   while [[ -n $remaining ]]; do
     local short="-${remaining:0:1}"
@@ -240,7 +240,7 @@ docopt_parse_long() {
   local value=${token#*=}
   local argcount
   docopt_argv=("${docopt_argv[@]:1}")
-  [[ $token = --* ]] || assert_fail
+  [[ $token = --* ]] || docopt_return 88
   if [[ $token = *=* ]]; then
     eq='='
   else
