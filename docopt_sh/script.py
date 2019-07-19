@@ -128,15 +128,15 @@ class ScriptLocation(object):
 class Doc(ScriptLocation):
 
   def __init__(self, script):
+    # regex for quote matching yanked from:
+    # https://www.metaltoad.com/blog/regex-quoted-string-escapable-quotes
     matches = re.finditer(
-      r'DOC="((\s*)(.*?Usage:.+?)(\s*))"(\n|;)',
+      r'^(?:[^#\n]*)DOC=((?<![\\])[\'"])((?:\s*)((?:.(?!(?<![\\])\1))*?.?)(?:\s*))\1(?:\n|;)',
       script.contents,
-      re.MULTILINE | re.IGNORECASE | re.DOTALL
+      re.MULTILINE | re.DOTALL
     )
-    # re.IGNORECASE causes doc=, Doc= etc. to be matched, remove those matches
-    matches = filter(lambda m: m.group(0).startswith('DOC='), matches)
     super(Doc, self).__init__(script, matches, 0)
-    self.raw_value = self.match.group(1) if self.present else None
+    self.raw_value = self.match.group(2) if self.present else None
     self.value = self.match.group(3) if self.present else None
     self.stripped_value_boundaries = (
       self.match.start(3) - self.match.start(2),

@@ -243,3 +243,19 @@ def test_error_fn(monkeypatch, capsys, bash):
   assert code == 1
   assert out == ''
   assert err == '--color must be auto, always, or never\nUsage: enum_check.sh [options]\n'
+
+
+def test_single_quoted_doc(monkeypatch, capsys, bash):
+  run = patch_file(monkeypatch, capsys, 'single_quoted_doc.sh')
+  code, out, err = run(bash, 'test')
+  assert code == 0
+  assert out == 'test\n'
+  assert err == ''
+
+
+def test_ignore_commented_doc(monkeypatch, capsys, bash):
+  run = patch_file(monkeypatch, capsys, 'commented_doc.sh')
+  code, out, err = run(bash, 'test')
+  assert code == 0
+  assert out == 'test\n'
+  assert err == ''
