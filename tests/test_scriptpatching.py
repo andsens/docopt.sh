@@ -8,6 +8,7 @@ from docopt_sh.script import Script
 def test_arg(monkeypatch, capsys, bash):
   run = patch_file(monkeypatch, capsys, 'echo_ship_name.sh')
   code, out, err = run(bash, 'ship', 'new', 'Britannica')
+  assert err == ''
   assert code == 0
   assert out == 'Britannica\n'
 
@@ -16,14 +17,15 @@ def test_wrong_usage(monkeypatch, capsys, bash):
   run = patch_file(monkeypatch, capsys, 'echo_ship_name.sh')
   code, out, err = run(bash, '--bad-opt')
   assert code != 0
+  assert out == ''
 
 
 def test_help(monkeypatch, capsys, bash):
   run = patch_file(monkeypatch, capsys, 'echo_ship_name.sh')
   code, out, err = run(bash, '--help')
+  assert err == ''
   assert code == 0
   assert out == 'Usage: echo_ship_name.sh ship new <name>...\n'
-  assert err == ''
 
 
 def test_no_help(monkeypatch, capsys, bash):
@@ -32,9 +34,9 @@ def test_no_help(monkeypatch, capsys, bash):
     docopt_params={'DOCOPT_ADD_HELP': False}
   )
   code, out, err = run(bash, '--help')
+  assert err == 'Usage: echo_ship_name.sh ship new <name>...\n'
   assert code == 1
   assert out == ''
-  assert err == 'Usage: echo_ship_name.sh ship new <name>...\n'
 
 
 def test_version(monkeypatch, capsys, bash):
@@ -43,6 +45,7 @@ def test_version(monkeypatch, capsys, bash):
     docopt_params={'DOCOPT_PROGRAM_VERSION': '0.1.5'}
   )
   code, out, err = run(bash, '--version')
+  assert err == ''
   assert code == 0
   assert out == '0.1.5\n'
 
@@ -53,9 +56,9 @@ def test_no_version(monkeypatch, capsys, bash):
     docopt_params={'DOCOPT_PROGRAM_VERSION': False}
   )
   code, out, err = run(bash, '--version')
+  assert err == 'Usage: echo_ship_name.sh ship new <name>...\n'
   assert code == 1
   assert out == ''
-  assert err == 'Usage: echo_ship_name.sh ship new <name>...\n'
 
 
 def test_options_anywhere(monkeypatch, capsys, bash):
@@ -70,6 +73,7 @@ def test_options_first(monkeypatch, capsys, bash):
     docopt_params={'DOCOPT_OPTIONS_FIRST': True}
   )
   code, out, err = run(bash, '--speed', '6', 'ship', 'Titanic', 'move', '1', '4')
+  assert err == ''
   assert code == 0
   assert out == 'The Titanic is now moving to 1,4 at 6 knots.\n'
 
@@ -80,9 +84,9 @@ def test_options_first_fail(monkeypatch, capsys, bash):
     docopt_params={'DOCOPT_OPTIONS_FIRST': True}
   )
   code, out, err = run(bash, 'ship', 'Titanic', 'move', '1', '--speed', '6', '4')
+  assert err[:6] == 'Usage:'
   assert code == 1
   assert out == ''
-  assert err[:6] == 'Usage:'
 
 
 def test_prefix(monkeypatch, capsys, bash):
@@ -91,6 +95,7 @@ def test_prefix(monkeypatch, capsys, bash):
     docopt_params={'DOCOPT_PREFIX': 'prefix_'}
   )
   code, out, err = run(bash, 'ship', 'new', 'Titanic')
+  assert err == ''
   assert code == 0
   assert out == 'Titanic\n'
 
@@ -99,6 +104,8 @@ def test_patch_file(monkeypatch, bash):
   with temp_file('echo_ship_name.sh') as (script, run):
     invoke_docopt(monkeypatch, program_params=[script.name])
     code, out, err = run(bash, 'ship', 'new', 'Olympia')
+    assert err == ''
+    assert code == 0
     assert out == 'Olympia\n'
 
 
@@ -127,6 +134,8 @@ def test_no_doc_check(monkeypatch, bash):
     with open(script.name, 'w') as h:
       h.write(contents)
     code, out, err = run(bash, 'ship', 'new', 'Olympia')
+    assert err == ''
+    assert code == 0
     assert out == 'Olympia\n'
 
 
@@ -143,6 +152,7 @@ echo $((_x_ + _y_))
 '''.format(doc=doc, parser=parser)
   captured = invoke_docopt(monkeypatch, capsys, program_params=['-'], stdin=StringIO(program))
   code, out, err = bash_eval_script(bash, captured.out, ['ship', 'shoot', '3', '1'])
+  assert err == ''
   assert code == 0
   assert out == '4\n'
 
@@ -169,8 +179,8 @@ def test_library(monkeypatch, capsys, bash):
       program_params=['--library', library.name]
     )
     code, out, err = run(bash, 'ship', 'new', 'Britannica')
-    assert code == 0
     assert err == ''
+    assert code == 0
     assert out == 'Britannica\n'
 
 
@@ -180,8 +190,8 @@ def test_library_missing(monkeypatch, capsys, bash):
     program_params=['--library', 'bogus-path']
   )
   code, out, err = run(bash, 'ship', 'new', 'Britannica')
-  assert code == 1
   assert re.match(r'.*line \d+: bogus-path: No such file or directory\n$', err, re.IGNORECASE) is not None
+  assert code == 1
   assert out == ''
 
 
@@ -217,9 +227,9 @@ def test_library_version(monkeypatch, capsys, bash):
         r'^The version of the included docopt library \([^)]+\) does not '
         r'match the version of the invoking docopt parser \(0\.0\.0\)\n$'
       )
-      assert out == ''
-      assert code == 70
       assert re.match(regex, err) is not None
+      assert code == 70
+      assert out == ''
 
 
 def test_auto_params(monkeypatch, capsys, bash):
@@ -240,22 +250,22 @@ def test_auto_params(monkeypatch, capsys, bash):
 def test_error_fn(monkeypatch, capsys, bash):
   run = patch_file(monkeypatch, capsys, 'enum_check.sh')
   code, out, err = run(bash, '--color', 'sometimes')
+  assert err == '--color must be auto, always, or never\nUsage: enum_check.sh [options]\n'
   assert code == 1
   assert out == ''
-  assert err == '--color must be auto, always, or never\nUsage: enum_check.sh [options]\n'
 
 
 def test_single_quoted_doc(monkeypatch, capsys, bash):
   run = patch_file(monkeypatch, capsys, 'single_quoted_doc.sh')
   code, out, err = run(bash, 'test')
+  assert err == ''
   assert code == 0
   assert out == 'test\n'
-  assert err == ''
 
 
 def test_ignore_commented_doc(monkeypatch, capsys, bash):
   run = patch_file(monkeypatch, capsys, 'commented_doc.sh')
   code, out, err = run(bash, 'test')
+  assert err == ''
   assert code == 0
   assert out == 'test\n'
-  assert err == ''
