@@ -1,7 +1,5 @@
 import re
 from shlex import quote
-from collections import OrderedDict
-from collections.abc import Iterable
 from itertools import chain
 
 
