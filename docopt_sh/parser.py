@@ -7,7 +7,7 @@ from collections import OrderedDict
 from . import __version__, DocoptError
 from .doc_ast import DocAst, Option
 from .bash import Code, indent, bash_ifs_value, minify
-from .node import LeafNode
+from .node import LeafNode, helper_list
 
 log = logging.getLogger(__name__)
 
@@ -33,15 +33,6 @@ class Parser(object):
       )
 
   def generate(self, script):
-    if self.parameters.library_path:
-      library = indent('''source {path} '{version}' || {{
-  ret=$?
-  printf -- "exit %d\\n" "$ret"
-  exit "$ret"
-}}'''.format(path=self.parameters.library_path, version=__version__), level=1)
-    else:
-      library = indent(str(self.generate_library()), level=1)
-
     stripped_doc = '${{DOC:{start}:{length}}}'.format(
       start=script.doc.trimmed_value_start,
       length=len(script.doc.trimmed_value),
@@ -53,6 +44,17 @@ class Parser(object):
       start=str(script.doc.trimmed_value_start + usage_start),
       length=str(usage_end - usage_start),
     )
+
+    if self.parameters.library_path:
+      library = indent('''source {path} '{version}' || {{
+  ret=$?
+  printf -- "exit %d\\n" "$ret"
+  exit "$ret"
+}}'''.format(path=self.parameters.library_path, version=__version__), level=1)
+    else:
+      helpers_needed = set([n.helper_name for n in doc_ast.nodes])
+      exclude = set(['docopt', 'lib_version_check'] + helper_list) - helpers_needed
+      library = indent(str(self.library.generate_code(exclude=exclude)), level=1)
 
     leaf_nodes = [n for n in doc_ast.nodes if type(n) is LeafNode]
     option_nodes = [node for node in leaf_nodes if type(node.pattern) is Option]
@@ -72,19 +74,10 @@ class Parser(object):
       '"MAX NODE IDX"': max([n.idx for n in doc_ast.nodes]),
       '"ROOT NODE IDX"': doc_ast.root_node.idx,
     }
-    main = self.library.main.replace_literal(replacements)
+    main = self.library.functions['docopt'].replace_literal(replacements)
     if self.parameters.minify:
       main = main.minify(self.parameters.max_line_length)
     return str(main)
-
-  def generate_library(self, add_version_check=False):
-    functions = self.library.functions
-    if add_version_check:
-      functions['lib_version_check'] = functions['lib_version_check'].replace_literal(
-        {'"LIBRARY VERSION"': __version__})
-    else:
-      del functions['lib_version_check']
-    return Code(functions.values())
 
 
 class Library(object):
@@ -100,12 +93,15 @@ class Library(object):
     with open(os.path.join(os.path.dirname(__file__), 'docopt.sh'), 'r') as handle:
       for match in function_re.finditer(handle.read()):
         name = match.group('name')
-        if name == 'docopt':
-          self.main = Code(match.group(0))
-        elif name == 'lib_version_check':
-          self.functions[name] = Code(match.group('body'))
+        if name == 'lib_version_check':
+          self.functions['lib_version_check'] = Code(match.group('body')).replace_literal(
+            {'"LIBRARY VERSION"': __version__}
+          )
         else:
-          self.functions[name] = Code(match.group(0))
+          self.functions[match.group('name')] = Code(match.group(0))
+
+  def generate_code(self, exclude=[]):
+    return Code([code for name, code in self.functions.items() if name not in exclude])
 
 
 class ParserParameter(object):

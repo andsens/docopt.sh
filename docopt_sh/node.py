@@ -8,6 +8,11 @@ helper_map = {
   OneOrMore: 'oneormore',
   Either: 'either',
 }
+helper_list = list(helper_map.values()) + [
+  'switch',
+  '_command',
+  'value',
+]
 
 
 class Node(Code):
@@ -27,8 +32,9 @@ class BranchNode(Node):
   def __init__(self, pattern, idx, node_map):
     # minify arg list by only specifying node idx
     child_indexes = map(lambda child: node_map[child].idx, pattern.children)
+    self.helper_name = helper_map[type(pattern)]
     body = '  {helper} {args}'.format(
-      helper=helper_map[type(pattern)],
+      helper=self.helper_name,
       args=' '.join(list(map(str, child_indexes))),
     )
     super(BranchNode, self).__init__(pattern, body, idx)
@@ -39,23 +45,23 @@ class LeafNode(Node):
   def __init__(self, pattern, idx):
     default_value = pattern.value
     if type(pattern) is Option:
-      helper_name = 'switch' if type(default_value) in [bool, int] else 'value'
+      self.helper_name = 'switch' if type(default_value) in [bool, int] else 'value'
       needle = idx
     elif type(pattern) is Command:
-      helper_name = '_command'
+      self.helper_name = '_command'
       needle = pattern.name
-    else:
-      helper_name = 'value'
+    else:  # type is Argument
+      self.helper_name = 'value'
       needle = 'a'
     self.variable_name = bash_variable_name(pattern.name)
 
     args = [self.variable_name, bash_ifs_value(needle)]
     if type(default_value) in [list, int]:
       args.append(bash_ifs_value(True))
-    elif helper_name == '_command' and args[0] == args[1]:
+    elif self.helper_name == '_command' and args[0] == args[1]:
       args = [args[0]]
     body = '  {helper} {args}'.format(
-      helper=helper_name,
+      helper=self.helper_name,
       args=' '.join(args),
     )
 

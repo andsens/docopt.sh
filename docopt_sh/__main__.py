@@ -5,7 +5,7 @@ import docopt
 import logging
 import termcolor
 from . import __doc__ as pkg_doc, __name__ as root_name, DocoptError, __version__
-from .parser import ParserParameters, Parser
+from .parser import ParserParameters, Parser, Library
 from .script import Script
 
 log = logging.getLogger(root_name)
@@ -47,9 +47,9 @@ def docopt_sh(params):
   # `generate-library` will never be true because it is specified after [SCRIPT]
   # which matches it first. We want it in that order though, but there's a simple workaround:
   if params['SCRIPT'] == 'generate-library':
-    parser_parameters = ParserParameters(params)
-    parser = Parser(parser_parameters)
-    sys.stdout.write('#!/usr/bin/env bash\n\n' + str(parser.generate_library(add_version_check=True)))
+    library = Library()
+    exclude = ['docopt']
+    sys.stdout.write('#!/usr/bin/env bash\n\n' + str(library.generate_code(exclude=exclude)))
   else:
     try:
       if params['-']:
@@ -89,7 +89,7 @@ def setup_logging():
   class ColorFormatter(logging.Formatter):
 
     def format(self, record):
-        record.msg = termcolor.colored(record.msg, level_colors.get(record.levelno, None))
+        record.msg = termcolor.colored(str(record.msg), level_colors.get(record.levelno, None))
         return super(ColorFormatter, self).format(record)
 
   stderr = logging.StreamHandler(sys.stderr)
