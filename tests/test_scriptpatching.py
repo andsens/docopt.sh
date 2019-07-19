@@ -272,3 +272,17 @@ def test_ignore_commented_doc(monkeypatch, capsys, bash):
   assert err == ''
   assert code == 0
   assert out == 'test\n'
+
+
+def test_escaped_chars_in_doc(monkeypatch, capsys, bash):
+  run = patch_file(monkeypatch, capsys, 'escaped_chars_in_doc.sh')
+  code, out, err = run(bash, '-h')
+  assert err == ''
+  assert code == 0
+  assert out == '''Usage:
+  escaped_quotes_in_doc.sh [options]
+
+Options:
+  -v  Variable to test [default: $foo]
+  -s  Thing to test against, like "hello" [default: hi]
+'''

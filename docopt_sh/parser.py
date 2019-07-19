@@ -42,16 +42,15 @@ class Parser(object):
     else:
       library = indent(str(self.generate_library()), level=1)
 
-    doc_value_start, doc_value_end = script.doc.stripped_value_boundaries
     stripped_doc = '${{DOC:{start}:{length}}}'.format(
-      start=doc_value_start,
-      length=doc_value_end - doc_value_start,
+      start=script.doc.trimmed_value_start,
+      length=len(script.doc.trimmed_value),
     )
 
-    doc_ast = DocAst(script.doc.value)
+    doc_ast = DocAst(script.doc.trimmed_value)
     usage_start, usage_end = doc_ast.usage_match
     usage_doc = '${{DOC:{start}:{length}}}'.format(
-      start=str(doc_value_start + usage_start),
+      start=str(script.doc.trimmed_value_start + usage_start),
       length=str(usage_end - usage_start),
     )
 
@@ -62,7 +61,7 @@ class Parser(object):
       '  "LIBRARY"': library,
       '"DOC VALUE"': stripped_doc,
       '"DOC USAGE"': usage_doc,
-      '"DOC DIGEST"': hashlib.sha256(script.doc.raw_value.encode('utf-8')).hexdigest()[0:5],
+      '"DOC DIGEST"': hashlib.sha256(script.doc.untrimmed_value.encode('utf-8')).hexdigest()[0:5],
       '"SHORTS"': ' '.join([bash_ifs_value(o.pattern.short) for o in option_nodes]),
       '"LONGS"': ' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
       '"ARGCOUNT"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),

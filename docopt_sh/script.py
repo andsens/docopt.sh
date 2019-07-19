@@ -2,6 +2,7 @@ import re
 import logging
 import shlex
 import docopt
+import subprocess
 from . import DocoptError
 
 log = logging.getLogger(__name__)
@@ -131,17 +132,43 @@ class Doc(ScriptLocation):
     # regex for quote matching yanked from:
     # https://www.metaltoad.com/blog/regex-quoted-string-escapable-quotes
     matches = re.finditer(
-      r'^(?:[^#\n]*)DOC=((?<![\\])[\'"])((?:\s*)((?:.(?!(?<![\\])\1))*?.?)(?:\s*))\1(?:\n|;)',
+      r'^(?:[^#\n]*)'
+      r'DOC='
+      r'(?P<quote_start>(?<![\\])[\'"])'
+      r'(?P<raw_value>'
+      r'(?P<trimmed_before>\s*)'
+      r'(?P<trimmed_raw_value>(?:.(?!(?<![\\])\1))*?.?)'
+      r'(?P<trimmed_after>\s*))'
+      r'(?P<quote_end>\1)(?:\n|;)',
       script.contents,
       re.MULTILINE | re.DOTALL
     )
     super(Doc, self).__init__(script, matches, 0)
-    self.raw_value = self.match.group(2) if self.present else None
-    self.value = self.match.group(3) if self.present else None
-    self.stripped_value_boundaries = (
-      self.match.start(3) - self.match.start(2),
-      self.match.end(3) - self.match.start(2)
-    ) if self.present else None
+    if self.present:
+      # Get bash to output what the docstring looks like when evaluated
+      output_doc = 'DOC={quote}{trimmed_raw_value}{quote};printf "%s" "$DOC"'.format(
+        trimmed_raw_value=self.match.group('trimmed_raw_value'),
+        quote=self.match.group('quote_start')
+      )
+      process = subprocess.run(
+        ['bash', '-c', 'eval "$(cat)"'],
+        input=output_doc.encode('utf-8'),
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE
+      )
+      if process.returncode != 0:
+        raise DocoptScriptValidationError(
+          self, 'Unable to evaluate DOC= with system bash: %s' % process.stderr.decode('utf-8')
+        )
+      self.trimmed_value = process.stdout.decode('utf-8')
+      self.trimmed_value_start = self.match.start('trimmed_raw_value') - self.match.end('quote_start')
+      self.untrimmed_value = (
+        self.match.group('trimmed_before') +
+        self.trimmed_value +
+        self.match.group('trimmed_after')
+      )
+    else:
+      self.value = None
+      self.trimmed_value_boundaries = None
 
 
 class TopGuard(ScriptLocation):
