@@ -2,7 +2,6 @@ import re
 import os
 from io import StringIO
 from . import bash_eval_script, patch_file, invoke_docopt, temp_file, generated_library
-from docopt_sh.script import Script
 
 
 def test_arg(monkeypatch, capsys, bash):
@@ -140,21 +139,25 @@ def test_no_doc_check(monkeypatch, bash):
 
 
 def test_parser_only(monkeypatch, capsys, bash):
-  with open('tests/scripts/naval_fate.sh') as h:
-    script = h.read()
-  doc = Script(script).doc.raw_value
+  doc = 'Usage: echo_ship_name.sh ship new <name>...'
+  script = '''
+DOC="{doc}"
+eval "$(docopt "$@")"
+'''.format(doc=doc)
   parser = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)).out
   program = '''
 DOC="{doc}"
 {parser}
 eval "$(docopt "$@")"
-echo $((_x_ + _y_))
+if $ship && $new; then
+  echo $_name_
+fi
 '''.format(doc=doc, parser=parser)
   captured = invoke_docopt(monkeypatch, capsys, program_params=['-'], stdin=StringIO(program))
-  code, out, err = bash_eval_script(bash, captured.out, ['ship', 'shoot', '3', '1'])
+  code, out, err = bash_eval_script(bash, captured.out, ['ship', 'new', 'Argo'])
   assert err == ''
   assert code == 0
-  assert out == '4\n'
+  assert out == 'Argo\n'
 
 
 def test_teardown(monkeypatch, capsys, bash):
