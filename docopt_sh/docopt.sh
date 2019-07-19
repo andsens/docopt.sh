@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 
 docopt() {
-  set -e
   "LIBRARY"
+  set -e
   doc="DOC VALUE"
   usage="DOC USAGE"
   digest="DOC DIGEST"
