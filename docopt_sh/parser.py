@@ -34,13 +34,11 @@ class Parser(object):
 
   def generate(self, script):
     if self.parameters.library_path:
-      library = indent('''
-source {path} '{version}' || {{
+      library = indent('''source {path} '{version}' || {{
   ret=$?
   printf -- "exit %d\\n" "$ret"
   exit "$ret"
-}}
-'''.format(path=self.parameters.library_path, version=__version__), level=1)
+}}'''.format(path=self.parameters.library_path, version=__version__), level=1)
     else:
       library = indent(str(self.generate_library()), level=1)
 
