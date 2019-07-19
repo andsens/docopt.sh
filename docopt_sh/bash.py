@@ -40,7 +40,10 @@ class Code(object):
 
 def indent(script, level=1):
   indentation = '  ' * level
-  return '\n'.join(map(lambda l: indentation + l, script.split('\n')))
+
+  def indent_line(line):
+    return indentation + line if line else line
+  return '\n'.join(map(indent_line, script.split('\n')))
 
 
 def bash_variable_name(name):
