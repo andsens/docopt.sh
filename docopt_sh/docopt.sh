@@ -16,11 +16,14 @@ docopt() {
   printf "%s\n" ""DOC USAGE"" >&2
   exit 1
 }'
+  # unset the "var_" prefixed variables that will be used for internal assignment
+  unset "INTERNAL VARNAMES"
   parse "ROOT NODE IDX" "$@"
   # shellcheck disable=2157,2140
   "HAS VARS" || return 0
   # shellcheck disable=2034
   local prefix=${DOCOPT_PREFIX:-''}
+
   # Workaround for bash-4.3 bug
   # The following script will not work in bash 4.3.0 (and only that version)
   # #!tests/bash-versions/bash-4.3/bash
@@ -36,12 +39,13 @@ docopt() {
   # variable names, so instead we just output the `declare`s twice
   # in bash-4.3.
 
-  # Unset exported variables from parent shell
-  unset "VAR NAMES"
+  # Unset exported variables from parent shell,
+  # that may clash with names derived from the doc
+  unset "OUTPUT VARNAMES"
   "DEFAULTS"
   local i=0
   for ((i=0;i<declares;i++)); do
-  declare -p "VAR NAMES"
+  declare -p "OUTPUT VARNAMES"
   done
 }
 

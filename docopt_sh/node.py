@@ -82,5 +82,4 @@ class LeafNode(Node):
       docopt_name='var_' + self.variable_name,
       default=bash_variable_value(default_value)
     )
-    self.prefixed_variable_name = '${{prefix}}{name}'.format(name=self.variable_name)
     super(LeafNode, self).__init__(pattern, body, idx)
