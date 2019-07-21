@@ -66,7 +66,7 @@ class Parser(object):
       '"DOC DIGEST"': hashlib.sha256(script.doc.untrimmed_value.encode('utf-8')).hexdigest()[0:5],
       '"SHORTS"': ' '.join([bash_ifs_value(o.pattern.short) for o in option_nodes]),
       '"LONGS"': ' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
-      '"ARGCOUNT"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
+      '"ARGCOUNTS"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
       '  "NODES"': indent('\n'.join(map(str, list(doc_ast.nodes))), level=1),
       '  "DEFAULTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes]), level=1),
       '"VAR NAMES"': ' \\\n    '.join(['"%s"' % node.prefixed_variable_name for node in leaf_nodes]),

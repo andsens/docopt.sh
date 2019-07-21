@@ -8,7 +8,7 @@ docopt() {
   digest="DOC DIGEST"
   shorts=("SHORTS")
   longs=("LONGS")
-  argcounts=("ARGCOUNT")
+  argcounts=("ARGCOUNTS")
   "NODES"
   # shellcheck disable=2016
   cat <<<' docopt_exit() {
