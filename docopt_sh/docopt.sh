@@ -20,7 +20,7 @@ docopt() {
   unset "INTERNAL VARNAMES"
   parse "ROOT NODE IDX" "$@"
   # shellcheck disable=2157,2140
-  "HAS VARS" || return 0
+  "EARLY RETURN"
   # shellcheck disable=2034
   local prefix=${DOCOPT_PREFIX:-''}
 

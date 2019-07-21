@@ -71,7 +71,7 @@ class Parser(object):
       '  "DEFAULTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes]), level=1),
       '"INTERNAL VARNAMES"': ' \\\n    '.join(['var_%s' % node.variable_name for node in leaf_nodes]),
       '"OUTPUT VARNAMES"': ' \\\n    '.join(['"${prefix}%s"' % node.variable_name for node in leaf_nodes]),
-      '"HAS VARS"': bash_ifs_value(True if leaf_nodes else False),
+      '  "EARLY RETURN"\n': '' if leaf_nodes else '  return 0',
       '"MAX NODE IDX"': max([n.idx for n in doc_ast.nodes]),
       '"ROOT NODE IDX"': doc_ast.root_node.idx,
     }
