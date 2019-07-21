@@ -80,6 +80,7 @@ def minify(parser_str, max_length):
   lines = parser_str.split('\n')
   lines = remove_leading_spaces(lines)
   lines = remove_empty_lines(lines)
+  lines = remove_comments(lines)
   lines = remove_newlines(lines, max_length)
   return '\n'.join(lines) + '\n'
 
@@ -95,10 +96,13 @@ def remove_empty_lines(lines):
       yield line
 
 
-def remove_newlines(lines, max_length):
-  def is_comment(line):
-    return re.match(r'^\s*#', line) is not None
+def remove_comments(lines):
+  for line in lines:
+    if re.match(r'^\s*#', line) is None:
+      yield line
 
+
+def remove_newlines(lines, max_length):
   def needs_separator(line):
     return re.search(r'; (then|do)$|else$|\{$', line) is None
 
@@ -109,12 +113,6 @@ def remove_newlines(lines, max_length):
     return re.sub(r'\s*\\\s*$', '', line)
 
   def combine(line1, line2):
-    if is_comment(line1) or is_comment(line2):
-      if not is_comment(line1):
-        return line1
-      if not is_comment(line2):
-        return line2
-      return None
     if has_continuation(line1):
       return remove_continuation(line1) + ' ' + line2
     if needs_separator(line1):
@@ -125,9 +123,7 @@ def remove_newlines(lines, max_length):
   previous = next(lines)
   for line in lines:
     combined = combine(previous, line)
-    if combined is None:
-      previous = next(lines, None)
-    elif len(combined) > max_length:
+    if len(combined) > max_length:
       yield previous
       previous = line
     else:
