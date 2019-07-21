@@ -3,13 +3,23 @@
 docopt() {
   "LIBRARY"
   set -e
-  doc="DOC VALUE"
+  # substring of doc where leading & trailing newlines have been trimmed
+  trimmed_doc="DOC VALUE"
+  # substring of doc containing the Usage: part (i.e. no Options: or other notes)
   usage="DOC USAGE"
+  # shortened shasum of doc from which the parser was generated
   digest="DOC DIGEST"
+  # 3 lists representing option metadata
+  # names for short options
   shorts=("SHORTS")
+  # names for long options
   longs=("LONGS")
+  # argument counts for options, 0 or 1
   argcounts=("ARGCOUNTS")
+
+  # Nodes. This is the AST representing the parsed doc.
   "NODES"
+
   # shellcheck disable=2016
   cat <<<' docopt_exit() {
   [[ -n $1 ]] && printf "%s\n" "$1" >&2
@@ -18,7 +28,9 @@ docopt() {
 }'
   # unset the "var_" prefixed variables that will be used for internal assignment
   unset "INTERNAL VARNAMES"
+  # invoke main parsing function
   parse "ROOT NODE IDX" "$@"
+  # if there are no variables to be set docopt() will exit here
   # shellcheck disable=2157,2140
   "EARLY RETURN"
   # shellcheck disable=2034
@@ -42,7 +54,8 @@ docopt() {
   # Unset exported variables from parent shell,
   # that may clash with names derived from the doc
   unset "OUTPUT VARNAMES"
-  "DEFAULTS"
+  # Assign internal varnames to output varnames and set defaults
+  "OUTPUT VARNAMES ASSIGNMENTS"
   local i=0
   for ((i=0;i<declares;i++)); do
   declare -p "OUTPUT VARNAMES"
@@ -109,7 +122,7 @@ Run \`docopt.sh\` to refresh the parser."
     for idx in "${parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
       if [[ ${shorts[$idx]} = "-h" || ${longs[$idx]} = "--help" ]]; then
-        stdout "$doc"
+        stdout "$trimmed_doc"
         _return 0
       fi
     done
