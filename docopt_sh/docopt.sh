@@ -63,9 +63,7 @@ either() {
   local best_match_idx
   local match_count
   local node_idx
-  local unset_testmatch=true
-  $testmatch && unset_testmatch=false
-  testmatch=true
+  ((testdepth++)) || true
   for node_idx in "$@"; do
     if "node_$node_idx"; then
       if [[ -z $match_count || ${#left[@]} -lt $match_count ]]; then
@@ -75,7 +73,7 @@ either() {
     fi
     left=("${initial_left[@]}")
   done
-  $unset_testmatch && testmatch=false
+  ((testdepth--)) || true
   if [[ -n $best_match_idx ]]; then
     "node_$best_match_idx"
     return 0
@@ -109,18 +107,15 @@ optional() {
 required() {
   local initial_left=("${left[@]}")
   local node_idx
-  local unset_testmatch=true
-  $testmatch && unset_testmatch=false
-  testmatch=true
+  ((testdepth++)) || true
   for node_idx in "$@"; do
     if ! "node_$node_idx"; then
       left=("${initial_left[@]}")
-      $unset_testmatch && testmatch=false
+      ((testdepth--)) || true
       return 1
     fi
   done
-  if $unset_testmatch; then
-    testmatch=false
+  if [[ $((--testdepth)) -eq 0 ]]; then
     left=("${initial_left[@]}")
     for node_idx in "$@"; do
       "node_$node_idx"
@@ -135,7 +130,7 @@ switch() {
     local l=${left[$i]}
     if [[ ${parsed_params[$l]} = "$2" ]]; then
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
-      $testmatch && return 0
+      [[ $testdepth -gt 0 ]] && return 0
       if [[ $3 = true ]]; then
         eval "((var_$1++))" || true
       else
@@ -153,7 +148,7 @@ value() {
     local l=${left[$i]}
     if [[ ${parsed_params[$l]} = "$2" ]]; then
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
-      $testmatch && return 0
+      [[ $testdepth -gt 0 ]] && return 0
       local value
       value=$(printf -- "%q" "${parsed_values[$l]}")
       if [[ $3 = true ]]; then
@@ -177,7 +172,7 @@ _command() {
         return 1
       fi
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
-      $testmatch && return 0
+      [[ $testdepth -gt 0 ]] && return 0
       if [[ $3 = true ]]; then
         eval "((var_$1++)) || true"
       else
@@ -338,7 +333,9 @@ Run \`docopt.sh\` to refresh the parser."
   parsed_params=()
   parsed_values=()
   left=()
-  testmatch=false
+  # testing depth counter, when >0 nodes only check for potential matches
+  # when ==0 leafs will set the actual variable when a match is found
+  testdepth=0
 
   local arg
   while [[ ${#argv[@]} -gt 0 ]]; do
