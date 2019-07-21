@@ -246,6 +246,9 @@ in order to output a message for the user, the function automatically appends
 a short usage message (i.e. the ``Usage:`` part of the doc) and then exits with
 code ``1``.
 
+Note that this function is only defined *after* you have run
+``eval "$(docopt "$@")"``, it is part of the docopt output.
+
 Library mode
 ------------
 
