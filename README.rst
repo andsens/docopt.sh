@@ -165,15 +165,14 @@ The variables and their values will be:
     _v=3 # -vvv
     _s=true # -s
     __val=XY # --val XY
-    __val=true # --val
     multicmd=2 # multicmd multicmd
     command=true # command
     ARG=A # A
     ARGS=(1 2 3) # 1 2 3
 
-You can use ``$DOCOPT_PREFIX`` to change the above output by prefixing the
-variable names (e.g. specifying ``DOCOPT_PREFIX=prog`` would change ``ARG``
-to ``progARG``). See `parser options`_ for other parser options.
+You can use ``$DOCOPT_PREFIX`` to prefix the above variable names with a custom
+string (e.g. specifying ``DOCOPT_PREFIX=prog`` would change ``ARG`` to
+``progARG``). See `parser options`_ for additional parser options.
 
 Commandline options
 -------------------
@@ -190,19 +189,23 @@ The commandline options are:
 | ``--line-length -n N``  | Max line length when minifying.              |
 |                         | Disable with ``0`` (default: 80)             |
 +-------------------------+----------------------------------------------+
-| ``--library -l SRC``    | Generates the dynamic part of the parser and |
-|                         | includes the static parts with `source SRC`. |
+| ``--library -l SRC``    | `Generates the dynamic part of the parser`_  |
+|                         | and includes the static parts with           |
+|                         | `source SRC`.                                |
 +-------------------------+----------------------------------------------+
 | ``--no-auto-params -P`` | Disable auto-detection of parser             |
-|                         | generation parameters                        |
+|                         | generation parameters.                       |
 +-------------------------+----------------------------------------------+
-| ``--parser -p``         | Output the parser instead of inserting       |
-|                         | it in the script                             |
+| ``--parser -p``         | `Output the parser`_ instead of inserting    |
+|                         | it in the script.                            |
 +-------------------------+----------------------------------------------+
-| ``--help -h``           | Show the help screen                         |
+| ``--help -h``           | Show the help screen.                        |
 +-------------------------+----------------------------------------------+
-| ``--version``           | Show docopt.sh version                       |
+| ``--version``           | Show docopt.sh version.                      |
 +-------------------------+----------------------------------------------+
+
+.. _Generates the dynamic part of the parser: `Library mode`_
+.. _Output the parser: `On-the-fly parser generation`_
 
 Parser options
 --------------
@@ -220,8 +223,8 @@ are specified as global variables and must be specified *before* invoking
 | ``$DOCOPT_ADD_HELP``        | Set to `false` to not print usage on --help |
 |                             | (default: ``true``)                         |
 +-----------------------------+---------------------------------------------+
-| ``$DOCOPT_OPTIONS_FIRST``   | Set to ``true`` to fail when options are    |
-|                             | specified after arguments/commands          |
+| ``$DOCOPT_OPTIONS_FIRST``   | Set to ``true`` to treat everything after   |
+|                             | the first non-option as commands/arguments  |
 |                             | (default: ``false``)                        |
 +-----------------------------+---------------------------------------------+
 | ``$DOCOPT_PREFIX``          | Prefixes all variable names with the        |
