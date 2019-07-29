@@ -26,8 +26,8 @@ file.
 Installation
 ------------
 
-Albeit ``docopt.sh`` outputs bash the program itself is written in python.
-Install ``docopt.sh`` using pip:
+Albeit ``docopt.sh`` generates a parser for bash the generator itself is
+written in python. Install ``docopt.sh`` using pip:
 
 .. code-block::
 
@@ -44,8 +44,8 @@ Here is an abbreviated version of `Naval Fate <http://try.docopt.org/>`_.
     #!/usr/bin/env bash
     DOC="Naval Fate.
     Usage:
-      naval_fate.py ship <name> move <x> <y> [--speed=<kn>]
-      naval_fate.py ship shoot <x> <y>
+      naval_fate.sh ship <name> move <x> <y> [--speed=<kn>]
+      naval_fate.sh ship shoot <x> <y>
 
     Options:
       --speed=<kn>  Speed in knots [default: 10].
@@ -73,8 +73,8 @@ The file will now look like this:
     #!/usr/bin/env bash
     DOC="Naval Fate.
     Usage:
-      naval_fate.py ship <name> move <x> <y> [--speed=<kn>]
-      naval_fate.py ship shoot <x> <y>
+      naval_fate.sh ship <name> move <x> <y> [--speed=<kn>]
+      naval_fate.sh ship shoot <x> <y>
 
     Options:
       --speed=<kn>  Speed in knots [default: 10].
@@ -300,8 +300,8 @@ The script from the introduction would look like this (only
     #!/usr/bin/env bash
     DOC="Naval Fate.
     Usage:
-      naval_fate.py ship <name> move <x> <y> [--speed=<kn>]
-      naval_fate.py ship shoot <x> <y>
+      naval_fate.sh ship <name> move <x> <y> [--speed=<kn>]
+      naval_fate.sh ship shoot <x> <y>
 
     Options:
       --speed=<kn>  Speed in knots [default: 10].
