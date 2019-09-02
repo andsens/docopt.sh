@@ -4,6 +4,7 @@ import subprocess
 import re
 import glob
 import json
+import itertools
 from . import Usecase
 
 log = logging.getLogger(__name__)
@@ -36,9 +37,10 @@ def pytest_generate_tests(metafunc):
     if metafunc.config.bash_versions:
       metafunc.parametrize('bash', metafunc.config.bash_versions)
   if 'usecase' in metafunc.fixturenames:
-    with open(os.path.join(os.path.dirname(__file__), 'usecases.txt'), 'r') as handle:
-      contents = handle.read()
-    metafunc.parametrize('usecase', [usecase for usecase in parse_usecases(contents)])
+    usecase_generators = []
+    for path in glob.glob(os.path.join(os.path.dirname(__file__), '*usecases.txt')):
+      usecase_generators.append(parse_usecases(path))
+    metafunc.parametrize('usecase', itertools.chain(*usecase_generators))
 
 
 def pytest_assertrepr_compare(config, op, left, right):
@@ -62,7 +64,9 @@ def pytest_assertrepr_compare(config, op, left, right):
     return error
 
 
-def parse_usecases(raw):
+def parse_usecases(path):
+  with open(path, 'r') as handle:
+    raw = handle.read()
   fixture_pattern = re.compile(r'r"""(?P<doc>[^"]+)""".*?(?=r"""|$)', re.DOTALL)
   case_pattern = re.compile(
     r'\$ (?P<prog>[^\n ]+)( (?P<argv>[^\n]+))?\n(?P<expect>[^\n]+?)(?P<comment>\s*#[^\n]*)?\n\n')
@@ -71,6 +75,7 @@ def parse_usecases(raw):
     fixture = fixture_match.group(0)
     doc = fixture_match.group('doc')
     for case_match in case_pattern.finditer(fixture):
+      file = os.path.basename(path)
       line = line_offset + fixture[:case_match.start(0)].count('\n')
       case = case_match.group(0)
       prog = case_match.group('prog')
@@ -81,7 +86,7 @@ def parse_usecases(raw):
       except json.decoder.JSONDecodeError as e:
         json_line = line_offset + fixture[:case_match.start('expect')].count('\n')
         raise Exception('Error on line %d:\n%s\n---\n%s' % (json_line, case, str(e)))
-      yield Usecase(line, None, doc, prog, argv, expect)
+      yield Usecase(file, line, None, doc, prog, argv, expect)
 
 
 def get_system_bash():

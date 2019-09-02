@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from docopt_sh.__main__ import main as docopt_sh_main
 from docopt_sh.bash import bash_variable_value
 
-Usecase = namedtuple('Usecase', ['line', 'bash', 'doc', 'prog', 'argv', 'expect'])
+Usecase = namedtuple('Usecase', ['file', 'line', 'bash', 'doc', 'prog', 'argv', 'expect'])
 
 
 def bash_eval_script(bash, script, argv):

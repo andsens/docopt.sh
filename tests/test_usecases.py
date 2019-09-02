@@ -10,7 +10,7 @@ def test_usecase(monkeypatch, capsys, usecase, bash):
 
 
 def run_usecase(monkeypatch, capsys, usecase, bash):
-  lineno, _, doc, prog, argv, expect = usecase
+  file, lineno, _, doc, prog, argv, expect = usecase
   program_template = '''
 DOC="{doc}"
 "DOCOPT PARAMS"
@@ -30,18 +30,20 @@ fi
     expr = re.compile('^declare (--|-a) ([^=]+)=')
     out = out.strip('\n')
     result = {}
+    if err != '':
+      raise Exception('Errors encountered while running usecase %s:%d: \n%s' % (file, lineno, err))
     if out != '':
       for line in out.split('\n'):
         if expr.match(line) is None:
-          raise Exception('Unable to match %s for usecase on line %d' % (line, lineno))
+          raise Exception('Unable to match %s for usecase %s:%d' % (file, line, lineno))
         result[expr.match(line).group(2)] = line
   else:
     result = 'user-error'
-  return Usecase(lineno, bash[0], doc, prog, argv, result)
+  return Usecase(file, lineno, bash[0], doc, prog, argv, result)
 
 
 def convert_to_bash(bash, usecase):
-  lineno, _, doc, prog, argv, expect = usecase
+  file, lineno, _, doc, prog, argv, expect = usecase
   if expect == 'user-error':
     declarations = expect
   else:
@@ -49,7 +51,7 @@ def convert_to_bash(bash, usecase):
     for key, value in expect.items():
       var = '_usecase_' + re.sub(r'^[^a-z_]|[^a-z0-9_]', '_', key, 0, re.IGNORECASE)
       declarations[var] = bash_decl(bash[0], var, value)
-  return Usecase(lineno, bash[0], doc, prog, argv, declarations)
+  return Usecase(file, lineno, bash[0], doc, prog, argv, declarations)
 
 
 def bash_decl(bash_version, name, value):
