@@ -1,0 +1,19 @@
+r"""Usage:
+  prog [-a] command
+  prog [-a]
+
+"""
+$ prog
+{"-a": false, "command": false}
+
+$ prog -b
+"user-error"
+
+$ prog -a
+{"-a": true, "command": false}
+
+$ prog -a command
+{"-a": true, "command": true}
+
+$ prog command
+{"-a": false, "command": true}

@@ -18,7 +18,7 @@ class DocAst(object):
       node_map[param] = LeafNode(param, idx)
     offset = len(node_map)
     for idx, pattern in enumerate(iter(root)):
-      if isinstance(pattern, BranchPattern):
+      if isinstance(pattern, BranchPattern) and pattern not in node_map:
         node_map[pattern] = BranchNode(pattern, offset + idx, node_map)
 
     self.root_node = node_map[root]
