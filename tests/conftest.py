@@ -63,7 +63,7 @@ def pytest_assertrepr_compare(config, op, left, right):
 
 
 def parse_usecases(raw):
-  fixture_pattern = re.compile(r'r"""(?P<doc>[^"]+)""".*?(?=r""")', re.DOTALL)
+  fixture_pattern = re.compile(r'r"""(?P<doc>[^"]+)""".*?(?=r"""|$)', re.DOTALL)
   case_pattern = re.compile(
     r'\$ (?P<prog>[^\n ]+)( (?P<argv>[^\n]+))?\n(?P<expect>[^\n]+?)(?P<comment>\s*#[^\n]*)?\n\n')
   for fixture_match in fixture_pattern.finditer(raw):
