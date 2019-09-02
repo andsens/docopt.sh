@@ -72,7 +72,6 @@ class Parser(object):
       '"INTERNAL VARNAMES"': ' \\\n    '.join(['var_%s' % node.variable_name for node in leaf_nodes]),
       '"OUTPUT VARNAMES"': ' \\\n    '.join(['"${prefix}%s"' % node.variable_name for node in leaf_nodes]),
       '  "EARLY RETURN"\n': '' if leaf_nodes else '  return 0\n',
-      '"MAX NODE IDX"': max([n.idx for n in doc_ast.nodes]),
       '"ROOT NODE IDX"': doc_ast.root_node.idx,
     }
     main = self.library.functions['docopt'].replace_literal(replacements)
