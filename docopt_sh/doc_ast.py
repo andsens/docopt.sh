@@ -16,10 +16,11 @@ class DocAst(object):
     # Enumerate leaf nodes first so that their function index & index in the params array match
     for idx, param in enumerate(sorted_params):
       node_map[param] = LeafNode(param, idx)
-    offset = len(node_map)
-    for idx, pattern in enumerate(iter(root)):
+    idx = len(node_map)
+    for pattern in iter(root):
       if isinstance(pattern, BranchPattern) and pattern not in node_map:
-        node_map[pattern] = BranchNode(pattern, offset + idx, node_map)
+        node_map[pattern] = BranchNode(pattern, idx, node_map)
+        idx += 1
 
     self.root_node = node_map[root]
     self.nodes = node_map.values()
