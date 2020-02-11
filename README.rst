@@ -4,35 +4,51 @@ docopt.sh
 .. image:: https://travis-ci.org/andsens/docopt.sh.png?branch=master
     :target: https://travis-ci.org/andsens/docopt.sh
 
-``docopt.sh`` is a bash argument parser generator for bash 3.2, and 4+.
-Given a script it finds the ``docopt`` help text, parses it, generates a
-matching parser in bash, and then inserts it back into the original script.
+`docopt <http://docopt.org/>`_ uses your help text to parse command-line
+arguments for you.
+It is available `in many different languages <https://github.com/docopt/>`_,
+this implementation is for bash 3.2, and 4+.
+
+* Introduction
+    * `How it works`_
+    * `Installation`_
+    * `Quick example`_
+    * `Refreshing the parser`_
+    * `Parser output`_
+* Advanced usage
+    * `Commandline options`_
+    * `Parser options`_
+    * `Exiting with a usage message`_
+    * `Library mode`_
+    * `On-the-fly parser generation`_
+* Developers
+    * `Testing`_
+
+How it works
+------------
+
+Given a script ``docopt.sh`` finds the ``docopt`` (``DOC="..."``) help text,
+parses it, generates a matching parser in bash, and then inserts it back into
+the original script.
 The patched script will have no dependencies and can be shipped as a single
 file.
 
-* `Installation`_
-* `Quick example`_
-* `Refreshing the parser`_
-* `Parser output`_
-* `Commandline options`_
-* `Parser options`_
-* `Exiting with a usage message`_
-* `Library mode`_
-* `On-the-fly parser generation`_
-* `Developers`_
-    * `Testing`_
-
+To reduce the amount of code added to the it, the script will only contain a
+parser made for that specific help text.
+For that reason there is no need for the generator itself to be
+written in bash, instead that part is written Python 3.
+Though, this also means that you have to regenerate your parser everytime you
+change the help text (see `On-the-fly parser generation`_ for automating that
+part while developing).
 
 Installation
 ------------
 
-Albeit ``docopt.sh`` generates a parser for bash the generator itself is
-written in python. Install ``docopt.sh`` using pip:
+Install ``docopt.sh`` using pip:
 
 .. code-block::
 
     sudo pip3 install docopt-sh
-
 
 Quick example
 -------------
@@ -146,7 +162,7 @@ variable value will be an integer that has been incremented the number of times
 the parameter was specified.
 
 Options with values and regular arguments become strings.
-If an option with a value or an argument can be specified more that once,
+If an option with a value or an argument can be specified more than once,
 the value will be an array of strings.
 
 To clarify, given this (somewhat complex, but concise) doc and invocation:
@@ -191,7 +207,7 @@ The commandline options are:
 +-------------------------+----------------------------------------------+
 | ``--library -l SRC``    | `Generates the dynamic part of the parser`_  |
 |                         | and includes the static parts with           |
-|                         | `source SRC`.                                |
+|                         | ``source SRC``.                              |
 +-------------------------+----------------------------------------------+
 | ``--no-auto-params -P`` | Disable auto-detection of parser             |
 |                         | generation parameters.                       |
@@ -220,8 +236,8 @@ are specified as global variables and must be specified *before* invoking
 | ``$DOCOPT_PROGRAM_VERSION`` | The string to print when --version is       |
 |                             | specified (default: none)                   |
 +-----------------------------+---------------------------------------------+
-| ``$DOCOPT_ADD_HELP``        | Set to `false` to not print usage on --help |
-|                             | (default: ``true``)                         |
+| ``$DOCOPT_ADD_HELP``        | Set to ``false`` to not print usage on      |
+|                             | --help (default: ``true``)                  |
 +-----------------------------+---------------------------------------------+
 | ``$DOCOPT_OPTIONS_FIRST``   | Set to ``true`` to treat everything after   |
 |                             | the first non-option as commands/arguments  |
