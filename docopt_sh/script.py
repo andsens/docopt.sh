@@ -100,11 +100,11 @@ class ScriptLocation(object):
     self.script = script
     self.matches = list(matches)
     self.match = self.matches[0] if self.matches else None
-    self.offset = offset if offset else 0
+    self.offset = offset
     self.present = self.match is not None
     self.count = len(self.matches)
-    self.start = self.match.start(0) + self.offset if self.present else None
-    self.end = self.match.end(0) + self.offset if self.present else None
+    self.start = self.match.start(0) + (self.offset or 0) if self.present else None
+    self.end = self.match.end(0) + (self.offset or 0) if self.present else None
     self.line = self.script.contents[:self.start].count('\n') + 1
     self.all = [self] + [ScriptLocation(self.script, iter([match]), self.offset) for match in self.matches[1:]]
     if self.count == 0:
