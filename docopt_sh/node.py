@@ -1,5 +1,6 @@
 from .doc_ast import Option, Command, Required, Optional, OptionsShortcut, OneOrMore, Either
 from .bash import Code, bash_variable_name, bash_variable_value, bash_ifs_value
+from shlex import quote
 
 helper_map = {
   Required: 'required',
@@ -66,20 +67,34 @@ class LeafNode(Node):
     )
 
     if type(default_value) is list:
-      default_tpl = (
+      assignment1 = '{name}=("${{{docopt_name}[@]}}")'.format(
+        name=self.variable_name,
+        docopt_name='var_' + self.variable_name
+      )
+      assignment2 = '{name}={default}'.format(
+        name=self.variable_name,
+        default=bash_variable_value(default_value)
+      )
+      self.default_assignment = (
         'if declare -p {docopt_name} >/dev/null 2>&1; then\n'
-        '  eval "${{prefix}}"\'{name}=("${{{docopt_name}[@]}}")\'\n'
+        '  eval "${{prefix}}"{assignment1}\n'
         'else\n'
-        '  eval "${{prefix}}"\'{name}={default}\'\n'
+        '  eval "${{prefix}}"{assignment2}\n'
         'fi'
+      ).format(
+        docopt_name='var_' + self.variable_name,
+        assignment1=quote(assignment1),
+        assignment2=quote(assignment2)
       )
     else:
-      default_tpl = (
-        'eval "${{prefix}}"\'{name}=${{{docopt_name}:-{default}}}\''
+      assignment = '{name}=${{{docopt_name}:-{default}}}'.format(
+        name=self.variable_name,
+        docopt_name='var_' + self.variable_name,
+        default=bash_variable_value(default_value)
       )
-    self.default_assignment = default_tpl.format(
-      name=self.variable_name,
-      docopt_name='var_' + self.variable_name,
-      default=bash_variable_value(default_value)
-    )
+      self.default_assignment = (
+        'eval "${{prefix}}"{assignment}'
+      ).format(
+        assignment=quote(assignment)
+      )
     super(LeafNode, self).__init__(pattern, body, idx)

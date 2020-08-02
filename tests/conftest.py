@@ -44,7 +44,7 @@ def pytest_generate_tests(metafunc):
       )
   if 'usecase' in metafunc.fixturenames:
     usecase_generators = []
-    for path in glob.glob(os.path.join(os.path.dirname(__file__), '*usecases.txt')):
+    for path in glob.glob(os.path.join(os.path.dirname(__file__), '*-usecases.txt')):
       usecase_generators.append(parse_usecases(path))
     cases, copied_cases = itertools.tee(itertools.chain(*usecase_generators))
     ids = ('%s:%d' % (case.file, case.line) for case in copied_cases)
@@ -75,7 +75,7 @@ def pytest_assertrepr_compare(config, op, left, right):
 def parse_usecases(path):
   with open(path, 'r') as handle:
     raw = handle.read()
-  fixture_pattern = re.compile(r'r"""(?P<doc>[^"]+)""".*?(?=r"""|$(?!.))', re.DOTALL)
+  fixture_pattern = re.compile(r'r"""(?P<doc>.+?)""".*?(?=r"""|$(?!.))', re.DOTALL)
   case_pattern = re.compile(
     r'\$ (?P<prog>[^\n ]+)( (?P<argv>[^\n]+))?\n(?P<expect>(\n|.)+?)(?P<comment>\s*#[^\n]*)?\n(\n|$(?!.))')
   for fixture_match in fixture_pattern.finditer(raw):

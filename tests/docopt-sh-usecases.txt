@@ -17,3 +17,22 @@ $ prog -a command
 
 $ prog command
 {"-a": false, "command": true}
+
+
+r"""Usage:
+  prog [-o OPT]
+
+Options: -o OPT  Option [default: \$var]
+"""
+$ prog
+{"-o": "$var"}
+
+
+r"""Usage:
+  prog [-o OPT]
+
+Options: -o OPT  Option [default: \"]
+"""
+$ prog
+{"-o": "\""}
+

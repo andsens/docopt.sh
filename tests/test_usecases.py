@@ -72,7 +72,9 @@ def bash_decl_value(bash_version, value):
   if type(value) is int:
     return '"{value}"'.format(value=value)
   if type(value) is str:
-    return '"{value}"'.format(value=shlex.quote(value).strip("'"))
+    val = shlex.quote(value).strip("'")
+    val = re.sub(r'(\$|")', r'\\\1', val)
+    return '"{value}"'.format(value=val)
   if type(value) is list:
     list_tpl = "'({value})'"
     if bash_version >= bash_four_four:
