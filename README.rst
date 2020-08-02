@@ -128,9 +128,9 @@ variables will then be defined globally.
 Refreshing the parser
 ---------------------
 
-``docopt.sh`` embeds a hash of the help text into the parser to ensure that the
-two always match. In order to update the parser, simply run ``docopt.sh``
-again. The existing parser will be replaced with a new one.
+``docopt.sh`` embeds a shasum of the help text into the parser to ensure that
+the two always match. In order to update the parser, simply run
+``docopt.sh`` again. The existing parser will be replaced with a new one.
 If the parser was generated with any particular options, these options will be
 re-applied unless instructed otherwise with ``--no-auto-params``.
 
@@ -146,6 +146,12 @@ re-applied unless instructed otherwise with ``--no-auto-params``.
 Once you have generated the parser, you can move the codeblock to
 any other place in your script. The script patcher will automatically find
 the codeblock and replace it with an updated version.
+
+In order to avoid "works on my machine" issues, the parser automatically
+skips the help text check on machines without ``shasum`` or ``sha256sum``
+(a "command not found" error will still be printed though).
+The check can also manually be disabled with ``$DOCOPT_DOC_CHECK``
+(see `parser options`_ for more on that).
 
 Parser output
 -------------

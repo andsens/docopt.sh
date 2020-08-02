@@ -73,12 +73,13 @@ fi
 parse() {
   if ${DOCOPT_DOC_CHECK:-true}; then
     local doc_hash
-    doc_hash=$(printf "%s" "$DOC" | shasum -a 256)
-    if [[ ${doc_hash:0:5} != "$digest" ]]; then
-      stderr "The current usage doc (${doc_hash:0:5}) does not match \
+    if doc_hash=$(printf "%s" "$DOC" | (sha256sum 2>/dev/null || shasum -a 256)); then
+      if [[ ${doc_hash:0:5} != "$digest" ]]; then
+        stderr "The current usage doc (${doc_hash:0:5}) does not match \
 what the parser was generated with (${digest})
 Run \`docopt.sh\` to refresh the parser."
-      _return 70
+        _return 70
+      fi
     fi
   fi
 
