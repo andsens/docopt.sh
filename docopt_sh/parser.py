@@ -22,6 +22,7 @@ class Parser(object):
     ]
     if self.parameters.library_path:
       self.shellcheck_ignores.extend([
+        '1090'   # Ignore non-constant library sourcing
         '1091',  # Ignore library sourcing
         '2034',  # Ignore unused vars (they refer to things in the library)
       ])
