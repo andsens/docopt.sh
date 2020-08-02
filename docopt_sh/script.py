@@ -119,7 +119,7 @@ class ScriptLocation(object):
 
   def __str__(self):
     if not self.present:
-      return '%s' % self.script.path
+      return '%s' % (self.script.path if self.script.path else 'STDIN')
     if self.count > 1:
       return '%s:%s' % (self.script.path, ','.join(map(lambda l: str(l.line), self.all)))
     else:
