@@ -1,0 +1,45 @@
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
+// https://github.com/microsoft/vscode-dev-containers/tree/v0.122.1/containers/python-3
+{
+  "name": "Python 3",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    // Update 'VARIANT' to pick a Python version. Rebuild the container
+    // if it already exists to update. Available variants: 3, 3.6, 3.7, 3.8
+    "args": {
+      "VARIANT": "3"
+    }
+  },
+  // Set *default* container specific settings.json values on container create.
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/bash",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": true,
+    "python.pythonPath": "/usr/local/bin/python3",
+    "python.testing.pytestPath": "/usr/local/bin/pytest",
+    "python.linting.flake8Path": "/usr/local/bin/flake8",
+    "python.linting.flake8Enabled": true,
+    "python.linting.flake8Args": [
+      "--ignore=E111,E114,E121",
+      "--max-line-length=120",
+      "--exclude=tests/bash-versions"
+    ],
+    "python.testing.pytestArgs": [
+      "tests"
+    ],
+    "python.testing.pytestEnabled": true,
+  },
+  // Add the IDs of extensions you want installed when the container is created.
+  "extensions": [
+    "ms-python.python",
+    "timonwong.shellcheck",
+    "bungcip.better-toml",
+    "lextudio.restructuredtext"
+  ],
+  "postCreateCommand": "pip3 --disable-pip-version-check --no-cache-dir install pygments flit && FLIT_ROOT_INSTALL=1 flit install && tests/get_bash.py 3.2 4.4"
+  // Use 'forwardPorts' to make a list of ports inside the container available locally.
+  // "forwardPorts": [],
+  // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
+  // "remoteUser": "vscode"
+}

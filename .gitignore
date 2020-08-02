@@ -2,3 +2,7 @@
 /dist
 /docopt_sh.egg-info
 /tests/bash-versions
+__pycache__/
+*.pyc
+/.vscode
+/docopt.code-workspace
