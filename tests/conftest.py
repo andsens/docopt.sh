@@ -47,13 +47,13 @@ def pytest_generate_tests(metafunc):
     for path in glob.glob(os.path.join(os.path.dirname(__file__), '*usecases.txt')):
       usecase_generators.append(parse_usecases(path))
     cases, copied_cases = itertools.tee(itertools.chain(*usecase_generators))
-    ids = ('%s:%i' % (case.file, case.line) for case in copied_cases)
+    ids = ('%s:%d' % (case.file, case.line) for case in copied_cases)
     metafunc.parametrize('usecase', cases, ids=ids)
 
 
 def pytest_assertrepr_compare(config, op, left, right):
   if isinstance(left, Usecase) and isinstance(right, Usecase) and op == '==':
-    error = ['Usecase on line %d failed' % left.line]
+    error = ['Usecase in %s:%d failed' % (left.file, left.line)]
     error.append('bash: %s' % left.bash)
     error.append('%s' % left.doc)
     error.append('$ %s %s' % (left.prog, left.argv))
@@ -75,9 +75,9 @@ def pytest_assertrepr_compare(config, op, left, right):
 def parse_usecases(path):
   with open(path, 'r') as handle:
     raw = handle.read()
-  fixture_pattern = re.compile(r'r"""(?P<doc>[^"]+)""".*?(?=r"""|$)', re.DOTALL)
+  fixture_pattern = re.compile(r'r"""(?P<doc>[^"]+)""".*?(?=r"""|$(?!.))', re.DOTALL)
   case_pattern = re.compile(
-    r'\$ (?P<prog>[^\n ]+)( (?P<argv>[^\n]+))?\n(?P<expect>[^\n]+?)(?P<comment>\s*#[^\n]*)?\n\n')
+    r'\$ (?P<prog>[^\n ]+)( (?P<argv>[^\n]+))?\n(?P<expect>(\n|.)+?)(?P<comment>\s*#[^\n]*)?\n(\n|$(?!.))')
   for fixture_match in fixture_pattern.finditer(raw):
     line_offset = raw[:fixture_match.start(0)].count('\n') + 1
     fixture = fixture_match.group(0)
