@@ -26,5 +26,5 @@ requires = ["docopt", "termcolor"]
 test = [
   "pytest",
   "pytest-xdist",
-  "pytest-pep8",
+  "pytest-flake8",
 ]

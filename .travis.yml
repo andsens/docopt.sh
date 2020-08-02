@@ -11,7 +11,8 @@ addons:
     - freebsd-glue
 
 before_script:
-- pip3 install docopt termcolor pytest\>=4.4.2 pytest-xdist pytest-pep8
+- pip3 install pygments flit
+- flit install
 # Skip 4.2.53, it errors out on `$(fn)`
 - tests/get_bash.py 3.2 3.2.48 3.2.57 4.0 4.1 4.2 4.3 4.3.30 4.4
 
