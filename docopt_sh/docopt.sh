@@ -36,6 +36,12 @@ docopt() {
   # shellcheck disable=2034
   local prefix=${DOCOPT_PREFIX:-''}
 
+  # Unset exported variables from parent shell
+  # that may clash with names derived from the doc
+  unset "OUTPUT VARNAMES"
+  # Assign internal varnames to output varnames and set defaults
+  "OUTPUT VARNAMES ASSIGNMENTS"
+
   # Workaround for bash-4.3 bug
   # The following script will not work in bash 4.3.0 (and only that version)
   # #!tests/bash-versions/bash-4.3/bash
@@ -45,19 +51,12 @@ docopt() {
   #   declare -p X
   # }
   # fn
-  local docopt_decl=1
-  [[ $BASH_VERSION =~ ^4.3 ]] && docopt_decl=2
   # Adding "declare X" before "eval" fixes the issue, but we don't know the
   # variable names, so instead we just output the `declare`s twice
   # in bash-4.3.
-
-  # Unset exported variables from parent shell,
-  # that may clash with names derived from the doc
-  unset "OUTPUT VARNAMES"
-  # Assign internal varnames to output varnames and set defaults
-  "OUTPUT VARNAMES ASSIGNMENTS"
-  local docopt_i=0
-  for ((docopt_i=0;docopt_i<docopt_decl;docopt_i++)); do
+  local docopt_i=1
+  [[ $BASH_VERSION =~ ^4.3 ]] && docopt_i=2
+  for ((;docopt_i>0;docopt_i--)); do
   declare -p "OUTPUT VARNAMES"
   done
 }
