@@ -118,12 +118,13 @@ class ScriptLocation(object):
     return self.end - self.start if self.present else 0
 
   def __str__(self):
+    path = self.script.path if self.script.path is not None else 'STDIN'
     if not self.present:
-      return '%s' % (self.script.path if self.script.path else 'STDIN')
+      return '%s' % (path)
     if self.count > 1:
-      return '%s:%s' % (self.script.path, ','.join(map(lambda l: str(l.line), self.all)))
+      return '%s:%s' % (path, ','.join(map(lambda l: str(l.line), self.all)))
     else:
-      return '%s:%d' % (self.script.path, self.line)
+      return '%s:%d' % (path, self.line)
 
 
 class Doc(ScriptLocation):
