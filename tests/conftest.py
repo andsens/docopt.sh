@@ -5,6 +5,7 @@ import re
 import glob
 import json
 import itertools
+from packaging.version import parse as parse_version
 from . import Usecase
 
 log = logging.getLogger(__name__)
@@ -22,10 +23,11 @@ def pytest_sessionstart(session):
   if bash_version == 'all':
     session.config.bash_versions = get_installed_bash_versions()
     all_versions = [version for version, _ in session.config.bash_versions]
-    log.warning('Testing with bash versions: %s' % ', '.join(all_versions))
+    log.warning('Testing with bash versions: %s' % ', '.join(map(str, all_versions)))
   elif bash_version:
-    session.config.bash_versions = [get_bash_version(version) for version in bash_version.split(',')]
-    log.warning('Testing with bash versions: %s' % ', '.join(bash_version.split(',')))
+    selected_versions = [get_bash_version(version) for version in bash_version.split(',')]
+    session.config.bash_versions = selected_versions
+    log.warning('Testing with bash versions: %s' % ', '.join(map(str, selected_versions.split(','))))
   else:
     version, executable = get_system_bash()
     log.warning('Testing with system bash: %s' % version)
@@ -96,19 +98,18 @@ def get_system_bash():
   )
   process.check_returncode()
   out = process.stdout.decode('utf-8')
-  match = re.search(r'GNU bash, version ([^ ]+)', out)
+  match = re.search(r'GNU bash, version (\d+\.\d+\.\d+)', out)
   if not match:
-    log.warning('Unable to detect installed bash version from:\n%s\nAssuming 4.4' % out)
-    return '4.4', 'bash'
+    raise Exception('Unable to detect installed bash version from: %s' % out)
   else:
-    return match.group(1), 'bash'
+    return parse_version(match.group(1)), 'bash'
 
 
 def get_installed_bash_versions():
   versions = [get_system_bash()]
   for executable in glob.glob('tests/bash-versions/bash-*/bash'):
     folder_name = os.path.basename(os.path.dirname(executable))
-    versions.append((re.search(r'bash-(.+)', folder_name).group(1), executable))
+    versions.append((parse_version(re.search(r'bash-(.+)', folder_name).group(1)), executable))
   return versions
 
 
@@ -120,4 +121,4 @@ def get_bash_version(version):
       'Use `tests/get_bash.py {version}` to do that'
       .format(version=version)
     )
-  return version, executable_path
+  return parse_version(version), executable_path

@@ -1,7 +1,10 @@
 import re
 import shlex
 import io
+from packaging.version import parse as parse_version
 from . import Usecase, patch_stream
+
+bash_four_four = parse_version('4.4')
 
 
 def test_usecase(monkeypatch, capsys, usecase, bash):
@@ -71,9 +74,9 @@ def bash_decl_value(bash_version, value):
   if type(value) is str:
     return '"{value}"'.format(value=shlex.quote(value).strip("'"))
   if type(value) is list:
-    list_tpl = '({value})'
-    if bash_version is not None and (int(bash_version[0]) < 4 or int(bash_version[2]) < 4):
-      list_tpl = "'({value})'"
+    list_tpl = "'({value})'"
+    if bash_version >= bash_four_four:
+      list_tpl = '({value})'
     return list_tpl.format(value=' '.join('[{i}]={value}'.format(
       i=i, value=bash_decl_value(bash_version, v)) for i, v in enumerate(value))
     )
