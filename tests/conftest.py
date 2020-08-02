@@ -22,15 +22,15 @@ def pytest_sessionstart(session):
   bash_version = session.config.getoption('--bash-version')
   if bash_version == 'all':
     session.config.bash_versions = get_installed_bash_versions()
-    all_versions = [version for version, _ in session.config.bash_versions]
-    log.warning('Testing with bash versions: %s' % ', '.join(map(str, all_versions)))
+    all_versions = sorted([version for version, _ in session.config.bash_versions])
+    log.info('Testing with bash versions: %s' % ', '.join(map(str, all_versions)))
   elif bash_version:
     selected_versions = [get_bash_version(version) for version in bash_version.split(',')]
     session.config.bash_versions = selected_versions
-    log.warning('Testing with bash versions: %s' % ', '.join(map(str, selected_versions.split(','))))
+    log.info('Testing with bash versions: %s' % ', '.join(map(str, selected_versions.split(','))))
   else:
     version, executable = get_system_bash()
-    log.warning('Testing with system bash: %s' % version)
+    log.info('Testing with system bash: %s' % version)
     session.config.bash_versions = [(version, executable)]
 
 

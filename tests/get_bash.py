@@ -24,21 +24,21 @@ def get_bash(version):
     version_path = os.path.join(versions_path, 'bash-%s' % version)
     executable_path = os.path.join(version_path, 'bash')
     if not os.path.exists(executable_path):
-      log.warning('bash-%s executable not found in tests/bash-versions, downloading & compiling now' % version)
+      log.info('bash-%s executable not found in tests/bash-versions, downloading & compiling now' % version)
       archive_path = os.path.join(versions_path, 'bash-%s.tar.gz' % version)
       if os.path.exists(archive_path):
-        log.warning('%s already exists, skipping download' % archive_path)
+        log.info('%s already exists, skipping download' % archive_path)
       else:
         url = 'http://ftp.gnu.org/gnu/bash/bash-%s.tar.gz' % version
         urllib.request.urlretrieve(url, archive_path)
       if os.path.exists(version_path):
-        log.warning('%s already exists, skipping extraction' % version_path)
+        log.info('%s already exists, skipping extraction' % version_path)
       else:
         with tarfile.open(archive_path) as archive:
           archive.extractall(versions_path)
       makefile_path = os.path.join(version_path, 'Makefile')
       if os.path.exists(makefile_path):
-        log.warning('%s already exists, skipping ./configure' % makefile_path)
+        log.info('%s already exists, skipping ./configure' % makefile_path)
       else:
         process = subprocess.run('./configure', cwd=version_path)
         process.check_returncode()
