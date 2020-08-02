@@ -104,5 +104,6 @@ def main():
   params = docopt.docopt(__doc__, version=__version__)
   docopt_sh(params)
 
+
 if __name__ == '__main__':
   main()

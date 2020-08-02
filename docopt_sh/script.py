@@ -162,9 +162,9 @@ class Doc(ScriptLocation):
       self.trimmed_value = process.stdout.decode('utf-8')
       self.trimmed_value_start = self.match.start('trimmed_raw_value') - self.match.end('quote_start')
       self.untrimmed_value = (
-        self.match.group('trimmed_before') +
-        self.trimmed_value +
-        self.match.group('trimmed_after')
+        self.match.group('trimmed_before')
+        + self.trimmed_value
+        + self.match.group('trimmed_after')
       )
     else:
       self.value = None
@@ -195,7 +195,7 @@ class BottomGuard(ScriptLocation):
       from .__main__ import __doc__
       try:
         self.refresh_command_params = docopt.docopt(__doc__, shlex.split(self.match.group(2))[1:])
-      except (docopt.DocoptLanguageError, docopt.DocoptExit) as e:
+      except (docopt.DocoptLanguageError, docopt.DocoptExit):
         pass
 
 
@@ -208,7 +208,7 @@ class Guards(object):
     else:
       self.bottom = BottomGuard(script, 0)
     self.present = self.top.present and self.bottom.present
-    # By defaulting start+end to doc.end the parse will be appended to
+    # By defaulting start+end to doc.end the parser will be appended to
     # the doc if it is absent
     self.start = self.top.start if self.present else doc.end
     self.end = self.bottom.end if self.present else doc.end

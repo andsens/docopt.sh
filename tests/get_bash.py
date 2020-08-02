@@ -50,6 +50,7 @@ def get_bash(version):
     log.error('Failed to install bash-%s' % version)
     raise
 
+
 if __name__ == '__main__':
   params = docopt.docopt(__doc__)
   for version in params['VERSION']:

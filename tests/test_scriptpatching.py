@@ -1,5 +1,4 @@
 import re
-import os
 from io import StringIO
 from . import bash_eval_script, patch_file, invoke_docopt, temp_file, generated_library
 

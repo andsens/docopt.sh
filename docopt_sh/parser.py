@@ -6,7 +6,7 @@ import shlex
 from collections import OrderedDict
 from . import __version__, DocoptError
 from .doc_ast import DocAst, Option
-from .bash import Code, indent, bash_ifs_value, minify
+from .bash import Code, indent, bash_ifs_value
 from .node import LeafNode, helper_list
 
 log = logging.getLogger(__name__)

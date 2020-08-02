@@ -1,7 +1,6 @@
 import re
 import shlex
 import io
-from docopt_sh.bash import bash_variable_name
 from . import Usecase, patch_stream
 
 
