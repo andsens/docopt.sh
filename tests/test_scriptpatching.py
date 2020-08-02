@@ -1,4 +1,5 @@
 import re
+import pytest
 from io import StringIO
 from . import bash_eval_script, patch_file, invoke_docopt, temp_file, generated_library
 
@@ -105,6 +106,19 @@ def test_patch_file(monkeypatch, bash):
     assert err == ''
     assert code == 0
     assert out == 'Olympia\n'
+
+
+def test_doc_missing(monkeypatch, capsys):
+  script = '''
+eval "$(docopt "$@")"
+'''
+  with pytest.raises(SystemExit) as exc_info:
+    invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script))
+  assert (
+     'STDIN Could not find variable containing usage doc. '
+     + 'Make sure your script contains a `DOC="... Usage: ..."` variable\n') in capsys.readouterr().err
+  assert exc_info.type == SystemExit
+  assert exc_info.value.code == 74
 
 
 def test_doc_check(monkeypatch, bash):
