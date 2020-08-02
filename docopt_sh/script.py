@@ -168,7 +168,6 @@ class Doc(ScriptLocation):
       )
     else:
       self.value = None
-      self.trimmed_value_boundaries = None
 
 
 class TopGuard(ScriptLocation):
