@@ -100,7 +100,7 @@ class ScriptLocation(object):
     self.script = script
     self.matches = list(matches)
     self.match = self.matches[0] if self.matches else None
-    self.offset = offset
+    self.offset = offset if offset else 0
     self.present = self.match is not None
     self.count = len(self.matches)
     self.start = self.match.start(0) + self.offset if self.present else None
