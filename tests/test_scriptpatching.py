@@ -108,19 +108,6 @@ def test_patch_file(monkeypatch, bash):
     assert out == 'Olympia\n'
 
 
-def test_doc_missing(monkeypatch, capsys):
-  script = '''
-eval "$(docopt "$@")"
-'''
-  with pytest.raises(SystemExit) as exc_info:
-    invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script))
-  assert (
-     'STDIN Could not find variable containing usage doc. '
-     + 'Make sure your script contains a `DOC="... Usage: ..."` variable\n') in capsys.readouterr().err
-  assert exc_info.type == SystemExit
-  assert exc_info.value.code == 74
-
-
 def test_doc_check(monkeypatch, bash):
   with temp_file('echo_ship_name.sh') as (script, run):
     invoke_docopt(monkeypatch, program_params=[script.name])
@@ -299,3 +286,115 @@ Options:
   -v  Variable to test [default: $foo]
   -s  Thing to test against, like "hello" [default: hi]
 '''
+
+
+def test_doc_missing(monkeypatch, capsys):
+  script = '''
+eval "$(docopt "$@")"
+'''
+  with pytest.raises(SystemExit) as exc_info:
+    invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script))
+  assert (
+      'STDIN Could not find variable containing usage doc. '
+      + 'Make sure your script contains a `DOC="... Usage: ..."` variable\n') in capsys.readouterr().err
+  assert exc_info.type == SystemExit
+  assert exc_info.value.code == 74
+
+
+def test_multiple_docs(monkeypatch, capsys):
+  script = '''
+DOC='Usage: echo_ship_name.sh ship new <name>...'
+DOC='Usage: echo_ship_name.sh ship new <name>...'
+eval "$(docopt "$@")"
+'''
+  with pytest.raises(SystemExit) as exc_info:
+    invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script))
+  assert (
+      'More than one variable containing usage doc found. '
+      + 'Search your script for `DOC=`, there should be only one such declaration.\n') in capsys.readouterr().err
+  assert exc_info.type == SystemExit
+  assert exc_info.value.code == 74
+
+
+def test_multiple_top_guards(monkeypatch, capsys):
+  script = '''
+# docopt parser below
+# docopt parser below
+DOC='Usage: echo_ship_name.sh ship new <name>...'
+eval "$(docopt "$@")"
+'''
+  with pytest.raises(SystemExit) as exc_info:
+    invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script))
+  assert 'Multiple docopt parser top guards found.' in capsys.readouterr().err
+  assert exc_info.type == SystemExit
+  assert exc_info.value.code == 74
+
+
+def test_multiple_bottom_guards(monkeypatch, capsys):
+  script = '''
+# docopt parser above
+# docopt parser above
+DOC='Usage: echo_ship_name.sh ship new <name>...'
+eval "$(docopt "$@")"
+'''
+  with pytest.raises(SystemExit) as exc_info:
+    invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script))
+  assert 'Multiple docopt parser bottom guards found.' in capsys.readouterr().err
+  assert exc_info.type == SystemExit
+  assert exc_info.value.code == 74
+
+
+def test_no_bottom_guard(monkeypatch, capsys):
+  script = '''
+# docopt parser below
+DOC='Usage: echo_ship_name.sh ship new <name>...'
+eval "$(docopt "$@")"
+'''
+  with pytest.raises(SystemExit) as exc_info:
+    invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script))
+  assert 'STDIN:2 Parser top guard found, but no bottom guard detected.' in capsys.readouterr().err
+  assert exc_info.type == SystemExit
+  assert exc_info.value.code == 74
+
+
+def test_no_top_guard(monkeypatch, capsys):
+  script = '''
+# docopt parser above
+DOC='Usage: echo_ship_name.sh ship new <name>...'
+eval "$(docopt "$@")"
+'''
+  with pytest.raises(SystemExit) as exc_info:
+    invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script))
+  assert 'STDIN:2 Parser bottom guard found, but no top guard detected.' in capsys.readouterr().err
+  assert exc_info.type == SystemExit
+  assert exc_info.value.code == 74
+
+
+def test_no_invocations(monkeypatch, capsys):
+  script = '''
+DOC='Usage: echo_ship_name.sh ship new <name>...'
+'''
+  err = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)).err
+  assert 'No invocations of docopt found, check your script to make sure this is correct.' in err
+
+
+def test_multiple_invocations(monkeypatch, capsys):
+  script = '''
+DOC='Usage: echo_ship_name.sh ship new <name>...'
+eval "$(docopt "$@")"
+eval "$(docopt "$@")"
+'''
+  err = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)).err
+  assert 'STDIN:3,4 Multiple invocations of docopt found, check your script to make sure this is correct.' in err
+
+
+def test_option_after_invocation(monkeypatch, capsys):
+  script = '''
+DOC='Usage: echo_ship_name.sh ship new <name>...'
+eval "$(docopt "$@")"
+DOCOPT_ADD_HELP=false
+'''
+  err = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)).err
+  assert (
+    'STDIN:4 $DOCOPT_ADD_HELP has no effect when specified after invoking docopt, '
+    + 'make sure to place docopt options before calling `eval "$(docopt "$@")"`.') in err
