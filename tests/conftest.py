@@ -37,12 +37,18 @@ def pytest_sessionstart(session):
 def pytest_generate_tests(metafunc):
   if 'bash' in metafunc.fixturenames:
     if metafunc.config.bash_versions:
-      metafunc.parametrize('bash', metafunc.config.bash_versions)
+      metafunc.parametrize(
+        'bash',
+        metafunc.config.bash_versions,
+        ids=map(lambda v: str(v[0]), metafunc.config.bash_versions)
+      )
   if 'usecase' in metafunc.fixturenames:
     usecase_generators = []
     for path in glob.glob(os.path.join(os.path.dirname(__file__), '*usecases.txt')):
       usecase_generators.append(parse_usecases(path))
-    metafunc.parametrize('usecase', itertools.chain(*usecase_generators))
+    cases, copied_cases = itertools.tee(itertools.chain(*usecase_generators))
+    ids = ('%s:%i' % (case.file, case.line) for case in copied_cases)
+    metafunc.parametrize('usecase', cases, ids=ids)
 
 
 def pytest_assertrepr_compare(config, op, left, right):
