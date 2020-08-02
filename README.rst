@@ -36,8 +36,8 @@ file.
 To reduce the amount of code added to the it, the script will only contain a
 parser made for that specific help text.
 For that reason there is no need for the generator itself to be
-written in bash, instead that part is written Python 3.
-Though, this also means that you have to regenerate your parser everytime you
+written in bash, instead that part is written in Python 3.
+Though, this also means that you have to regenerate your parser every time you
 change the help text (see `On-the-fly parser generation`_ for automating that
 part while developing).
 
@@ -228,7 +228,8 @@ Parser options
 
 Parser options change the behavior of the parser in various ways. These options
 are specified as global variables and must be specified *before* invoking
-``eval "$(docopt "$@")"``.
+``eval "$(docopt "$@")"``. You do not need to regenerate the parse when changing
+any of these options.
 
 +-----------------------------+---------------------------------------------+
 |           Option            |                 Description                 |
@@ -345,7 +346,7 @@ Testing
 ``docopt.sh`` uses pytest_ for testing. You can run the testsuite by executing
 ``pytest`` in the root of the project.
 
-All usecases_ from the original docopt are used to validate correctness.
+All `use cases`_ from the original docopt are used to validate correctness.
 Per default pytest uses the bash version that is installed on the system to
 run the tests.
 However, you can specify multiple alternate versions using
@@ -359,4 +360,4 @@ installed.
 
 
 .. _pytest: https://pytest.org/
-.. _usecases: https://github.com/andsens/docopt.sh/blob/c254d766a8eda8537bd5438b6ff22e005de4b586/tests/usecases.txt
+.. _use cases: https://github.com/andsens/docopt.sh/blob/e2cba6d9dc10a1d3366d01976767ae933b90f5bd/tests/docopt-py-usecases.txt
