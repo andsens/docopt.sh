@@ -27,7 +27,7 @@ def pytest_sessionstart(session):
   elif bash_version:
     selected_versions = [get_bash_version(version) for version in bash_version.split(',')]
     session.config.bash_versions = selected_versions
-    log.info('Testing with bash versions: %s' % ', '.join(map(str, selected_versions.split(','))))
+    log.info('Testing with bash versions: %s' % ', '.join(map(str, selected_versions)))
   else:
     version, executable = get_system_bash()
     log.info('Testing with system bash: %s' % version)
