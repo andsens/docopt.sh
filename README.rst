@@ -7,7 +7,7 @@ docopt.sh
 `docopt <http://docopt.org/>`_ uses your help text to parse command-line
 arguments for you.
 It is available `in many different languages <https://github.com/docopt/>`_,
-this implementation is for bash 3.2, and 4+.
+this implementation is for bash 3.2, 4+, and 5+.
 
 * Introduction
     * `How it works`_
