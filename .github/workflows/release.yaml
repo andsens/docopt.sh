@@ -51,8 +51,8 @@ jobs:
     - name: Build and publish
       env:
         DOCOPT_SH_VERSION: ${{ steps.release-version.outputs.version }}
-        FLIT_INDEX_URL: https://test.pypi.org/legacy/
+        FLIT_INDEX_URL: https://upload.pypi.org/legacy/
         FLIT_USERNAME: __token__
-        FLIT_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
+        FLIT_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         flit publish
