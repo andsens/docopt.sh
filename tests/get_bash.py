@@ -53,5 +53,8 @@ def get_bash(version):
 
 if __name__ == '__main__':
   params = docopt.docopt(__doc__)
-  for version in params['VERSION']:
+  versions = params['VERSION']
+  if len(versions) == 1 and ',' in versions:
+    versions = versions[0].split(',')
+  for version in versions:
     get_bash(version)

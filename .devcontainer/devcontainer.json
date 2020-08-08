@@ -36,7 +36,8 @@
     "ms-python.python",
     "timonwong.shellcheck",
     "bungcip.better-toml",
-    "lextudio.restructuredtext"
+    "lextudio.restructuredtext",
+    "me-dutour-mathieu.vscode-github-actions"
   ],
   "postCreateCommand": "pip3 --disable-pip-version-check --no-cache-dir install rstcheck pygments flit && FLIT_ROOT_INSTALL=1 flit install && tests/get_bash.py 3.2 4.4"
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
