@@ -9,6 +9,5 @@
 ARG VARIANT="3"
 FROM mcr.microsoft.com/vscode/devcontainers/python:0-${VARIANT}
 
-RUN apt-get update \
-   && export DEBIAN_FRONTEND=noninteractive \
-   && apt-get -y install --no-install-recommends shellcheck
+RUN wget -O- https://github.com/koalaman/shellcheck/releases/download/v0.7.1/shellcheck-v0.7.1.linux.x86_64.tar.xz | \
+  tar -xJC /usr/local/bin --strip-components 1 shellcheck-v0.7.1/shellcheck

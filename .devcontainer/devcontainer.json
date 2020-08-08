@@ -4,7 +4,7 @@
   "name": "Python 3",
   "build": {
     "dockerfile": "Dockerfile",
-    "context": "..",
+    "context": ".",
     // Update 'VARIANT' to pick a Python version. Rebuild the container
     // if it already exists to update. Available variants: 3, 3.6, 3.7, 3.8
     "args": {
@@ -29,6 +29,7 @@
       "tests"
     ],
     "python.testing.pytestEnabled": true,
+    "shellcheck.executablePath": "/usr/local/bin/shellcheck"
   },
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": [
