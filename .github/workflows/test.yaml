@@ -2,9 +2,9 @@ name: Lint & test
 
 on:
   push:
-    branches: [ actions ]
+    branches: [ '*' ]
   pull_request:
-    branches: [ actions ]
+    branches: [ '*' ]
 
 jobs:
   lint:
