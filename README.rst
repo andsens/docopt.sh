@@ -1,8 +1,8 @@
 docopt.sh
 =========
 
-.. image:: https://travis-ci.org/andsens/docopt.sh.png?branch=master
-    :target: https://travis-ci.org/andsens/docopt.sh
+.. image:: https://github.com/andsens/docopt.sh/workflows/Lint%20&%20test/badge.svg
+    :target: https://github.com/andsens/docopt.sh/actions?query=workflow%3A%22Lint+%26+test%22
 
 `docopt <http://docopt.org/>`_ uses your help text to parse command-line
 arguments for you.
