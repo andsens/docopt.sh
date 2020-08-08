@@ -13,11 +13,9 @@ except ImportError:
   import importlib_metadata as metadata
 try:
   __version__ = metadata.version(__name__)
-except Exception as e:
+except Exception:
   from os import getenv
-  __version__ = getenv('DOCOPT_SH_VERSION', None)
-  if __version__ is None:
-    raise e
+  __version__ = getenv('DOCOPT_SH_VERSION', '0.0.0-dev')
 
 
 class DocoptError(Exception):
