@@ -37,7 +37,7 @@
     "bungcip.better-toml",
     "lextudio.restructuredtext"
   ],
-  "postCreateCommand": "pip3 --disable-pip-version-check --no-cache-dir install pygments flit && FLIT_ROOT_INSTALL=1 flit install && tests/get_bash.py 3.2 4.4"
+  "postCreateCommand": "pip3 --disable-pip-version-check --no-cache-dir install rstcheck pygments flit && FLIT_ROOT_INSTALL=1 flit install && tests/get_bash.py 3.2 4.4"
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   // "forwardPorts": [],
   // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
