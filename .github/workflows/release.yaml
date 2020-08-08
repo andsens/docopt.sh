@@ -1,0 +1,58 @@
+name: Create release
+
+on:
+  push:
+    tags:
+    - 'v*'
+
+jobs:
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Get release notes from tag message
+        id: tag-message
+        run: printf "::set-output name=body::%s\n" "$(git tag -l --format='%(contents)' ${{ github.ref }})"
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          body: ${{ steps.tag-message.outputs.body }}
+          draft: false
+          prerelease: false
+
+  publish:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    - name: Get release version from tag name
+      id: release-version
+      env:
+        GITHUB_REF: ${{ github.ref }}
+      run: printf "::set-output name=version::%s\n" "${GITHUB_REF/#refs\/tags\/v/}"
+    - name: Install dependencies
+      env:
+        DOCOPT_SH_VERSION: ${{ steps.release-version.outputs.version }}
+      run: |
+        python -m pip install --upgrade pip
+        pip install pygments flit
+        flit install
+    - name: Build and publish
+      env:
+        DOCOPT_SH_VERSION: ${{ steps.release-version.outputs.version }}
+        FLIT_INDEX_URL: https://test.pypi.org/legacy/
+        FLIT_USERNAME: __token__
+        FLIT_PASSWORD: ${{ secrets.TEST_PYPI_PASSWORD }}
+      run: |
+        flit publish

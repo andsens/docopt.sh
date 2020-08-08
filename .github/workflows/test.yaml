@@ -57,8 +57,7 @@ jobs:
         pip install pygments flit
         flit install
     - name: Test with pytest
-      run: |
-        pytest
+      run: pytest
 
   test-bash:
 
@@ -91,5 +90,4 @@ jobs:
       run:
         tests/get_bash.py "${{ matrix.bash-version }}"
     - name: Test with pytest
-      run: |
-        pytest --bash-version "${{ matrix.bash-version }}"
+      run: pytest --bash-version "${{ matrix.bash-version }}"

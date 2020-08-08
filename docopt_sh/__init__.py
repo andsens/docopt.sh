@@ -7,7 +7,17 @@ docopt.sh - Bash argument parser generator.
 # in order to prevent docopt from parsing it as a `usage:`` section
 
 __all__ = ['docopt_sh']
-__version__ = '0.9.15'
+try:
+  from importlib import metadata
+except ImportError:
+  import importlib_metadata as metadata
+try:
+  __version__ = metadata.version(__name__)
+except Exception as e:
+  from os import getenv
+  __version__ = getenv('DOCOPT_SH_VERSION', None)
+  if __version__ is None:
+    raise e
 
 
 class DocoptError(Exception):
