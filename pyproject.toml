@@ -22,6 +22,9 @@ requires = ["docopt", "termcolor", 'importlib-metadata ~= 1.0 ; python_version <
 [tool.flit.scripts]
 "docopt.sh" = "docopt_sh.__main__:main"
 
+[tool.flit.sdist]
+exclude = ["tests", "pytest.ini", ".*"]
+
 [tool.flit.metadata.requires-extra]
 test = [
   "pytest",
