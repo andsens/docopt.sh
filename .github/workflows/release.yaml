@@ -10,19 +10,34 @@ jobs:
     name: Create GitHub Release
     runs-on: ubuntu-latest
     steps:
+      - name: Determine tag name
+        id: tag-name
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          printf "::set-output name=tag::%s\n" "$(basename "${{ github.ref }}")"
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Get release notes from tag message
+        with:
+          ref: ${{ steps.tag-name.outputs.tag }}
+      - name: Get release notes from tag
         id: tag-message
-        run: printf "::set-output name=body::%s\n" "$(git tag -l --format='%(contents)' ${{ github.ref }})"
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          MESSAGE=$(git tag -l --format='%(contents)' "${{ steps.tag-name.outputs.tag }}")
+          MESSAGE=${MESSAGE//'%'/'%25'}
+          MESSAGE=${MESSAGE//$'\n'/'%0A'}
+          MESSAGE=${MESSAGE//$'\r'/'%0D'}
+          printf "::set-output name=message::%s\n" "$MESSAGE"
       - name: Create Release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
-          body: ${{ steps.tag-message.outputs.body }}
+          tag_name: ${{ steps.tag-name.outputs.tag }}
+          release_name: ${{ steps.tag-name.outputs.tag }}
+          body: ${{ steps.tag-message.outputs.message }}
           draft: false
           prerelease: false
 
