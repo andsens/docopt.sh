@@ -36,21 +36,18 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: '3.8'
-    - name: Get release version from tag name
+    - name: Set release version from tag name
       id: release-version
       env:
-        GITHUB_REF: ${{ github.ref }}
-      run: printf "::set-output name=version::%s\n" "${GITHUB_REF/#refs\/tags\/v/}"
+        REF: ${{ github.ref }}
+      run: printf "__version__ = \"%s\"\n" "${REF/#refs\/tags\/v/}" > docopt_sh/version.py
     - name: Install dependencies
-      env:
-        DOCOPT_SH_VERSION: ${{ steps.release-version.outputs.version }}
       run: |
         python -m pip install --upgrade pip
         pip install pygments flit
         flit install
     - name: Build and publish
       env:
-        DOCOPT_SH_VERSION: ${{ steps.release-version.outputs.version }}
         FLIT_INDEX_URL: https://upload.pypi.org/legacy/
         FLIT_USERNAME: __token__
         FLIT_PASSWORD: ${{ secrets.PYPI_PASSWORD }}

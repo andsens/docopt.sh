@@ -8,14 +8,9 @@ docopt.sh - Bash argument parser generator.
 
 __all__ = ['docopt_sh']
 try:
-  from importlib import metadata
+  from .version import __version__
 except ImportError:
-  import importlib_metadata as metadata
-try:
-  __version__ = metadata.version(__name__)
-except Exception:
-  from os import getenv
-  __version__ = getenv('DOCOPT_SH_VERSION', '0.0.0-dev')
+  __version__ = '0.0.0-dev'
 
 
 class DocoptError(Exception):
