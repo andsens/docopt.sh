@@ -17,21 +17,6 @@ class Parser(object):
   def __init__(self, parser_parameters):
     self.parameters = parser_parameters
     self.library = Library()
-    self.shellcheck_ignores = [
-      '2016',  # Ignore unexpanded variables in single quotes (used for docopt_exit generation)
-    ]
-    if self.parameters.library_path:
-      self.shellcheck_ignores.extend([
-        '1090',  # Ignore non-constant library sourcing
-        '1091',  # Ignore library sourcing
-        '2034',  # Ignore unused vars (they refer to things in the library)
-      ])
-    if not self.parameters.library_path and self.parameters.minify:
-      # Ignore else .. if issue in parse_long,
-      # see https://github.com/koalaman/shellcheck/issues/1584 for more details
-      self.shellcheck_ignores.append(
-        '1075',
-      )
 
   def generate(self, script):
     stripped_doc = '${{DOC:{start}:{length}}}'.format(
@@ -78,7 +63,25 @@ class Parser(object):
     main = self.library.functions['docopt'].replace_literal(replacements)
     if self.parameters.minify:
       main = main.minify(self.parameters.max_line_length)
-    return str(main)
+
+    shellcheck_ignores = [
+      '2016',  # Ignore unexpanded variables in single quotes (used for docopt_exit generation)
+    ]
+    if self.parameters.library_path:
+      shellcheck_ignores.extend([
+        '1090',  # Ignore non-constant library sourcing
+        '1091',  # Ignore library sourcing
+        '2034',  # Ignore unused vars (they refer to things in the library)
+      ])
+    if not self.parameters.library_path and self.parameters.minify:
+      # Ignore else .. if issue in parse_long,
+      # see https://github.com/koalaman/shellcheck/issues/1584 for more details
+      shellcheck_ignores.append('1075')
+
+    return "{shellcheck_ignores}\n{parser}".format(
+      shellcheck_ignores='# shellcheck disable=%s' % ','.join(shellcheck_ignores),
+      parser=main,
+    )
 
 
 class Library(object):

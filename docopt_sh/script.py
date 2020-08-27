@@ -73,12 +73,11 @@ class Script(object):
 
   def patch(self, parser):
     return Script(
-      "{start}{guard_begin}\n{shellcheck_ignores}\n{parser}{guard_end}\n{end}".format(
+      "{start}{guard_begin}\n{parser}{guard_end}\n{end}".format(
         start=self.contents[:self.guards.start],
         guard_begin=(
           "# docopt parser below, refresh this parser with `%s`"
           % parser.parameters.refresh_command_short),
-        shellcheck_ignores='# shellcheck disable=%s' % ','.join(parser.shellcheck_ignores),
         parser=parser.generate(self),
         guard_end=(
           "# docopt parser above, complete command for generating this parser is `%s`"
