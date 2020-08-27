@@ -77,6 +77,11 @@ class Parser(object):
       # Ignore else .. if issue in parse_long,
       # see https://github.com/koalaman/shellcheck/issues/1584 for more details
       shellcheck_ignores.append('1075')
+    if any([type(node.pattern.value) is list for node in leaf_nodes]):
+      # Unlike non-array values, array values will output a "declare -p var_..."
+      # to check in what way they should be set (${var:-VAL} does not work with arrays)
+      # So we ignore the "referenced but not assigned" error
+      shellcheck_ignores.append('2154')
 
     return "{shellcheck_ignores}\n{parser}".format(
       shellcheck_ignores='# shellcheck disable=%s' % ','.join(shellcheck_ignores),
