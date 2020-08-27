@@ -15,7 +15,6 @@
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash",
     "python.linting.enabled": true,
-    "python.linting.pylintEnabled": true,
     "python.pythonPath": "/usr/local/bin/python3",
     "python.testing.pytestPath": "/usr/local/bin/pytest",
     "python.linting.flake8Path": "/usr/local/bin/flake8",
