@@ -81,7 +81,7 @@ jobs:
       env:
         cache-name: bash-version
       with:
-        path: tests/bash-versions/${{ matrix.bash-version }}
+        path: tests/bash-versions/bash-${{ matrix.bash-version }}/bash
         key: ${{ env.cache-name }}-${{ matrix.bash-version }}
     - name: Download & compile bash ${{ matrix.bash-version }}
       run:
