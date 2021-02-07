@@ -22,7 +22,11 @@
       "--exclude=tests/bash-versions"
     ],
     "python.testing.pytestEnabled": true,
-    "shellcheck.executablePath": "/usr/local/bin/shellcheck"
+    "shellcheck.executablePath": "/usr/local/bin/shellcheck",
+    "files.exclude": {
+      ".pytest_cache": true,
+      "dist": true
+    }
   },
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": [
@@ -32,7 +36,7 @@
     "asciidoctor.asciidoctor-vscode",
     "me-dutour-mathieu.vscode-github-actions"
   ],
-  "postCreateCommand": "pip --disable-pip-version-check --no-cache-dir install flit && FLIT_ROOT_INSTALL=1 flit install --deps develop && tests/get_bash.py 3.2 4.4",
+  "postCreateCommand": "pip --disable-pip-version-check --no-cache-dir install flit && FLIT_ROOT_INSTALL=1 flit install --deps develop",
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   // "forwardPorts": [],
   // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
