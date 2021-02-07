@@ -15,33 +15,26 @@
   "settings": {
     "terminal.integrated.shell.linux": "/bin/bash",
     "python.linting.enabled": true,
-    "python.pythonPath": "/usr/local/bin/python3",
-    "python.testing.pytestPath": "/usr/local/bin/pytest",
-    "python.linting.flake8Path": "/usr/local/bin/flake8",
     "python.linting.flake8Enabled": true,
     "python.linting.flake8Args": [
       "--ignore=E111,E114,E121",
       "--max-line-length=120",
       "--exclude=tests/bash-versions"
     ],
-    "python.testing.pytestArgs": [
-      "tests"
-    ],
     "python.testing.pytestEnabled": true,
     "shellcheck.executablePath": "/usr/local/bin/shellcheck"
   },
   // Add the IDs of extensions you want installed when the container is created.
   "extensions": [
-    "ms-python.python",
+    "ms-python.vscode-pylance",
     "timonwong.shellcheck",
     "bungcip.better-toml",
     "asciidoctor.asciidoctor-vscode",
     "me-dutour-mathieu.vscode-github-actions"
   ],
-  "postCreateCommand": "pip3 --disable-pip-version-check --no-cache-dir install rstcheck pygments flit && FLIT_ROOT_INSTALL=1 flit install && tests/get_bash.py 3.2 4.4",
+  "postCreateCommand": "pip --disable-pip-version-check --no-cache-dir install flit && FLIT_ROOT_INSTALL=1 flit install --deps develop && tests/get_bash.py 3.2 4.4",
   // Use 'forwardPorts' to make a list of ports inside the container available locally.
   // "forwardPorts": [],
   // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
-  // "remoteUser": "vscode"
   "updateRemoteUserUID": true
 }

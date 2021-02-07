@@ -4,6 +4,6 @@
 /tests/bash-versions
 __pycache__/
 *.pyc
-/.vscode
+/.vscode/settings.json
 /docopt.code-workspace
 /docopt_sh/version.py

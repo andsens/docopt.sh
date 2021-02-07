@@ -28,6 +28,8 @@ exclude = ["tests", "pytest.ini", ".*"]
 
 [tool.flit.metadata.requires-extra]
 test = [
+  "packaging",
+  "flake8",
   "pytest",
   "pytest-xdist",
   "pytest-flake8",
