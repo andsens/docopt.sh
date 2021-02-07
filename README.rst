@@ -4,15 +4,63 @@ docopt.sh
 .. image:: https://github.com/andsens/docopt.sh/workflows/Lint%20&%20test/badge.svg
     :target: https://github.com/andsens/docopt.sh/actions?query=workflow%3A%22Lint+%26+test%22
 
-`docopt <http://docopt.org/>`_ uses your help text to parse command-line
-arguments for you.
-It is available `in many different languages <https://github.com/docopt/>`_,
-this implementation is for bash 3.2, 4+, and 5+.
+A `docopt <http://docopt.org/>`_ argument parser for bash 3.2, 4+, and 5+.
+
+Quick start
+-----------
+
+`<naval_fate.sh>`__
+
+.. code-block:: sh
+
+    #!/usr/bin/env bash
+
+    DOC="Naval Fate.
+    Usage:
+      naval_fate.sh ship <name> move <x> <y> [--speed=<kn>]
+      naval_fate.sh ship shoot <x> <y>
+
+    Options:
+      --speed=<kn>  Speed in knots [default: 10]."
+
+    naval_fate() {
+      eval "$(docopt "$@")"
+      if $move; then
+        printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
+      fi
+      if $shoot; then
+        printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
+      fi
+      return 0
+    }
+    naval_fate "$@"
+
+Run ``docopt.sh`` to insert a parser that matches the helptext into the script:
+
+.. code-block:: sh
+
+    $ sudo pip3 install docopt-sh
+    $ docopt.sh naval_fate.sh
+    naval_fate.sh has been updated
+    $ ./naval_fate.sh ship Olympia move 1 5 --speed 8
+    The Olympia is now moving to 1,5 at 8 knots.
+
+**Note that the script is completely independent from the python package.**
+``docopt.sh`` is merely a development tool to insert and update the parser, your
+scripts will be entirely self contained. The parser is inlined right beneath
+the ``DOC="..."`` and takes up ~110 lines of code (depending on the size of
+your helptext). If you ship multiple scripts in the same project you can reduce
+that to ~20 lines by `moving the generic parts of the parser to a different file
+and reusing it <#library-mode>`__.
+
+Table of contents
+-----------------
 
 * Introduction
-    * `How it works`_
+    * `Quick start`_
     * `Installation`_
-    * `Quick example`_
+    * `How it works`_
+    * `Local vs. global variables`_
     * `Refreshing the parser`_
     * `Parser output`_
 * Advanced usage
@@ -23,6 +71,15 @@ this implementation is for bash 3.2, 4+, and 5+.
     * `On-the-fly parser generation`_
 * Developers
     * `Testing`_
+
+Installation
+------------
+
+Install ``docopt.sh`` using pip:
+
+.. code-block:: sh
+
+    sudo pip3 install docopt-sh
 
 How it works
 ------------
@@ -41,89 +98,30 @@ Though, this also means that you have to regenerate your parser every time you
 change the help text (see `On-the-fly parser generation`_ for automating that
 part while developing).
 
-Installation
-------------
+Local vs. global variables
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Install ``docopt.sh`` using pip:
+Running ``docopt "$@"`` outputs multiple variable declarations
+(and a `function <#exiting-with-a-usage-message>`__) whose values match the
+command-line arguments that were used.
 
-.. code-block::
-
-    sudo pip3 install docopt-sh
-
-Quick example
--------------
-
-Here is an abbreviated version of `Naval Fate <http://try.docopt.org/>`_.
+As an example, invoking ``naval_fate.sh`` from the `quick start`__ section with
+``./naval_fate.sh shoot 1 5`` outputs the following.
 
 .. code-block:: sh
 
-    #!/usr/bin/env bash
-    DOC="Naval Fate.
-    Usage:
-      naval_fate.sh ship <name> move <x> <y> [--speed=<kn>]
-      naval_fate.sh ship shoot <x> <y>
+     docopt_exit() { [[ -n $1 ]] && printf "%s\n" "$1" >&2
+    printf "%s\n" "${DOC:12:87}" >&2; exit 1; }
+    declare -- __speed="10"
+    declare -- _name_=""
+    declare -- _x_="1"
+    declare -- _y_="5"
+    declare -- move="false"
+    declare -- shoot="true"
 
-    Options:
-      --speed=<kn>  Speed in knots [default: 10].
-      --moored      Moored (anchored) mine.
-      --drifting    Drifting mine."
-    naval_fate() {
-      eval "$(docopt "$@")"
-      $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
-      $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
-      return 0
-    }
-    naval_fate "$@"
-
-We can use ``docopt.sh`` to insert a matching parser:
-
-.. code-block::
-
-    $ docopt.sh naval_fate.sh
-    naval_fate.sh has been updated
-
-The file will now look like this:
-
-.. code-block:: sh
-
-    #!/usr/bin/env bash
-    DOC="Naval Fate.
-    Usage:
-      naval_fate.sh ship <name> move <x> <y> [--speed=<kn>]
-      naval_fate.sh ship shoot <x> <y>
-
-    Options:
-      --speed=<kn>  Speed in knots [default: 10].
-      --moored      Moored (anchored) mine.
-      --drifting    Drifting mine."
-    # docopt parser below, refresh this parser with `docopt.sh naval_fate.sh`
-    # shellcheck disable=2016
-    docopt() { docopt_run() { docopt_doc=${DOC:0:237}; docopt_usage=${DOC:13:97}
-    docopt_digest=79f25; docopt_shorts=(''); docopt_longs=(--speed)
-    ... more code ...
-    done; if ! docopt_required "$root_idx" || [ ${#docopt_left[@]} -gt 0 ]; then
-    docopt_error; fi; return 0; }
-    # docopt parser above, complete command for generating this parser is `docopt.sh naval_fate.sh`
-    naval_fate() {
-      eval "$(docopt "$@")"
-      $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
-      $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
-      return 0
-    }
-    naval_fate "$@"
-
-To try it out we run ``naval_fate.sh``
-
-.. code-block::
-
-    $ ./naval_fate.sh ship Olympia move 1 5 --speed 8
-    The Olympia is now moving to 1,5 at 8 knots.
-
-The variables ``$ship``, ``$move``, etc. are not set globally, but rather
-contained to the scope of the invoking function.
-You are however not restricted to calling ``eval "$(docopt "$@")"`` from a
-function, calling docopt outside of functions will work just as well and the
-variables will then be defined globally.
+Evaluating (``eval``) this in bash will set those variables.
+If done in a function the variables will be local and only available inside that
+function (like in ``naval_fate.sh``), otherwise they will be available globally.
 
 Refreshing the parser
 ---------------------
@@ -134,7 +132,7 @@ the two always match. In order to update the parser, simply run
 If the parser was generated with any particular options, these options will be
 re-applied unless instructed otherwise with ``--no-auto-params``.
 
-.. code-block::
+.. code-block:: sh
 
     $ docopt.sh --line-length 120 naval_fate.sh
     naval_fate.sh has been updated.
@@ -182,7 +180,7 @@ To clarify, given this (somewhat complex, but concise) doc and invocation:
 
 The variables and their values will be:
 
-.. code-block::
+.. code-block:: sh
 
     _v=3 # -vvv
     _s=true # -s
@@ -321,20 +319,24 @@ The script from the introduction would look like this (only
 .. code-block:: sh
 
     #!/usr/bin/env bash
+
     DOC="Naval Fate.
     Usage:
       naval_fate.sh ship <name> move <x> <y> [--speed=<kn>]
       naval_fate.sh ship shoot <x> <y>
 
     Options:
-      --speed=<kn>  Speed in knots [default: 10].
-      --moored      Moored (anchored) mine.
-      --drifting    Drifting mine."
+      --speed=<kn>  Speed in knots [default: 10]."
+
     naval_fate() {
       eval "$(docopt.sh --parser "$0")"
       eval "$(docopt "$@")"
-      $ship && $move && printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
-      $ship && $shoot && printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
+      if $move; then
+        printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
+      fi
+      if $shoot; then
+        printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
+      fi
       return 0
     }
     naval_fate "$@"
