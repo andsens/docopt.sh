@@ -35,7 +35,7 @@
     "ms-python.python",
     "timonwong.shellcheck",
     "bungcip.better-toml",
-    "lextudio.restructuredtext",
+    "asciidoctor.asciidoctor-vscode",
     "me-dutour-mathieu.vscode-github-actions"
   ],
   "postCreateCommand": "pip3 --disable-pip-version-check --no-cache-dir install rstcheck pygments flit && FLIT_ROOT_INSTALL=1 flit install && tests/get_bash.py 3.2 4.4"

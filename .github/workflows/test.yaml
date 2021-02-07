@@ -26,7 +26,7 @@ jobs:
     - name: Lint with shellcheck
       uses: ludeeus/action-shellcheck@master
       with:
-        ignore: tests
+        scandir: './docopt_sh'
     - name: Lint with flake8
       run: |
         # error out if there are Python syntax errors or undefined names

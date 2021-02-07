@@ -1,0 +1,334 @@
+== docopt.sh
+
+https://github.com/andsens/docopt.sh/actions?query=workflow%3A%22Lint+%26+test%22[image:https://github.com/andsens/docopt.sh/workflows/Lint%20&%20test/badge.svg[image]]
+
+A http://docopt.org/[docopt] argument parser for bash 3.2, 4+, and 5+ with no
+external dependencies.
+
+=== Quick start
+
+link:docs/naval_fate.sh[naval_fate.sh]
+
+[source,sh]
+----
+#!/usr/bin/env bash
+
+DOC="Naval Fate.
+Usage:
+  naval_fate.sh <name> move <x> <y> [--speed=<kn>]
+  naval_fate.sh shoot <x> <y>
+
+Options:
+  --speed=<kn>  Speed in knots [default: 10]."
+
+naval_fate() {
+  eval "$(docopt "$@")"
+  if $move; then
+    printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
+  fi
+  if $shoot; then
+    printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
+  fi
+  return 0
+}
+naval_fate "$@"
+----
+
+Run `docopt.sh` to insert a parser that matches the helptext into the script:
+
+[source,sh]
+----
+$ sudo pip3 install docopt-sh
+$ docopt.sh naval_fate.sh
+naval_fate.sh has been updated
+$ ./naval_fate.sh Olympia move 1 5 --speed 8
+The Olympia is now moving to 1,5 at 8 knots.
+----
+
+link:docs/naval_fate.patched.sh[See the patched file here]
+
+*Note that the script is completely independent from the python package.* +
+`docopt.sh` is merely a development tool to insert and update the parser, your
+scripts will be entirely self contained. +
+The parser is inlined right beneath the `DOC="..."` and takes up ~110 lines of
+code (depending on the size of your helptext).
+If you ship multiple scripts in the same project
+link:docs/naval_fate.library.sh[you can reduce that to ~20 lines] by
+link:#library-mode[moving the generic parts of the parser to a different file]
+and reusing it.
+
+=== Table of contents
+
+Introduction::
+  ** link:#quick-start[Quick start]
+  ** link:#installation[Installation]
+  ** link:#how-it-works[How it works]
+  ** link:#local-vs.-global-variables[Local vs. global variables]
+  ** link:#refreshing-the-parser[Refreshing the parser]
+  ** link:#parser-output[Parser output]
+
+Advanced usage::
+  ** link:#commandline-options[Commandline options]
+  ** link:#parser-options[Parser options]
+  ** link:#exiting-with-a-usage-message[Exiting with a usage message]
+  ** link:#library-mode[Library mode]
+  ** link:#on-the-fly-parser-generation[On-the-fly parser generation]
+
+Developers::
+  ** link:#testing[Testing]
+
+=== Installation
+
+Install `docopt.sh` using pip:
+
+[source,sh]
+----
+sudo pip3 install docopt-sh
+----
+
+=== How it works
+
+Given a script `docopt.sh` finds the `docopt` (`DOC="..."`) help text,
+parses it, generates a matching parser in bash, and then inserts it back into
+the original script. The patched script will have no dependencies and can be
+shipped as a single file.
+
+To reduce the amount of code added to the it, the script will only contain a
+parser made for that specific help text. For that reason there is no need for
+the generator itself to be written in bash, instead that part is written in
+Python 3. Though, this also means that you have to regenerate your parser every
+time you change the help text (see link:#on-the-fly-parser-generation[On-the-fly
+parser generation] for automating that part while developing).
+
+==== Local vs. global variables
+
+Running `docopt "$@"` outputs multiple variable declarations (and a
+link:#exiting-with-a-usage-message[function]) whose values match the
+command-line arguments that were used.
+
+As an example, invoking `naval_fate.sh` from the
+link:#quick-start[quick start section] with `./naval_fate.sh shoot 1 5` outputs
+the following.
+
+[source,sh]
+----
+docopt_exit() { [[ -n $1 ]] && printf "%s\n" "$1" >&2
+printf "%s\n" "${DOC:12:87}" >&2; exit 1; }
+declare -- __speed="10"
+declare -- _name_=""
+declare -- _x_="1"
+declare -- _y_="5"
+declare -- move="false"
+declare -- shoot="true"
+----
+
+Evaluating (`eval`) this in bash will set those variables. If done in a function
+the variables will be local and only available inside that function
+(like in `naval_fate.sh`), otherwise they will be available globally.
+
+=== Refreshing the parser
+
+`docopt.sh` embeds a shasum of the help text into the parser to ensure that the
+two always match. In order to update the parser, simply run `docopt.sh` again.
+The existing parser will be replaced with a new one. If the parser was generated
+with any particular options, these options will be re-applied unless instructed
+otherwise with `--no-auto-params`.
+
+[source,sh]
+----
+$ docopt.sh --line-length 120 naval_fate.sh
+naval_fate.sh has been updated.
+$ docopt.sh naval_fate.sh
+Adding `--line-length=120` from parser generation parameters that were detected
+in the script. Use --no-auto-params to disable this behavior.
+The parser in naval_fate.sh is already up-to-date.
+----
+
+Once you have generated the parser, you can move the codeblock to any other
+place in your script. The script patcher will automatically find the codeblock
+and replace it with an updated version.
+
+In order to avoid "works on my machine" issues, the parser automatically skips
+the help text check on machines without `shasum` or `sha256sum` (a "command
+not found" error will still be printed though). The check can also manually be
+disabled with `$DOCOPT_DOC_CHECK` (see link:#parser-options[parser options]
+for more on that).
+
+=== Parser output
+
+Names of arguments, commands, and options are mapped by replacing everything
+that is not an alphanumeric character with an underscore. This means `--speed`
+becomes `$__speed`, `-f` becomes `$_f`, and `<name>` becomes `_name_`, while
+`NAME` stays as `$NAME` and `set` stays as `$set`.
+
+Switches (options without arguments) and commands become `true` or `false`.
+If a switch or command can be specified more than once, the resulting variable
+value will be an integer that has been incremented the number of times the
+parameter was specified.
+
+Options with values and regular arguments become strings. If an option with a
+value or an argument can be specified more than once, the value will be an array
+of strings.
+
+To clarify, given this (somewhat complex, but concise) doc and invocation:
+
+[source,sh]
+----
+Usage:
+  program -v... -s --val=VAL multicmd... command ARG ARGS...
+
+$ program -vvv -s --val XY multicmd multicmd command A 1 2 3
+----
+
+The variables and their values will be:
+
+[source,sh]
+----
+_v=3 # -vvv
+_s=true # -s
+__val=XY # --val XY
+multicmd=2 # multicmd multicmd
+command=true # command
+ARG=A # A
+ARGS=(1 2 3) # 1 2 3
+----
+
+You can use `$DOCOPT_PREFIX` to prefix the above variable names with a custom
+string (e.g. specifying `DOCOPT_PREFIX=prog` would change `ARG` to
+`progARG`). See link:#parser-options[parser options] for additional parser
+options.
+
+=== Commandline options
+
+The commandline options of `docopt.sh` only change _how_ the parser is
+generated, while global variables specified before `eval "$(docopt "$@")"`
+itself change the behavior of the parser.
+
+The commandline options are:
+
+|===
+| Option | Description
+| `--line-length -n N` | Max line length when minifying. Disable with `0` (default: 80)
+| `--library -l SRC` | link:#library-mode[Generates the dynamic part of the parser] and includes the static parts with `source SRC`.
+| `--no-auto-params -P` | Disable auto-detection of parser generation parameters.
+| `--parser -p` | link:#on-the-fly-parser-generation[Output the parser] instead of inserting it in the script.
+| `--help -h` | Show the help screen.
+| `--version` | Show docopt.sh version.
+|===
+
+=== Parser options
+
+Parser options change the behavior of the parser in various ways. These options
+are specified as global variables and must be specified _before_ invoking
+`eval "$(docopt "$@")"`. You do not need to regenerate the parse when changing
+any of these options.
+
+|===
+| Option | Default | Description
+| `$DOCOPT_PROGRAM_VERSION` | `false` | The string to print when `--version` is specified (`false` disables the option)
+| `$DOCOPT_ADD_HELP` | `true` | Set to `false` to disable the `--help` option
+| `$DOCOPT_OPTIONS_FIRST` | `false` | Set to `true` to treat everything after the first non-option as commands/arguments
+| `$DOCOPT_PREFIX` | `""` | Prefixes all variable names with the specified value
+| `$DOCOPT_DOC_CHECK` | `true` | Set to `false` to disable checking whether the parser matches the doc
+| `$DOCOPT_LIB_CHECK` | `true` | Set to `false` to disable checking whether the library version and the docopt parser version match
+|===
+
+=== Exiting with a usage message
+
+Oftentimes additional verification of parameters is necessary (e.g. when an
+option value is an enum). In those cases you can use `docopt_exit "message"`
+in order to output a message for the user, the function automatically appends a
+short usage message (i.e. the `Usage:` part of the doc) and then exits with
+code `1`.
+
+Note that this function is only defined _after_ you have run
+`eval "$(docopt "$@")"`, it is part of the docopt output.
+
+=== Library mode
+
+Instead of inlining the entirety of the parser in your script, you can move the
+static parts to an external file and only insert the dynamic part into your
+script. This is particularly useful when you have multiple bash scripts in the
+same project that use `docopt.sh`. To generate the library run
+`docopt.sh generate-library > DEST`. The output is written to `stdout`, so
+make sure to add that redirect.
+
+Once a library has been generated you can insert the dynamic part of your parser
+into your script with `docopt.sh --library DEST SCRIPT`. The generator will
+then automatically add a `source DEST` to the parser. Make sure to quote your
+library path if it contains spaces like so
+`docopt.sh --library '"/path with spaces/docopt-lib.sh"'`. You do not need to
+specify `--library` on subsequent refreshes of the parser, `docopt.sh` will
+automatically glean the previously used parameters from your script and re-apply
+them.
+
+`--library` can be any valid bash expression, meaning you can use things like
+`"$(dirname "$0")"`.
+
+On every invocation docopt checks that the library version and the version of
+the dynamic part in the script match. The parser exits with an error if that is
+not the case.
+
+=== On-the-fly parser generation
+
+*ATTENTION*: The method outlined below relies on `docopt.sh` being installed
+and is only intended for development use, do not release any scripts that use
+this method.
+
+When developing a new script you might add, modify, and remove parameters quite
+often. Having to refresh the parser with every change can quickly become
+cumbersome and interrupt your workflow. To avoid this you can use the
+`--parser` flag to generate and then immediately `eval` the output in your
+script before invoking `eval "$(docopt "$@")"`.
+
+The script from the introduction would look like this (only
+`eval "$(docopt.sh --parser "$0")"` has been added):
+
+[source,sh]
+----
+#!/usr/bin/env bash
+
+DOC="Naval Fate.
+Usage:
+  naval_fate.sh <name> move <x> <y> [--speed=<kn>]
+  naval_fate.sh shoot <x> <y>
+
+Options:
+  --speed=<kn>  Speed in knots [default: 10]."
+
+naval_fate() {
+  eval "$(docopt.sh --parser "$0")"
+  eval "$(docopt "$@")"
+  if $move; then
+    printf "The %s is now moving to %d,%d at %d knots.\n" "$_name_" "$_x_" "$_y_" "$__speed"
+  fi
+  if $shoot; then
+    printf "You shoot at %d,%d. It's a hit!\n" "$_x_" "$_y_"
+  fi
+  return 0
+}
+naval_fate "$@"
+----
+
+Since `docopt.sh` is not patching the script, you also avoid any line number
+jumps in your IDE. However, remember to replace this with the proper parser
+before you ship the script.
+
+=== Developers
+
+==== Testing
+
+`docopt.sh` uses https://pytest.org/[pytest] for testing. You can run the
+testsuite by executing `pytest` in the root of the project.
+
+All
+https://github.com/andsens/docopt.sh/blob/e2cba6d9dc10a1d3366d01976767ae933b90f5bd/tests/docopt-py-usecases.txt[use
+cases] from the original docopt are used to validate correctness. Per default
+pytest uses the bash version that is installed on the system to run the tests.
+However, you can specify multiple alternate versions using
+`--bash-version <versions>`, where `<versions>` is a comma-separated list of
+bash versions (e.g. `3.2,4.0,4.1`). These versions need to be downloaded and
+compiled first, which you can do with `get_bash.py`. The script downloads,
+extracts, configures, and compiles the specified bash versions in the
+`tests/bash-versions` folder. Use `--bash-version all` to test with all the
+bash versions that are installed.

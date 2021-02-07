@@ -8,7 +8,7 @@ module = "docopt_sh"
 author = "Anders Ingemann"
 author-email = "anders@ingemann.de"
 home-page = "https://github.com/andsens/docopt.sh"
-description-file = "README.rst"
+description-file = "README.adoc"
 classifiers = [
   "Topic :: Utilities",
   "Programming Language :: Python :: 3",
