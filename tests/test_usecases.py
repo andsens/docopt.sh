@@ -33,7 +33,7 @@ fi
     out = out.strip('\n')
     result = {}
     if err != '':
-      raise Exception('Errors encountered while running usecase %s:%d: \n%s' % (file, lineno, err))
+      result = 'Errors encountered while running usecase %s:%d: %s' % (file, lineno, err)
     if out != '':
       for line in out.split('\n'):
         if expr.match(line) is None:

@@ -57,14 +57,6 @@ jobs:
         REF: ${{ github.ref }}
       run: printf "__version__ = \"%s\"\n" "${REF/#refs\/tags\/v/}" > docopt_sh/version.py
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install flit
-        flit install
+      run: .devcontainer/post.sh
     - name: Build and publish
-      env:
-        FLIT_INDEX_URL: https://upload.pypi.org/legacy/
-        FLIT_USERNAME: __token__
-        FLIT_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        flit publish
+      run: poetry publish -u __token__ -p ${{ secrets.PYPI_PASSWORD }}
