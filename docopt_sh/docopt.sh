@@ -145,7 +145,7 @@ Run \`docopt.sh\` to refresh the parser."
     ((i++)) || true
   done
 
-  if ! required "$root_idx" || [ ${#left[@]} -gt 0 ]; then
+  if ! "node_$root_idx" || [ ${#left[@]} -gt 0 ]; then
     error
   fi
   return 0
@@ -263,7 +263,7 @@ parse_long() {
   parsed_values+=("$value")
 }
 
-required() {
+sequence() {
   local initial_left=("${left[@]}")
   local node_idx
   ((testdepth++)) || true
@@ -283,7 +283,7 @@ required() {
   return 0
 }
 
-either() {
+choice() {
   local initial_left=("${left[@]}")
   local best_match_idx
   local match_count
@@ -315,7 +315,7 @@ optional() {
   return 0
 }
 
-oneormore() {
+repeatable() {
   local i=0
   local prev=${#left[@]}
   while "node_$1"; do

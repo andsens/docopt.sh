@@ -9,6 +9,9 @@
     "python.linting.flake8Args": [
       "--config=.flake8"
     ],
+    "python.analysis.extraPaths": [
+      "/workspace/docopt-parser"
+    ],
     "files.exclude": {
       ".pytest_cache": true
     }
@@ -23,5 +26,8 @@
   ],
   "postCreateCommand": ".devcontainer/post.sh",
   "containerUser": "vscode",
-  "updateRemoteUserUID": true
+  "updateRemoteUserUID": true,
+  "mounts": [
+    "source=${localWorkspaceFolder}/../docopt-parser,target=/workspaces/docopt-parser,type=bind"
+  ]
 }

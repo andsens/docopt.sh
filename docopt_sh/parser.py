@@ -5,7 +5,8 @@ import logging
 import shlex
 from collections import OrderedDict
 from . import __version__, DocoptError
-from .doc_ast import DocAst, Option
+from .doc_ast import DocAst
+import docopt_parser as P
 from .bash import Code, indent, bash_ifs_value
 from .node import LeafNode, helper_list
 
@@ -43,16 +44,19 @@ class Parser(object):
       library = indent(str(self.library.generate_code(exclude=exclude)), level=1)
 
     leaf_nodes = [n for n in doc_ast.nodes if type(n) is LeafNode]
-    option_nodes = [node for node in leaf_nodes if type(node.pattern) is Option]
+    option_nodes = [node for node in leaf_nodes if type(node.pattern) is P.Option]
 
     replacements = {
       '  "LIBRARY"': library,
       '"DOC VALUE"': stripped_doc,
       '"DOC USAGE"': usage_doc,
       '"DOC DIGEST"': hashlib.sha256(script.doc.untrimmed_value.encode('utf-8')).hexdigest()[0:5],
-      '"SHORTS"': ' '.join([bash_ifs_value(o.pattern.short) for o in option_nodes]),
-      '"LONGS"': ' '.join([bash_ifs_value(o.pattern.long) for o in option_nodes]),
-      '"ARGCOUNTS"': ' '.join([bash_ifs_value(o.pattern.argcount) for o in option_nodes]),
+      '"SHORTS"': ' '.join([bash_ifs_value(o.pattern.short_alias or '') for o in option_nodes]),
+      '"LONGS"': ' '.join([
+        bash_ifs_value(o.pattern.definition.ident if o.pattern.definition.ident.startswith('--') else '')
+        for o in option_nodes
+      ]),
+      '"ARGCOUNTS"': ' '.join([bash_ifs_value(1 if o.pattern.argname else 0) for o in option_nodes]),
       '  "NODES"': indent('\n'.join(map(str, list(doc_ast.nodes))), level=1),
       '  "OUTPUT VARNAMES ASSIGNMENTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes]), level=1),
       '"INTERNAL VARNAMES"': ' \\\n    '.join(['var_%s' % node.variable_name for node in leaf_nodes]),
@@ -77,7 +81,7 @@ class Parser(object):
       # Ignore else .. if issue in parse_long,
       # see https://github.com/koalaman/shellcheck/issues/1584 for more details
       shellcheck_ignores.append('1075')
-    if any([type(node.pattern.value) is list for node in leaf_nodes]):
+    if any([type(node.pattern.default) is list for node in leaf_nodes]):
       # Unlike non-array values, array values will output a "declare -p var_..."
       # to check in what way they should be set (${var:-VAL} does not work with arrays)
       # So we ignore the "referenced but not assigned" error

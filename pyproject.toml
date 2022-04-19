@@ -21,6 +21,7 @@ include = ["docopt_sh/version.py"]
 python = ">=3.7"
 docopt = "^0.6.2"
 termcolor = "^1.1.0"
+docopt-parser = { path = "../docopt-parser/", develop = true }
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.1"

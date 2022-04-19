@@ -1,13 +1,12 @@
-from .doc_ast import Option, Command, Required, Optional, OptionsShortcut, OneOrMore, Either
 from .bash import Code, bash_variable_name, bash_variable_value, bash_ifs_value
 from shlex import quote
+import docopt_parser as P
 
 helper_map = {
-  Required: 'required',
-  Optional: 'optional',
-  OptionsShortcut: 'optional',
-  OneOrMore: 'oneormore',
-  Either: 'either',
+  P.Sequence: 'sequence',
+  P.Optional: 'optional',
+  P.Repeatable: 'repeatable',
+  P.Choice: 'choice',
 }
 helper_list = list(helper_map.values()) + [
   'switch',
@@ -32,7 +31,7 @@ class BranchNode(Node):
 
   def __init__(self, pattern, idx, node_map):
     # minify arg list by only specifying node idx
-    child_indexes = map(lambda child: node_map[child].idx, pattern.children)
+    child_indexes = map(lambda child: node_map[child].idx, pattern.items)
     self.helper_name = helper_map[type(pattern)]
     body = '  {helper} {args}'.format(
       helper=self.helper_name,
@@ -44,20 +43,19 @@ class BranchNode(Node):
 class LeafNode(Node):
 
   def __init__(self, pattern, idx):
-    default_value = pattern.value
-    if type(pattern) is Option:
-      self.helper_name = 'switch' if type(default_value) in [bool, int] else 'value'
+    if type(pattern) is P.Option:
+      self.helper_name = 'switch' if type(pattern.default) in [bool, int] else 'value'
       needle = idx
-    elif type(pattern) is Command:
+    elif type(pattern) in [P.Command, P.ArgumentSeparator]:
       self.helper_name = '_command'
-      needle = pattern.name
+      needle = pattern.ident
     else:  # type is Argument
       self.helper_name = 'value'
       needle = 'a'
-    self.variable_name = bash_variable_name(pattern.name)
+    self.variable_name = bash_variable_name(pattern.definition.ident if isinstance(pattern, P.Option) else pattern.ident)
 
     args = [self.variable_name, bash_ifs_value(needle)]
-    if type(default_value) in [list, int]:
+    if type(pattern.default) in [list, int]:
       args.append(bash_ifs_value(True))
     elif self.helper_name == '_command' and args[0] == args[1]:
       args = [args[0]]
@@ -66,14 +64,14 @@ class LeafNode(Node):
       args=' '.join(args),
     )
 
-    if type(default_value) is list:
+    if type(pattern.default) is list:
       assignment1 = '{name}=("${{{docopt_name}[@]}}")'.format(
         name=self.variable_name,
         docopt_name='var_' + self.variable_name
       )
       assignment2 = '{name}={default}'.format(
         name=self.variable_name,
-        default=bash_variable_value(default_value)
+        default=bash_variable_value(pattern.default)
       )
       self.default_assignment = (
         'if declare -p {docopt_name} >/dev/null 2>&1; then\n'
@@ -90,7 +88,7 @@ class LeafNode(Node):
       assignment = '{name}=${{{docopt_name}:-{default}}}'.format(
         name=self.variable_name,
         docopt_name='var_' + self.variable_name,
-        default=bash_variable_value(default_value)
+        default=bash_variable_value(pattern.default)
       )
       self.default_assignment = (
         'eval "${{prefix}}"{assignment}'
