@@ -9,13 +9,9 @@ docopt() {
   usage="DOC USAGE"
   # shortened shasum of doc from which the parser was generated
   digest="DOC DIGEST"
-  # 3 lists representing option metadata
-  # names for short options
-  shorts=("SHORTS")
-  # names for long options
-  longs=("LONGS")
-  # argument counts for options, 0 or 1
-  argcounts=("ARGCOUNTS")
+  # options list containing the short name, long name, and argcount (0 or 1)
+  # per entry, space separated
+  options=("OPTIONS")
 
   # Nodes. This is the AST representing the parsed doc.
   "NODES"
@@ -117,8 +113,8 @@ Run \`docopt.sh\` to refresh the parser."
       local long=${argv[0]%%=*}
       local similar=() match=false
       i=0
-      for o in "${longs[@]}"; do
-        if [[ $o = "$long" ]]; then
+      for o in "${options[@]}"; do
+        if [[ $o = *" $long "? ]]; then
           similar+=("$long")
           match=$i
           break
@@ -127,9 +123,10 @@ Run \`docopt.sh\` to refresh the parser."
       done
       if [[ $match = false ]]; then
         i=0
-        for o in "${longs[@]}"; do
-          if [[ $o = $long* ]]; then
-            similar+=("$long")
+        for o in "${options[@]}"; do
+          if [[ $o = *" $long"*? ]]; then
+            local long_match=${o#* }
+            similar+=("${long_match% *}")
             match=$i
           fi
           : $((i++))
@@ -150,9 +147,10 @@ Run \`docopt.sh\` to refresh the parser."
           error
         fi
       else
-        if [[ ${argcounts[$match]} -eq 0 ]]; then
+        if [[ ${options[$match]} = *0 ]]; then
           if [[ ${argv[0]} = *=* ]]; then
-            error "${longs[$match]} must not have an argument"
+            local long_match=${o#* }
+            error "${long_match% *} must not have an argument"
           else
             parsed+=("$match:true")
             argv=("${argv[@]:1}")
@@ -177,9 +175,10 @@ Run \`docopt.sh\` to refresh the parser."
         local short="-${remaining:0:1}" matched=false
         remaining="${remaining:1}"
         i=0
-        for o in "${shorts[@]}"; do
-          if [[ $o = "$short" ]]; then
-            if [[ ${argcounts[$i]} -eq 0 ]]; then
+        for o in "${options[@]}"; do
+          if [[ $o = "$short "* ]]; then
+            # printf "%s=%s\n" "${argcounts[$i]}" "${o##* }" >&2
+            if [[ $o = *0 ]]; then
               parsed+=("$i:true")
             else
               if [[ $remaining = '' ]]; then

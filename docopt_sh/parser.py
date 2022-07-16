@@ -44,19 +44,17 @@ class Parser(object):
       library = indent(str(self.library.generate_code(exclude=exclude)), level=1)
 
     leaf_nodes = [n for n in doc_ast.nodes if type(n) is LeafNode]
-    option_nodes = [node for node in leaf_nodes if type(node.pattern) is P.Option]
 
     replacements = {
       '  "LIBRARY"': library,
       '"DOC VALUE"': stripped_doc,
       '"DOC USAGE"': usage_doc,
       '"DOC DIGEST"': hashlib.sha256(script.doc.untrimmed_value.encode('utf-8')).hexdigest()[0:5],
-      '"SHORTS"': ' '.join([bash_ifs_value(o.pattern.short_alias or '') for o in option_nodes]),
-      '"LONGS"': ' '.join([
-        bash_ifs_value(o.pattern.definition.ident if o.pattern.definition.ident.startswith('--') else '')
-        for o in option_nodes
-      ]),
-      '"ARGCOUNTS"': ' '.join([bash_ifs_value(1 if o.pattern.argname else 0) for o in option_nodes]),
+      '"OPTIONS"': ' '.join([bash_ifs_value(' '.join([
+          node.pattern.short_alias or '',
+          node.pattern.definition.ident if node.pattern.definition.ident.startswith('--') else '',
+          '1' if node.pattern.argname else '0',
+        ])) for node in leaf_nodes if type(node.pattern) is P.Option]),
       '  "NODES"': indent('\n'.join(map(str, list(doc_ast.nodes))), level=1),
       '  "OUTPUT VARNAMES ASSIGNMENTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes]), level=1),
       '"INTERNAL VARNAMES"': ' '.join(['var_%s' % node.variable_name for node in leaf_nodes]),
