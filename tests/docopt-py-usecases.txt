@@ -955,3 +955,15 @@ other options:
 """
 $ prog --baz --egg
 {"--foo": false, "--baz": true, "--bar": false, "--egg": true, "--spam": false}
+
+#
+# Optional order
+#
+
+r"""Usage: prog [a b c]
+"""
+$ prog a b c
+{"a": true, "b": true, "c": true}
+
+$ prog b a c
+"user-error"
