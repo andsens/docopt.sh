@@ -20,9 +20,8 @@ jobs:
         python-version: '3.8'
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install flit
-        flit install --extras test
+        pip --disable-pip-version-check --no-cache-dir install --user poetry
+        poetry install
     - name: Lint with shellcheck
       uses: ludeeus/action-shellcheck@master
       with:
