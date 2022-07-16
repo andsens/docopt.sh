@@ -99,13 +99,15 @@ def remove_empty_lines(lines):
 
 def remove_comments(lines):
   for line in lines:
-    if re.match(r'^\s*#', line) is None:
+    if re.match(r'\s*#', line) is None:
       yield line
 
 
 def continuate_all_spaces(lines):
   for line in lines:
-    yield from re.sub(r' ', ' \\\n', line).split('\n')
+    # Split whenever there's a space, but make sure to keep single quoted
+    # strings on one line
+    yield from re.sub(r"('[^']* [^']*')|( )", r'\1\2\\\n', line).split('\n')
 
 
 def remove_newlines(lines, max_length):
@@ -116,7 +118,7 @@ def remove_newlines(lines, max_length):
     return re.search(r'\\\s*$', line) is not None
 
   def remove_continuation(line):
-    return re.sub(r'\\\s*$', '', line)
+    return re.sub(r'\\(\s*)$', r'\1', line)
 
   def combine(line1, line2):
     if has_continuation(line1):
