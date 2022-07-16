@@ -179,7 +179,6 @@ parse_shorts() {
       longs+=('')
       argcounts+=(0)
     else
-      value=false
       if [[ ${argcounts[$match]} -ne 0 ]]; then
         if [[ $remaining = '' ]]; then
           if [[ ${#argv[@]} -eq 0 || ${argv[0]} = '--' ]]; then
@@ -191,8 +190,7 @@ parse_shorts() {
           value=$remaining
           remaining=''
         fi
-      fi
-      if [[ $value = false ]]; then
+      else
         value=true
       fi
     fi
@@ -204,7 +202,7 @@ parse_shorts() {
 parse_long() {
   local token=${argv[0]}
   local long=${token%%=*}
-  local value=${token#*=}
+  local value
   local argcount
   argv=("${argv[@]:1}")
   [[ $token = --* ]] || _return 88
@@ -212,7 +210,6 @@ parse_long() {
     eq='='
   else
     eq=''
-    value=false
   fi
   local i=0
   local similar=()
@@ -239,24 +236,28 @@ parse_long() {
   elif [[ ${#similar[@]} -lt 1 ]]; then
     [[ $eq = '=' ]] && argcount=1 || argcount=0
     match=${#shorts[@]}
-    [[ $argcount -eq 0 ]] && value=true
+    if [[ $argcount -eq 0 ]]; then
+      value=true
+    else
+      value=${token#*=}
+    fi
     shorts+=('')
     longs+=("$long")
     argcounts+=("$argcount")
   else
     if [[ ${argcounts[$match]} -eq 0 ]]; then
-      if [[ $value != false ]]; then
+      if [[ $token = *=* ]]; then
         error "${longs[$match]} must not have an argument"
       fi
-    elif [[ $value = false ]]; then
+      value=true
+    elif [[ $token != *=* ]]; then
       if [[ ${#argv[@]} -eq 0 || ${argv[0]} = '--' ]]; then
         error "${long} requires argument"
       fi
       value=${argv[0]}
       argv=("${argv[@]:1}")
-    fi
-    if [[ $value = false ]]; then
-      value=true
+    else
+      value=${token#*=}
     fi
   fi
   parsed_params+=("$match")
