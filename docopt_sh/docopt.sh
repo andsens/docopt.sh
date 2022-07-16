@@ -102,8 +102,8 @@ Run \`docopt.sh\` to refresh the parser."
   # when ==0 leafs will set the actual variable when a match is found
   testdepth=0
 
-  # loop through the parameters and parse them one param at a time
-  local arg
+  # unshift the parameters and parse them one param at a time
+  local arg i o
   while [[ ${#argv[@]} -gt 0 ]]; do
     if [[ ${argv[0]} = "--" ]]; then
       # No more options allowed.
@@ -113,9 +113,103 @@ Run \`docopt.sh\` to refresh the parser."
       done
       break
     elif [[ ${argv[0]} = --* ]]; then
-      parse_long
+      # Parse long
+      local long=${argv[0]%%=*}
+      local similar=() match=false
+      i=0
+      for o in "${longs[@]}"; do
+        if [[ $o = "$long" ]]; then
+          similar+=("$long")
+          match=$i
+          break
+        fi
+        : $((i++))
+      done
+      if [[ $match = false ]]; then
+        i=0
+        for o in "${longs[@]}"; do
+          if [[ $o = $long* ]]; then
+            similar+=("$long")
+            match=$i
+          fi
+          : $((i++))
+        done
+      fi
+      if [[ ${#similar[@]} -gt 1 ]]; then
+        error "${long} is not a unique prefix: ${similar[*]}?"
+      elif [[ ${#similar[@]} -lt 1 ]]; then
+        # No match found, might be --help or --version
+        if ${DOCOPT_ADD_HELP:-true} && [[ $long = "--help" ]]; then
+          # shellcheck disable=SC2154
+          stdout "$trimmed_doc"
+          _return 0
+        elif [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' && $long = "--version" ]]; then
+          stdout "$DOCOPT_PROGRAM_VERSION"
+          _return 0
+        else
+          error
+        fi
+      else
+        if [[ ${argcounts[$match]} -eq 0 ]]; then
+          if [[ ${argv[0]} = *=* ]]; then
+            error "${longs[$match]} must not have an argument"
+          else
+            parsed+=("$match:true")
+            argv=("${argv[@]:1}")
+          fi
+        else
+          if [[ ${argv[0]} = *=* ]]; then
+            parsed+=("$match:${argv[0]#*=}")
+            argv=("${argv[@]:1}")
+          else
+            if [[ ${#argv[@]} -le 1 || ${argv[1]} = '--' ]]; then
+              error "${long} requires argument"
+            fi
+            parsed+=("$match:${argv[1]}")
+            argv=("${argv[@]:2}")
+          fi
+        fi
+      fi
     elif [[ ${argv[0]} = -* && ${argv[0]} != "-" ]]; then
-      parse_shorts
+      # Parse shorts
+      local remaining=${argv[0]#-}
+      while [[ -n $remaining ]]; do
+        local short="-${remaining:0:1}" matched=false
+        remaining="${remaining:1}"
+        i=0
+        for o in "${shorts[@]}"; do
+          if [[ $o = "$short" ]]; then
+            if [[ ${argcounts[$i]} -eq 0 ]]; then
+              parsed+=("$i:true")
+            else
+              if [[ $remaining = '' ]]; then
+                if [[ ${#argv[@]} -le 1 || ${argv[1]} = '--' ]]; then
+                  error "${short} requires argument"
+                fi
+                parsed+=("$i:${argv[1]}")
+                argv=("${argv[@]:1}")
+              else
+                parsed+=("$i:$remaining")
+                remaining=''
+              fi
+            fi
+            matched=true
+            break
+          fi
+          : $((i++))
+        done
+        if ! $matched; then
+          # No match found, check if it's -h
+          if ${DOCOPT_ADD_HELP:-true} && [[ $short = "-h" ]]; then
+            # shellcheck disable=SC2154
+            stdout "$trimmed_doc"
+            _return 0
+          else
+            error
+          fi
+        fi
+        argv=("${argv[@]:1}")
+      done
     elif ${DOCOPT_OPTIONS_FIRST:-false}; then
       # First non-option encountered and all options must be specified first.
       # Parse everything from here on out as commands or arguments. Then break.
@@ -129,29 +223,11 @@ Run \`docopt.sh\` to refresh the parser."
     fi
   done
 
-  local param
-  if ${DOCOPT_ADD_HELP:-true} || [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' ]]; then
-    # Early exit if -h is specified
-    for param in "${parsed[@]}"; do
-      local idx=${param%%:*}
-      [[ $idx = 'a' ]] && continue
-      if ${DOCOPT_ADD_HELP:-true} && [[ ${shorts[$idx]} = "-h" || ${longs[$idx]} = "--help" ]]; then
-        # shellcheck disable=SC2154
-        stdout "$trimmed_doc"
-        _return 0
-      fi
-      if [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' && ${longs[$idx]} = "--version" ]]; then
-        stdout "$DOCOPT_PROGRAM_VERSION"
-        _return 0
-      fi
-    done
-  fi
-
   # Populate the array of remaining indices to parse
-  local i=0
+  i=0
   while [[ $i -lt ${#parsed[@]} ]]; do
     left+=("$i")
-    ((i++)) || true
+    : $((i++))
   done
 
   # Run through the parsing tree, fail if not all params could be parsed.
@@ -161,127 +237,16 @@ Run \`docopt.sh\` to refresh the parser."
   return 0
 }
 
-parse_shorts() {
-  local token=${argv[0]}
-  local value
-  argv=("${argv[@]:1}")
-  [[ $token = -* && $token != --* ]] || _return 88
-  local remaining=${token#-}
-  while [[ -n $remaining ]]; do
-    local short="-${remaining:0:1}"
-    remaining="${remaining:1}"
-    local i=0
-    local similar=()
-    local match=false
-    for o in "${shorts[@]}"; do
-      if [[ $o = "$short" ]]; then
-        similar+=("$short")
-        [[ $match = false ]] && match=$i
-      fi
-      ((i++)) || true
-    done
-    if [[ ${#similar[@]} -gt 1 ]]; then
-      error "${short} is specified ambiguously ${#similar[@]} times"
-    elif [[ ${#similar[@]} -lt 1 ]]; then
-      match=${#shorts[@]}
-      value=true
-      shorts+=("$short")
-      longs+=('')
-      argcounts+=(0)
-    else
-      value=false
-      if [[ ${argcounts[$match]} -ne 0 ]]; then
-        if [[ $remaining = '' ]]; then
-          if [[ ${#argv[@]} -eq 0 || ${argv[0]} = '--' ]]; then
-            error "${short} requires argument"
-          fi
-          value=${argv[0]}
-          argv=("${argv[@]:1}")
-        else
-          value=$remaining
-          remaining=''
-        fi
-      fi
-      if [[ $value = false ]]; then
-        value=true
-      fi
-    fi
-    parsed+=("$match:$value")
-  done
-}
-
-parse_long() {
-  local token=${argv[0]}
-  local long=${token%%=*}
-  local value=${token#*=}
-  local argcount
-  argv=("${argv[@]:1}")
-  [[ $token = --* ]] || _return 88
-  if [[ $token = *=* ]]; then
-    eq='='
-  else
-    eq=''
-    value=false
-  fi
-  local i=0
-  local similar=()
-  local match=false
-  for o in "${longs[@]}"; do
-    if [[ $o = "$long" ]]; then
-      similar+=("$long")
-      [[ $match = false ]] && match=$i
-    fi
-    ((i++)) || true
-  done
-  if [[ $match = false ]]; then
-    i=0
-    for o in "${longs[@]}"; do
-      if [[ $o = $long* ]]; then
-        similar+=("$long")
-        [[ $match = false ]] && match=$i
-      fi
-      ((i++)) || true
-    done
-  fi
-  if [[ ${#similar[@]} -gt 1 ]]; then
-    error "${long} is not a unique prefix: ${similar[*]}?"
-  elif [[ ${#similar[@]} -lt 1 ]]; then
-    [[ $eq = '=' ]] && argcount=1 || argcount=0
-    match=${#shorts[@]}
-    [[ $argcount -eq 0 ]] && value=true
-    shorts+=('')
-    longs+=("$long")
-    argcounts+=("$argcount")
-  else
-    if [[ ${argcounts[$match]} -eq 0 ]]; then
-      if [[ $value != false ]]; then
-        error "${longs[$match]} must not have an argument"
-      fi
-    elif [[ $value = false ]]; then
-      if [[ ${#argv[@]} -eq 0 || ${argv[0]} = '--' ]]; then
-        error "${long} requires argument"
-      fi
-      value=${argv[0]}
-      argv=("${argv[@]:1}")
-    fi
-    if [[ $value = false ]]; then
-      value=true
-    fi
-  fi
-  parsed+=("$match:$value")
-}
-
 sequence() {
-  local initial_left=("${left[@]}")
-  local node_idx
+  local initial_left=("${left[@]}") node_idx
   # Increase testdepth, so we don't partially set variables and then fail
-  ((testdepth++)) || true
+  : $((testdepth++))
   # Check if we can match the entire subtree
   for node_idx in "$@"; do
     if ! "node_$node_idx"; then
       # Unable to match the entire subtree, reset the remaining params
       left=("${initial_left[@]}")
-      ((testdepth--)) || true
+      : $((testdepth--))
       return 1
     fi
   done
@@ -296,12 +261,9 @@ sequence() {
 }
 
 choice() {
-  local initial_left=("${left[@]}")
-  local best_match_idx
-  local match_count
-  local node_idx
+  local initial_left=("${left[@]}") best_match_idx match_count node_idx
   # Increase testdepth, so that we can test all subtrees without setting variables
-  ((testdepth++)) || true
+  : $((testdepth++))
   # Determine the best subtree match
   for node_idx in "$@"; do
     if "node_$node_idx"; then
@@ -338,8 +300,7 @@ optional() {
 }
 
 repeatable() {
-  local matched=false
-  local prev=${#left[@]}
+  local matched=false prev=${#left[@]}
   # Parse until we can't any longer
   while "node_$1"; do
     matched=true
