@@ -34,7 +34,7 @@ docopt() {
   # shellcheck disable=2157,2140
   "EARLY RETURN"
   # shellcheck disable=2034
-  local prefix=${DOCOPT_PREFIX:-''}
+  local p=${DOCOPT_PREFIX:-''}
 
   # Unset exported variables from parent shell
   # that may clash with names derived from the doc

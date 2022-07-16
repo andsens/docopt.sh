@@ -59,8 +59,8 @@ class Parser(object):
       '"ARGCOUNTS"': ' '.join([bash_ifs_value(1 if o.pattern.argname else 0) for o in option_nodes]),
       '  "NODES"': indent('\n'.join(map(str, list(doc_ast.nodes))), level=1),
       '  "OUTPUT VARNAMES ASSIGNMENTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes]), level=1),
-      '"INTERNAL VARNAMES"': ' \\\n    '.join(['var_%s' % node.variable_name for node in leaf_nodes]),
-      '"OUTPUT VARNAMES"': ' \\\n    '.join(['"${prefix}%s"' % node.variable_name for node in leaf_nodes]),
+      '"INTERNAL VARNAMES"': ' '.join(['var_%s' % node.variable_name for node in leaf_nodes]),
+      '"OUTPUT VARNAMES"': ' '.join(['"${p}%s"' % node.variable_name for node in leaf_nodes]),
       '  "EARLY RETURN"\n': '' if leaf_nodes else '  return 0\n',
       '"ROOT NODE IDX"': doc_ast.root_node.idx,
     }

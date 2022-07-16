@@ -70,9 +70,9 @@ class LeafNode(Node):
       )
       self.default_assignment = (
         'if declare -p {docopt_name} >/dev/null 2>&1; then\n'
-        '  eval "${{prefix}}"{assignment1}\n'
+        '  eval "$p"{assignment1}\n'
         'else\n'
-        '  eval "${{prefix}}"{assignment2}\n'
+        '  eval "$p"{assignment2}\n'
         'fi'
       ).format(
         docopt_name='var_' + self.variable_name,
@@ -86,7 +86,7 @@ class LeafNode(Node):
         default=bash_variable_value(pattern.default)
       )
       self.default_assignment = (
-        'eval "${{prefix}}"{assignment}'
+        'eval "$p"{assignment}'
       ).format(
         assignment=quote(assignment)
       )
