@@ -10,7 +10,7 @@
       "--config=.flake8"
     ],
     "python.analysis.extraPaths": [
-      "/workspace/docopt-parser"
+      "${localWorkspaceFolder}/../docopt-parser"
     ],
     "files.exclude": {
       ".pytest_cache": true

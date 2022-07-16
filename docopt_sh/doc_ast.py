@@ -1,6 +1,4 @@
-import re
 from collections import OrderedDict
-from itertools import chain
 import docopt_parser as P
 
 
@@ -26,6 +24,7 @@ class DocAst(object):
       node_map[param] = LeafNode(param, idx)
 
     idx = len(node_map)
+
     def create_groups(pattern):
       nonlocal idx
       if isinstance(pattern, P.Group):
