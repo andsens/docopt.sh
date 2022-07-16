@@ -10,7 +10,6 @@ helper_map = {
 }
 helper_list = list(helper_map.values()) + [
   'switch',
-  '_command',
   'value',
 ]
 
@@ -43,22 +42,18 @@ class BranchNode(Node):
 class LeafNode(Node):
 
   def __init__(self, pattern, idx):
-    if type(pattern) is P.Option:
-      self.helper_name = 'switch' if type(pattern.default) in [bool, int] else 'value'
-      needle = idx
-    elif type(pattern) in [P.Command, P.ArgumentSeparator]:
-      self.helper_name = '_command'
-      needle = pattern.ident
-    else:  # type is Argument
+    self.variable_name = bash_variable_name(
+      pattern.definition.ident if isinstance(pattern, P.Option) else pattern.ident
+    )
+    args = [self.variable_name]
+    if type(pattern) is P.Argument:
       self.helper_name = 'value'
-      needle = 'a'
-    self.variable_name = bash_variable_name(pattern.definition.ident if isinstance(pattern, P.Option) else pattern.ident)
-
-    args = [self.variable_name, bash_ifs_value(needle)]
+      args.append(bash_ifs_value('a'))
+    else:
+      self.helper_name = 'switch' if type(pattern.default) in [bool, int] else 'value'
+      args.append(bash_ifs_value(idx if type(pattern) is P.Option else f'a:{pattern.ident}'))
     if type(pattern.default) in [list, int]:
       args.append(bash_ifs_value(True))
-    elif self.helper_name == '_command' and args[0] == args[1]:
-      args = [args[0]]
     body = '  {helper} {args}'.format(
       helper=self.helper_name,
       args=' '.join(args),

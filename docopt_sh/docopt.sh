@@ -87,18 +87,15 @@ Run \`docopt.sh\` to refresh the parser."
   local root_idx=$1
   shift
   argv=("$@")
-  # Parsed parameter types array in the order they appear in argv.
-  # Contains either "a" for "argument"/non-option or the index of the option in
-  # the shorts/longs array.
-  parsed_params=()
-  # Parsed parameter values array in the order they appear in argv.
-  # The value is determined as follows:
+  # Typed parsed parameter indices and values array in the order they
+  # appear in argv.
+  # Example:
   # Usage: prog -s --val=OPTARG command ARG
   # $ prog command --val=optval "arg val" -s
-  # -> (command optval "arg val" true)
-  parsed_values=()
+  # -> (a:command 1:optval a:"arg val" 1:true)
+  parsed=()
   # Array containing indices of the remaining unparsed params.
-  # Initially filled with 0 through ${#parsed_params[@]}
+  # Initially filled with 0 through ${#parsed[@]}
   # parsers will remove indices on successful parsing
   left=()
   # testing depth counter, when >0 nodes only check for potential matches
@@ -112,8 +109,7 @@ Run \`docopt.sh\` to refresh the parser."
       # No more options allowed.
       # Parse everything from here on out as commands or arguments. Then break.
       for arg in "${argv[@]}"; do
-        parsed_params+=('a')
-        parsed_values+=("$arg")
+        parsed+=("a:$arg")
       done
       break
     elif [[ ${argv[0]} = --* ]]; then
@@ -124,34 +120,27 @@ Run \`docopt.sh\` to refresh the parser."
       # First non-option encountered and all options must be specified first.
       # Parse everything from here on out as commands or arguments. Then break.
       for arg in "${argv[@]}"; do
-        parsed_params+=('a')
-        parsed_values+=("$arg")
+        parsed+=("a:$arg")
       done
       break
     else
-      parsed_params+=('a')
-      parsed_values+=("${argv[0]}")
+      parsed+=("a:${argv[0]}")
       argv=("${argv[@]:1}")
     fi
   done
 
-  local idx
-  if ${DOCOPT_ADD_HELP:-true}; then
+  local param
+  if ${DOCOPT_ADD_HELP:-true} || [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' ]]; then
     # Early exit if -h is specified
-    for idx in "${parsed_params[@]}"; do
+    for param in "${parsed[@]}"; do
+      local idx=${param%%:*}
       [[ $idx = 'a' ]] && continue
-      if [[ ${shorts[$idx]} = "-h" || ${longs[$idx]} = "--help" ]]; then
+      if ${DOCOPT_ADD_HELP:-true} && [[ ${shorts[$idx]} = "-h" || ${longs[$idx]} = "--help" ]]; then
         # shellcheck disable=SC2154
         stdout "$trimmed_doc"
         _return 0
       fi
-    done
-  fi
-  if [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' ]]; then
-    # Early exit if --version is specified
-    for idx in "${parsed_params[@]}"; do
-      [[ $idx = 'a' ]] && continue
-      if [[ ${longs[$idx]} = "--version" ]]; then
+      if [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' && ${longs[$idx]} = "--version" ]]; then
         stdout "$DOCOPT_PROGRAM_VERSION"
         _return 0
       fi
@@ -160,7 +149,7 @@ Run \`docopt.sh\` to refresh the parser."
 
   # Populate the array of remaining indices to parse
   local i=0
-  while [[ $i -lt ${#parsed_params[@]} ]]; do
+  while [[ $i -lt ${#parsed[@]} ]]; do
     left+=("$i")
     ((i++)) || true
   done
@@ -217,8 +206,7 @@ parse_shorts() {
         value=true
       fi
     fi
-    parsed_params+=("$match")
-    parsed_values+=("$value")
+    parsed+=("$match:$value")
   done
 }
 
@@ -280,8 +268,7 @@ parse_long() {
       value=true
     fi
   fi
-  parsed_params+=("$match")
-  parsed_values+=("$value")
+  parsed+=("$match:$value")
 }
 
 sequence() {
@@ -368,43 +355,14 @@ repeatable() {
   return 1
 }
 
-_command() {
-  local i
-  local name=${2:-$1}
-  # Run through the remaining params and check if there's a command in there
-  for i in "${!left[@]}"; do
-    local l=${left[$i]}
-    # Skip if param is an option
-    if [[ ${parsed_params[$l]} = 'a' ]]; then
-      if [[ ${parsed_values[$l]} != "$name" ]]; then
-        return 1
-      fi
-      # Remove matching param from remaining params
-      left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
-      [[ $testdepth -gt 0 ]] && return 0
-      # Set the variable if we are not in testing mode
-      if [[ $3 = true ]]; then
-        # Command is repeatable, increase a counter
-        eval "((var_$1++)) || true"
-      else
-        # Command is not repeatable, set to true
-        eval "var_$1=true"
-      fi
-      return 0
-    fi
-  done
-  # Only options left, fail
-  return 1
-}
-
 switch() {
-  # Run though remaining params and
-  # check if there is an argument-less option in there
+  # Run though remaining params and check if there is an argument-less option,
+  # a command, or argument separator in there
   local i
   for i in "${!left[@]}"; do
     local l=${left[$i]}
-    if [[ ${parsed_params[$l]} = "$2" ]]; then
-      # Name of the option matches, remove the param from remaining params
+    if [[ ${parsed[$l]} = "$2" || ${parsed[$l]} = "$2":* ]]; then
+      # Name of the option/command matches, remove the param from remaining params
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       [[ $testdepth -gt 0 ]] && return 0
       # Set the variable if we are not in testing mode
@@ -416,6 +374,10 @@ switch() {
         eval "var_$1=true"
       fi
       return 0
+    elif [[ ${parsed[$l]} = a:* && $2 = a:* ]]; then
+      # Fail if we were to parse a non-option and we encountered a non-option
+      # where the name doesn't match
+      return 1
     fi
   done
   # No switches left, fail
@@ -423,18 +385,18 @@ switch() {
 }
 
 value() {
-  # Run though remaining params and
-  # check if there is an argument or an option with an argument in there
+  # Run though remaining params and check if there is an argument or an option
+  # with an argument in there
   local i
   for i in "${!left[@]}"; do
     local l=${left[$i]}
-    if [[ ${parsed_params[$l]} = "$2" ]]; then
+    if [[ ${parsed[$l]} = "$2":* ]]; then
       # Argument or option matches, remove the param from remaining params
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       [[ $testdepth -gt 0 ]] && return 0
       # Set the variable if we are not in testing mode
       local value
-      value=$(printf -- "%q" "${parsed_values[$l]}")
+      value=$(printf -- "%q" "${parsed[$l]#*:}")
       if [[ $3 = true ]]; then
         # Value is repeatable, add it to the array
         eval "var_$1+=($value)"
