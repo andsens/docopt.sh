@@ -967,3 +967,17 @@ $ prog a b c
 
 $ prog b a c
 "user-error"
+
+#
+# value=false bug
+#
+
+r"""Usage: prog --long=ARG
+"""
+$ prog --long=false
+{"--long": "false"}
+
+r"""Usage: prog --s=ARG
+"""
+$ prog --s=false
+{"--s": "false"}
