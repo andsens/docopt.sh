@@ -87,16 +87,30 @@ Run \`docopt.sh\` to refresh the parser."
   local root_idx=$1
   shift
   argv=("$@")
+  # Parsed parameter types array in the order they appear in argv.
+  # Contains either "a" for "argument"/non-option or the index of the option in
+  # the shorts/longs array.
   parsed_params=()
+  # Parsed parameter values array in the order they appear in argv.
+  # The value is determined as follows:
+  # Usage: prog -s --val=OPTARG command ARG
+  # $ prog command --val=optval "arg val" -s
+  # -> (command optval "arg val" true)
   parsed_values=()
+  # Array containing indices of the remaining unparsed params.
+  # Initially filled with 0 through ${#parsed_params[@]}
+  # parsers will remove indices on successful parsing
   left=()
   # testing depth counter, when >0 nodes only check for potential matches
   # when ==0 leafs will set the actual variable when a match is found
   testdepth=0
 
+  # loop through the parameters and parse them one param at a time
   local arg
   while [[ ${#argv[@]} -gt 0 ]]; do
     if [[ ${argv[0]} = "--" ]]; then
+      # No more options allowed.
+      # Parse everything from here on out as commands or arguments. Then break.
       for arg in "${argv[@]}"; do
         parsed_params+=('a')
         parsed_values+=("$arg")
@@ -107,6 +121,8 @@ Run \`docopt.sh\` to refresh the parser."
     elif [[ ${argv[0]} = -* && ${argv[0]} != "-" ]]; then
       parse_shorts
     elif ${DOCOPT_OPTIONS_FIRST:-false}; then
+      # First non-option encountered and all options must be specified first.
+      # Parse everything from here on out as commands or arguments. Then break.
       for arg in "${argv[@]}"; do
         parsed_params+=('a')
         parsed_values+=("$arg")
@@ -118,8 +134,10 @@ Run \`docopt.sh\` to refresh the parser."
       argv=("${argv[@]:1}")
     fi
   done
+
   local idx
   if ${DOCOPT_ADD_HELP:-true}; then
+    # Early exit if -h is specified
     for idx in "${parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
       if [[ ${shorts[$idx]} = "-h" || ${longs[$idx]} = "--help" ]]; then
@@ -130,6 +148,7 @@ Run \`docopt.sh\` to refresh the parser."
     done
   fi
   if [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' ]]; then
+    # Early exit if --version is specified
     for idx in "${parsed_params[@]}"; do
       [[ $idx = 'a' ]] && continue
       if [[ ${longs[$idx]} = "--version" ]]; then
@@ -139,12 +158,14 @@ Run \`docopt.sh\` to refresh the parser."
     done
   fi
 
+  # Populate the array of remaining indices to parse
   local i=0
   while [[ $i -lt ${#parsed_params[@]} ]]; do
     left+=("$i")
     ((i++)) || true
   done
 
+  # Run through the parsing tree, fail if not all params could be parsed.
   if ! "node_$root_idx" || [ ${#left[@]} -gt 0 ]; then
     error
   fi
@@ -266,14 +287,18 @@ parse_long() {
 sequence() {
   local initial_left=("${left[@]}")
   local node_idx
+  # Increase testdepth, so we don't partially set variables and then fail
   ((testdepth++)) || true
+  # Check if we can match the entire subtree
   for node_idx in "$@"; do
     if ! "node_$node_idx"; then
+      # Unable to match the entire subtree, reset the remaining params
       left=("${initial_left[@]}")
       ((testdepth--)) || true
       return 1
     fi
   done
+  # Decrease testdepth and let subtree set the variables
   if [[ $((--testdepth)) -eq 0 ]]; then
     left=("${initial_left[@]}")
     for node_idx in "$@"; do
@@ -288,9 +313,13 @@ choice() {
   local best_match_idx
   local match_count
   local node_idx
+  # Increase testdepth, so that we can test all subtrees without setting variables
   ((testdepth++)) || true
+  # Determine the best subtree match
   for node_idx in "$@"; do
     if "node_$node_idx"; then
+      # Subtree matches
+      # Make it the best match if the previous best match consumed fewer params
       if [[ -z $match_count || ${#left[@]} -lt $match_count ]]; then
         best_match_idx=$node_idx
         match_count=${#left[@]}
@@ -298,32 +327,42 @@ choice() {
     fi
     left=("${initial_left[@]}")
   done
-  ((testdepth--)) || true
+  # Check if any subtree matched
   if [[ -n $best_match_idx ]]; then
-    "node_$best_match_idx"
+    # Decrease testdepth and let the best-matching subtree set the variables
+    if [[ $((--testdepth)) -eq 0 ]]; then
+      "node_$best_match_idx"
+    fi
     return 0
   fi
+  # No subtree matched, reset the remaining params
   left=("${initial_left[@]}")
   return 1
 }
 
 optional() {
   local node_idx
+  # Parse subtree, stop parsing when we can't match any longer
   for node_idx in "$@"; do
     "node_$node_idx"
   done
+  # Always succeed
   return 0
 }
 
 repeatable() {
-  local i=0
+  local matched=false
   local prev=${#left[@]}
+  # Parse until we can't any longer
   while "node_$1"; do
-    ((i++)) || true
+    matched=true
+    # Nothing was removed from the remaining params, so stop looping
+    # This happens when an optional param can be repeated.
+    # An optional subtree parser never fails.
     [[ $prev -eq ${#left[@]} ]] && break
     prev=${#left[@]}
   done
-  if [[ $i -ge 1 ]]; then
+  if $matched; then
     return 0
   fi
   return 1
@@ -332,55 +371,75 @@ repeatable() {
 _command() {
   local i
   local name=${2:-$1}
+  # Run through the remaining params and check if there's a command in there
   for i in "${!left[@]}"; do
     local l=${left[$i]}
+    # Skip if param is an option
     if [[ ${parsed_params[$l]} = 'a' ]]; then
       if [[ ${parsed_values[$l]} != "$name" ]]; then
         return 1
       fi
+      # Remove matching param from remaining params
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       [[ $testdepth -gt 0 ]] && return 0
+      # Set the variable if we are not in testing mode
       if [[ $3 = true ]]; then
+        # Command is repeatable, increase a counter
         eval "((var_$1++)) || true"
       else
+        # Command is not repeatable, set to true
         eval "var_$1=true"
       fi
       return 0
     fi
   done
+  # Only options left, fail
   return 1
 }
 
 switch() {
+  # Run though remaining params and
+  # check if there is an argument-less option in there
   local i
   for i in "${!left[@]}"; do
     local l=${left[$i]}
     if [[ ${parsed_params[$l]} = "$2" ]]; then
+      # Name of the option matches, remove the param from remaining params
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       [[ $testdepth -gt 0 ]] && return 0
+      # Set the variable if we are not in testing mode
       if [[ $3 = true ]]; then
+        # Switch is repeatable, increase a counter
         eval "((var_$1++))" || true
       else
+        # Switch is not repeatable, set to true
         eval "var_$1=true"
       fi
       return 0
     fi
   done
+  # No switches left, fail
   return 1
 }
 
 value() {
+  # Run though remaining params and
+  # check if there is an argument or an option with an argument in there
   local i
   for i in "${!left[@]}"; do
     local l=${left[$i]}
     if [[ ${parsed_params[$l]} = "$2" ]]; then
+      # Argument or option matches, remove the param from remaining params
       left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
       [[ $testdepth -gt 0 ]] && return 0
+      # Set the variable if we are not in testing mode
       local value
       value=$(printf -- "%q" "${parsed_values[$l]}")
       if [[ $3 = true ]]; then
+        # Value is repeatable, add it to the array
         eval "var_$1+=($value)"
       else
+        # Value is not repeatable, set the value
         eval "var_$1=$value"
       fi
       return 0
@@ -390,10 +449,14 @@ value() {
 }
 
 stdout() {
+  # docopt is eval'd. So any output to stdout will just be evaluated.
+  # Output the message as a command that outputs the message instead.
   printf -- "cat <<'EOM'\n%s\nEOM\n" "$1"
 }
 
 stderr() {
+  # stderr is not captured when doing `eval "$(docopt "$@")"', but
+  # we do the same as in stdout for consistencies sake.
   printf -- "cat <<'EOM' >&2\n%s\nEOM\n" "$1"
 }
 
@@ -405,6 +468,8 @@ error() {
 }
 
 _return() {
+  # Same as in stdout(). An exit will not exit the parent program.
+  # Output the command that does it to `eval' instead.
   printf -- "exit %d\n" "$1"
   exit "$1"
 }
