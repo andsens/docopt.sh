@@ -50,12 +50,12 @@ link:docs/naval_fate.patched.sh[See the patched file here]
 *Note that the script is completely independent from the python package.* +
 `docopt.sh` is merely a development tool to insert and update the parser, your
 scripts will be entirely self contained. +
-The parser is inlined right beneath the `DOC="..."` and takes up ~110 lines of
+The parser is inlined right beneath the `DOC="..."` and takes up ~80 lines of
 code (depending on the size of your helptext).
 If you ship multiple scripts in the same project
 link:docs/naval_fate.library.sh[you can reduce that to ~20 lines] by
 link:#library-mode[moving the generic parts of the parser to a different file]
-and reusing it.
+and reusing them.
 
 === Table of contents
 
