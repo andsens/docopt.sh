@@ -82,10 +82,9 @@ Run \`docopt.sh\` to refresh the parser."
 
   local root_idx=$1
   shift
-  argv=("$@")
+
   # Typed parsed parameter indices and values array in the order they
-  # appear in argv.
-  # Example:
+  # appear in argv. Example:
   # Usage: prog -s --val=OPTARG command ARG
   # $ prog command --val=optval "arg val" -s
   # -> (a:command 1:optval a:"arg val" 1:true)
@@ -99,7 +98,7 @@ Run \`docopt.sh\` to refresh the parser."
   testdepth=0
 
   # unshift the parameters and parse them one param at a time
-  local arg i o
+  local argv=("$@") arg i o
   while [[ ${#argv[@]} -gt 0 ]]; do
     if [[ ${argv[0]} = "--" ]]; then
       # No more options allowed.
@@ -112,6 +111,7 @@ Run \`docopt.sh\` to refresh the parser."
       # Parse long
       local long=${argv[0]%%=*}
       local similar=() match=false
+      # Try matching the full long option first
       i=0
       for o in "${options[@]}"; do
         if [[ $o = *" $long "? ]]; then
@@ -122,6 +122,7 @@ Run \`docopt.sh\` to refresh the parser."
         : $((i++))
       done
       if [[ $match = false ]]; then
+        # No exact match was found, check for a prefix match
         i=0
         for o in "${options[@]}"; do
           if [[ $o = *" $long"*? ]]; then
@@ -133,6 +134,7 @@ Run \`docopt.sh\` to refresh the parser."
         done
       fi
       if [[ ${#similar[@]} -gt 1 ]]; then
+        # ambiguous prefix found (e.g. --l matches the options --lat and --long)
         error "${long} is not a unique prefix: ${similar[*]}?"
       elif [[ ${#similar[@]} -lt 1 ]]; then
         # No match found, might be --help or --version
@@ -147,22 +149,28 @@ Run \`docopt.sh\` to refresh the parser."
           error
         fi
       else
+        # Match found
         if [[ ${options[$match]} = *0 ]]; then
+          # Option does not accept an argument
           if [[ ${argv[0]} = *=* ]]; then
             local long_match=${o#* }
             error "${long_match% *} must not have an argument"
           else
+            # Add option as a switch
             parsed+=("$match:true")
+            # Unshift the param from argv
             argv=("${argv[@]:1}")
           fi
         else
           if [[ ${argv[0]} = *=* ]]; then
+            # --long=ARG given, add to parsed and unshift param
             parsed+=("$match:${argv[0]#*=}")
             argv=("${argv[@]:1}")
           else
             if [[ ${#argv[@]} -le 1 || ${argv[1]} = '--' ]]; then
               error "${long} requires argument"
             fi
+            # --long ARG given, add to parsed and unshift both params
             parsed+=("$match:${argv[1]}")
             argv=("${argv[@]:2}")
           fi
@@ -170,30 +178,44 @@ Run \`docopt.sh\` to refresh the parser."
       fi
     elif [[ ${argv[0]} = -* && ${argv[0]} != "-" ]]; then
       # Parse shorts
+      # We need to parse `-a` as well as `-abc'
       local remaining=${argv[0]#-}
       while [[ -n $remaining ]]; do
+        # Parse one short at a time
         local short="-${remaining:0:1}" matched=false
+        # Unshift current short from list of remaining shorts
         remaining="${remaining:1}"
         i=0
         for o in "${options[@]}"; do
           if [[ $o = "$short "* ]]; then
-            # printf "%s=%s\n" "${argcounts[$i]}" "${o##* }" >&2
-            if [[ $o = *0 ]]; then
-              parsed+=("$i:true")
-            else
+            # Match found
+            if [[ $o = *1 ]]; then
+              # Option takes an argument
               if [[ $remaining = '' ]]; then
+                # The next param is the argument
                 if [[ ${#argv[@]} -le 1 || ${argv[1]} = '--' ]]; then
                   error "${short} requires argument"
                 fi
+                # Add param to parsed and unshift the next param
                 parsed+=("$i:${argv[1]}")
+                # This is not the actual value param but rather the shortlist
+                # param. The value param will be unshifted at the end of the
+                # shortlist loop.
                 argv=("${argv[@]:1}")
+                # break out of the shortlist parsing loop, we're done
+                break 2
               else
+                # The entire remaining part of the shortlist is the argument
                 parsed+=("$i:$remaining")
-                remaining=''
+                # break out of the shortlist parsing loop, we're done
+                break 2
               fi
+            else
+              # Option does not take an argument, add to parsed
+              parsed+=("$i:true")
+              matched=true
+              break
             fi
-            matched=true
-            break
           fi
           : $((i++))
         done
@@ -207,8 +229,9 @@ Run \`docopt.sh\` to refresh the parser."
             error
           fi
         fi
-        argv=("${argv[@]:1}")
       done
+      # Unshift the param
+      argv=("${argv[@]:1}")
     elif ${DOCOPT_OPTIONS_FIRST:-false}; then
       # First non-option encountered and all options must be specified first.
       # Parse everything from here on out as commands or arguments. Then break.
@@ -217,6 +240,7 @@ Run \`docopt.sh\` to refresh the parser."
       done
       break
     else
+      # Normal argument or command given, add to parsed and let loop continue
       parsed+=("a:${argv[0]}")
       argv=("${argv[@]:1}")
     fi

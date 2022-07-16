@@ -36,3 +36,37 @@ Options: -o OPT  Option [default: \"]
 $ prog
 {"-o": "\""}
 
+
+#
+# Optional order
+#
+
+r"""Usage: prog [a b c]
+"""
+$ prog a b c
+{"a": true, "b": true, "c": true}
+
+$ prog b a c
+"user-error"
+
+#
+# value=false bug
+#
+
+r"""Usage: prog --long=ARG
+"""
+$ prog --long=false
+{"--long": "false"}
+
+r"""Usage: prog --s=ARG
+"""
+$ prog --s=false
+{"--s": "false"}
+
+
+###
+
+r"""Usage: prog [-ab --long]
+"""
+$ prog -ab --long
+{"-a": true, "-b": true, "--long": true}
