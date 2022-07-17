@@ -5,10 +5,9 @@ import logging
 import shlex
 from collections import OrderedDict
 from . import __version__, DocoptError
-from .doc_ast import DocAst
 import docopt_parser as P
 from .bash import Code, indent, bash_ifs_value
-from .node import LeafNode, helper_list
+from .node import parse_doc, LeafNode, helper_list
 
 log = logging.getLogger(__name__)
 
@@ -25,8 +24,7 @@ class Parser(object):
       length=len(script.doc.trimmed_value),
     )
 
-    doc_ast = DocAst(script.doc.trimmed_value)
-    usage_start, usage_end = doc_ast.usage_match
+    (usage_start, usage_end), nodes = parse_doc(script.doc.trimmed_value)
     usage_doc = '${{DOC:{start}:{length}}}'.format(
       start=str(script.doc.trimmed_value_start + usage_start),
       length=str(usage_end - usage_start),
@@ -39,11 +37,11 @@ class Parser(object):
   exit "$ret"
 }}'''.format(path=self.parameters.library_path, version=__version__), level=1)
     else:
-      helpers_needed = set([n.helper_name for n in doc_ast.nodes])
+      helpers_needed = set([n.helper_name for n in nodes])
       exclude = set(['docopt', 'lib_version_check'] + helper_list) - helpers_needed
       library = indent(str(self.library.generate_code(exclude=exclude)), level=1)
 
-    leaf_nodes = [n for n in doc_ast.nodes if type(n) is LeafNode]
+    leaf_nodes = [n for n in nodes if type(n) is LeafNode]
 
     replacements = {
       '  "LIBRARY"': library,
@@ -55,12 +53,12 @@ class Parser(object):
           node.pattern.definition.ident if node.pattern.definition.ident.startswith('--') else '',
           '1' if node.pattern.argname else '0',
         ])) for node in leaf_nodes if type(node.pattern) is P.Option]),
-      '  "NODES"': indent('\n'.join(map(str, list(doc_ast.nodes))), level=1),
+      '  "NODES"': indent('\n'.join(map(str, list(nodes))), level=1),
       '  "OUTPUT VARNAMES ASSIGNMENTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes]), level=1),
       '"INTERNAL VARNAMES"': ' '.join(['var_%s' % node.variable_name for node in leaf_nodes]),
       '"OUTPUT VARNAMES"': ' '.join(['"${p}%s"' % node.variable_name for node in leaf_nodes]),
       '  "EARLY RETURN"\n': '' if leaf_nodes else '  return 0\n',
-      '"ROOT NODE IDX"': doc_ast.root_node.idx,
+      '"ROOT NODE IDX"': len(nodes) - 1,
     }
     main = self.library.functions['docopt'].replace_literal(replacements)
     if self.parameters.minify:
