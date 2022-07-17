@@ -1,7 +1,15 @@
 #!/usr/bin/env bash
 
 docopt() {
+  # This function will always be directly inlined in the script.
+  # It contains all the specifics of $DOC, while the remaining functions
+  # are generic. All strings with uppercase letters a placeholders.
+
+  # The library, can be either the complete inline definition of all functions
+  # or a `source` call
   "LIBRARY"
+  # return on errors, I can't remember why this is placed after the library
+  # I just remember that it's important for some reason when sourcing :-)
   set -e
   # substring of doc where leading & trailing newlines have been trimmed
   trimmed_doc="DOC VALUE"
@@ -9,11 +17,13 @@ docopt() {
   usage="DOC USAGE"
   # shortened shasum of doc from which the parser was generated
   digest="DOC DIGEST"
-  # options list containing the short name, long name, and argcount (0 or 1)
-  # per entry, space separated
+  # Options array. Each entry consists of:
+  # * short name
+  # * long name
+  # * argcount (0 or 1)
+  # the items space separated. The order matches the AST node numbering
   options=("OPTIONS")
-
-  # Nodes. This is the AST representing the parsed doc.
+  # This is the AST representing the parsed doc.
   "NODES"
 
   # shellcheck disable=2016
@@ -58,6 +68,8 @@ docopt() {
 }
 
 lib_version_check() {
+  # Version check, when sourcing the wrong library version all kinds of weird
+  # stuff can happen.
 if [[ $1 != '"LIBRARY VERSION"' && ${DOCOPT_LIB_CHECK:-true} != 'false' ]]; then
   printf -- "cat <<'EOM' >&2\nThe version of the included docopt library (%s) \
 does not match the version of the invoking docopt parser (%s)\nEOM\nexit 70\n" \
@@ -67,6 +79,8 @@ fi
 }
 
 parse() {
+  # $DOC check. Makes sure that the replaced values of the placeholders in
+  # docopt() are up-to-date
   if ${DOCOPT_DOC_CHECK:-true}; then
     local doc_hash
     if doc_hash=$(printf "%s" "$DOC" | (sha256sum 2>/dev/null || shasum -a 256)); then
@@ -80,21 +94,37 @@ Run \`docopt.sh\` to refresh the parser."
     fi
   fi
 
+  # The AST nodes are indexed. To simplify the code leaf nodes come first.
+  # This allows us to reuse that index in the options array.
+  # This also means that the root node isn't 0, so we need to pass that around.
   local root_idx=$1
+  # All remaining arguments are actual arguments to the program
   shift
 
-  # Typed parsed parameter indices and values array in the order they
-  # appear in argv. Example:
+  #
+  # PARSING STRATEGY
+  #
+  # Since options can be specified anywhere in the invocation, we cannot simply
+  # traverse the generated AST and expect everything to be in its proper place.
+  # Additionaly, an option with an argument can be one or two arguments
+  # (--long ARG vs. --long=ARG, or -a ARG vs. -aARG), while multiple short
+  # options can be a single argument (-a -b -c vs. -abc).
+  # That is why we do a little pre-parsing of $argv by constructing the "parsed"
+  # array. The array contains one parameter value per entry.
+  # Each entry is prefixed, with either 'a:', meaning it's a non-option,
+  # or with an index pointing at the option in the options array.
+  # Example:
   # Usage: prog -s --val=OPTARG command ARG
   # $ prog command --val=optval "arg val" -s
-  # -> (a:command 1:optval a:"arg val" 1:true)
+  # -> (a:command 1:optval a:"arg val" 2:true)
+  # It's basically a normalized version of $argv.
   parsed=()
   # Array containing indices of the remaining unparsed params.
-  # Initially filled with 0 through ${#parsed[@]}
-  # parsers will remove indices on successful parsing
+  # Initially filled with 0 through ${#parsed[@]}.
+  # Parsers will remove indices on successful parsing
   left=()
-  # testing depth counter, when >0 nodes only check for potential matches
-  # when ==0 leafs will set the actual variable when a match is found
+  # Testing depth counter, when >0 nodes only check for potential matches.
+  # When ==0 leafs will set the actual variable if a match is found.
   testdepth=0
 
   # unshift the parameters and parse them one param at a time
@@ -239,7 +269,7 @@ Run \`docopt.sh\` to refresh the parser."
       done
       break
     else
-      # Normal argument or command given, add to parsed and let loop continue
+      # Normal argument or command given, unshift to parsed and continue loop
       parsed+=("a:${argv[0]}")
       argv=("${argv[@]:1}")
     fi
@@ -338,6 +368,22 @@ repeatable() {
   return 1
 }
 
+#
+# LEAF PARSING
+#
+# We only need two functions for parsing any leaf. A leaf can be:
+# * command
+# * -- (argument separator)
+# * ARGUMENT
+# * --option
+# * --option-with=ARGUMENT
+# We can group these into:
+# switches (command, --, --option) and
+# values (ARGUMENT, --option-with=ARGUMENT).
+# When either of these function parse options, they only return 1 when they have
+# run through the complete list of parameters that are yet to parsed and no
+# match was found.
+
 switch() {
   # Run though remaining params and check if there is an argument-less option,
   # a command, or argument separator in there
@@ -389,6 +435,10 @@ value() {
       fi
       return 0
     fi
+    # We don't fail here like we do in switch() if we were to find a non-option.
+    # This is because an ARGUMENT matches anything that isn't an option.
+    # So when the above `if' doesn't match, it's because we encountered an
+    # option.
   done
   return 1
 }
