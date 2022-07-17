@@ -32,7 +32,8 @@ class Parser(object):
 
   def generate(self, script):
     root = P.parse(script.doc.trimmed_value)
-    P.merge_identical_leaves(root, ignore_option_args=True)
+    root = P.merge_identical_leaves(root, ignore_option_args=True)
+    root = P.merge_identical_groups(root)
     (usage_start, usage_end) = root.mark.to_bytecount(script.doc.trimmed_value)
 
     all_nodes = (
