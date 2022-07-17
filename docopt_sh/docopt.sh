@@ -32,8 +32,12 @@ docopt() {
   printf "%s\n" ""DOC USAGE"" >&2
   exit 1
 }'
+
+  local varnames=("VARNAMES") varname
   # unset the "var_" prefixed variables that will be used for internal assignment
-  unset "INTERNAL VARNAMES"
+  for varname in "${varnames[@]}"; do
+    unset "var_$varname"
+  done
   # invoke main parsing function
   parse "ROOT NODE IDX" "$@"
   # if there are no variables to be set docopt() will exit here
@@ -44,7 +48,9 @@ docopt() {
 
   # Unset exported variables from parent shell
   # that may clash with names derived from the doc
-  unset "OUTPUT VARNAMES"
+  for varname in "${varnames[@]}"; do
+    unset "$p$varname"
+  done
   # Assign internal varnames to output varnames and set defaults
   "OUTPUT VARNAMES ASSIGNMENTS"
 
@@ -63,7 +69,9 @@ docopt() {
   local docopt_i=1
   [[ $BASH_VERSION =~ ^4.3 ]] && docopt_i=2
   for ((;docopt_i>0;docopt_i--)); do
-  declare -p "OUTPUT VARNAMES"
+    for varname in "${varnames[@]}"; do
+      declare -p "$p$varname"
+    done
   done
 }
 

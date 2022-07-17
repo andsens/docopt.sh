@@ -72,9 +72,8 @@ class Parser(object):
       '"DOC DIGEST"': hashlib.sha256(script.doc.untrimmed_value.encode('utf-8')).hexdigest()[0:5],
       '"OPTIONS"': generate_options_array(leaf_nodes),
       '  "NODES"': indent('\n'.join(map(str, map(lambda n: ast_cmd(n, nodes), nodes))), level=1),
+      '"VARNAMES"': ' '.join([bash_ifs_value(var_name(node)) for node in leaf_nodes]),
       '  "OUTPUT VARNAMES ASSIGNMENTS"': generate_default_assignments(leaf_nodes),
-      '"INTERNAL VARNAMES"': ' '.join([f'var_{var_name(node)}' for node in leaf_nodes]),
-      '"OUTPUT VARNAMES"': ' '.join([f'"${{p}}{var_name(node)}"' for node in leaf_nodes]),
       '  "EARLY RETURN"\n': '' if leaf_nodes else '  return 0\n',
       '"ROOT NODE IDX"': len(nodes) - 1,
     }
