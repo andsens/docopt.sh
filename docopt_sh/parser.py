@@ -34,12 +34,12 @@ class Parser(object):
     root = P.parse(script.doc.trimmed_value)
     root = P.merge_identical_leaves(root, ignore_option_args=True)
     root = P.merge_identical_groups(root)
+    root = P.collapse_groups(root)
     (usage_start, usage_end) = root.mark.to_bytecount(script.doc.trimmed_value)
 
     all_nodes = (
       list(OrderedDict.fromkeys(root.reduce(get_leaves, [])))
       + list(OrderedDict.fromkeys(root.reduce(get_groups, [])))
-      + [root]
     )
     node_sort_order = [P.Option, P.Argument, P.Command, P.ArgumentSeparator]
     nodes = sorted(
