@@ -108,3 +108,9 @@ r"""Usage: prog [-ah]
 
 > prog --help
 {"code": 0, "stdout": "Usage: prog [-ah]\n", "stderr": ""}
+
+
+r"""Usage: prog ARG (-a|-b)
+"""
+$ prog -a A
+{"ARG": "A", "-a": true, "-b": false}

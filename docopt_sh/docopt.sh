@@ -383,7 +383,40 @@ repeatable() {
 # When either of these function parse options, they only return 1 when they have
 # run through the complete list of parameters that are yet to parsed and no
 # match was found.
+# For a better understanding, consider the following program:
+#   Usage: prog ARG (-a|-b)
+# AST:
+#   <Sequence>
+#     Argument: ARG
+#     <Choice>
+#       -a
+#       -b
+# bash version:
+#   node_4(){ sequence 2 3; }
+#     node_2(){ value ARG a; }
+#     node_3(){ choice 0 1; }
+#       node_0(){ switch _a 0; }
+#       node_1(){ switch _b 1; }
+# Invocation:
+#   $ prog -a X
+# params=(0:true a:X)
+# left=(0 1)
+# We invoked it the other way around, one would expect this to fail, because
+# sequence would expect to get the argument ARG and then the <Choice>.
+#
+# However, the behavior and interaction between the two leaf parsers ensures
+# that we succeed:
+# When parsing the sequence, we start with node_2 which expects the argument.
+# It succeeds because -a is an option and therefore it's skipped.
+# Then the argument is found as the second entry in $params.
+# That entry is now removed from $left.
+# Then we parse the choice with node_3, which expects -a or -b.
+# The only remaining entry in $left is 1 (0:true in $params)
+# So all we have now is the remaining "-a", which is then successfully parsed.
 
+# Signature: $var_name $params_prefix $multiple
+# Where $params_prefix in the case of an option is the index
+# and the case of a command is the full command prefixed with "a:"
 switch() {
   # Run though remaining params and check if there is an argument-less option,
   # a command, or argument separator in there
@@ -413,6 +446,9 @@ switch() {
   return 1
 }
 
+# Signature: $var_name $params_prefix $multiple
+# Where $params_prefix in the case of an option is the index
+# and the case of an argument is just "a"
 value() {
   # Run though remaining params and check if there is an argument or an option
   # with an argument in there
