@@ -6,10 +6,22 @@ import shlex
 from collections import OrderedDict
 from . import __version__, DocoptError
 import docopt_parser as P
-from .bash import Code, indent, bash_ifs_value
-from .node import parse_doc, LeafNode, helper_list
+from .bash import Code, indent, bash_variable_name, bash_variable_value, bash_ifs_value
+from shlex import quote
 
 log = logging.getLogger(__name__)
+
+
+def get_leaves(memo, pattern):
+  if isinstance(pattern, P.Leaf):
+    memo.append(pattern)
+  return memo
+
+
+def get_groups(memo, pattern):
+  if isinstance(pattern, P.Group):
+    memo.append(pattern)
+  return memo
 
 
 class Parser(object):
@@ -19,44 +31,53 @@ class Parser(object):
     self.library = Library()
 
   def generate(self, script):
-    stripped_doc = '${{DOC:{start}:{length}}}'.format(
-      start=script.doc.trimmed_value_start,
-      length=len(script.doc.trimmed_value),
-    )
+    root = P.parse(script.doc.trimmed_value)
+    P.merge_identical_leaves(root, ignore_option_args=True)
+    (usage_start, usage_end) = root.mark.to_bytecount(script.doc.trimmed_value)
 
-    (usage_start, usage_end), nodes = parse_doc(script.doc.trimmed_value)
-    usage_doc = '${{DOC:{start}:{length}}}'.format(
-      start=str(script.doc.trimmed_value_start + usage_start),
-      length=str(usage_end - usage_start),
+    all_nodes = (
+      list(OrderedDict.fromkeys(root.reduce(get_leaves, [])))
+      + list(OrderedDict.fromkeys(root.reduce(get_groups, [])))
+      + [root]
+    )
+    node_sort_order = [P.Option, P.Argument, P.Command, P.ArgumentSeparator]
+    nodes = sorted(
+      all_nodes,
+      key=lambda p: node_sort_order.index(type(p)) if type(p) in node_sort_order else len(node_sort_order)
     )
 
     if self.parameters.library_path:
-      library = indent('''source {path} '{version}' || {{
+      library = indent(f'''source {self.parameters.library_path} '{__version__}' || {{
   ret=$?
   printf -- "exit %d\\n" "$ret"
   exit "$ret"
-}}'''.format(path=self.parameters.library_path, version=__version__), level=1)
+}}''', level=1)
     else:
-      helpers_needed = set([n.helper_name for n in nodes])
-      exclude = set(['docopt', 'lib_version_check'] + helper_list) - helpers_needed
+      exclude = ['docopt', 'lib_version_check'] + list(set(helper_list) - set(map(helper_name, nodes)))
       library = indent(str(self.library.generate_code(exclude=exclude)), level=1)
 
-    leaf_nodes = [n for n in nodes if type(n) is LeafNode]
+    leaf_nodes = [node for node in nodes if isinstance(node, P.Leaf)]
 
     replacements = {
       '  "LIBRARY"': library,
-      '"DOC VALUE"': stripped_doc,
-      '"DOC USAGE"': usage_doc,
+      '"DOC VALUE"': '${{DOC:{start}:{length}}}'.format(
+        start=script.doc.trimmed_value_start,
+        length=len(script.doc.trimmed_value),
+      ),
+      '"DOC USAGE"': '${{DOC:{start}:{length}}}'.format(
+        start=script.doc.trimmed_value_start + usage_start,
+        length=usage_end - usage_start,
+      ),
       '"DOC DIGEST"': hashlib.sha256(script.doc.untrimmed_value.encode('utf-8')).hexdigest()[0:5],
       '"OPTIONS"': ' '.join([bash_ifs_value(' '.join([
-          node.pattern.short_alias or '',
-          node.pattern.definition.ident if node.pattern.definition.ident.startswith('--') else '',
-          '1' if node.pattern.argname else '0',
-        ])) for node in leaf_nodes if type(node.pattern) is P.Option]),
-      '  "NODES"': indent('\n'.join(map(str, list(nodes))), level=1),
-      '  "OUTPUT VARNAMES ASSIGNMENTS"': indent('\n'.join([node.default_assignment for node in leaf_nodes]), level=1),
-      '"INTERNAL VARNAMES"': ' '.join(['var_%s' % node.variable_name for node in leaf_nodes]),
-      '"OUTPUT VARNAMES"': ' '.join(['"${p}%s"' % node.variable_name for node in leaf_nodes]),
+          node.short_alias or '',
+          node.definition.ident if node.definition.ident.startswith('--') else '',
+          '1' if node.argname else '0',
+        ])) for node in leaf_nodes if type(node) is P.Option]),
+      '  "NODES"': indent('\n'.join(map(str, map(lambda n: ast_cmd(n, nodes), nodes))), level=1),
+      '  "OUTPUT VARNAMES ASSIGNMENTS"': indent('\n'.join([default_assignment(node) for node in leaf_nodes]), level=1),
+      '"INTERNAL VARNAMES"': ' '.join([f'var_{var_name(node)}' for node in leaf_nodes]),
+      '"OUTPUT VARNAMES"': ' '.join([f'"${{p}}{var_name(node)}"' for node in leaf_nodes]),
       '  "EARLY RETURN"\n': '' if leaf_nodes else '  return 0\n',
       '"ROOT NODE IDX"': len(nodes) - 1,
     }
@@ -77,7 +98,7 @@ class Parser(object):
       # Ignore else .. if issue in parse_long,
       # see https://github.com/koalaman/shellcheck/issues/1584 for more details
       shellcheck_ignores.append('1075')
-    if any([type(node.pattern.default) is list for node in leaf_nodes]):
+    if any([type(node.default) is list for node in leaf_nodes]):
       # Unlike non-array values, array values will output a "declare -p var_..."
       # to check in what way they should be set (${var:-VAL} does not work with arrays)
       # So we ignore the "referenced but not assigned" error
@@ -182,3 +203,76 @@ class ParserParameters(object):
       command_short.append('<FILE')
     self.refresh_command = ' '.join(command)
     self.refresh_command_short = ' '.join(command_short)
+
+
+helper_list = ['sequence', 'choice', 'optional', 'repeatable', 'value', 'switch']
+
+
+def helper_name(node):
+  if isinstance(node, P.Group):
+    return {
+      P.Sequence: 'sequence',
+      P.Choice: 'choice',
+      P.Optional: 'optional',
+      P.Repeatable: 'repeatable',
+    }[type(node)]
+  elif type(node) is P.Argument or type(node.default) not in [bool, int]:
+    return 'value'
+  else:
+    return 'switch'
+
+
+def ast_cmd(node, sorted_nodes):
+  idx = sorted_nodes.index(node)
+  if isinstance(node, P.Group):
+    args = ' '.join([str(sorted_nodes.index(item)) for item in node.items])
+  else:
+    args = var_name(node)
+    if type(node) is P.Argument:
+      args += ' ' + bash_ifs_value('a')
+    else:
+      args += ' ' + bash_ifs_value(idx if type(node) is P.Option else f'a:{node.ident}')
+    if type(node.default) in [list, int]:
+      args += ' true'
+  return Code(f'node_{idx}(){{\n  {helper_name(node)} {args}\n}}\n')
+
+
+def var_name(node):
+  return bash_variable_name(
+    node.definition.ident if isinstance(node, P.Option) else node.ident
+  )
+
+
+def default_assignment(node):
+  variable_name = var_name(node)
+  if type(node.default) is list:
+    assignment1 = '{name}=("${{{docopt_name}[@]}}")'.format(
+      name=variable_name,
+      docopt_name='var_' + variable_name
+    )
+    assignment2 = '{name}={default}'.format(
+      name=variable_name,
+      default=bash_variable_value(node.default)
+    )
+    return (
+      'if declare -p {docopt_name} >/dev/null 2>&1; then\n'
+      '  eval "$p"{assignment1}\n'
+      'else\n'
+      '  eval "$p"{assignment2}\n'
+      'fi'
+    ).format(
+      docopt_name='var_' + variable_name,
+      assignment1=quote(assignment1),
+      assignment2=quote(assignment2)
+    )
+  else:
+    assignment = '{name}=${{{docopt_name}:-{default}}}'.format(
+      name=variable_name,
+      docopt_name='var_' + variable_name,
+      default=bash_variable_value(node.default)
+    )
+    return (
+      'eval "$p"{assignment}'
+    ).format(
+      assignment=quote(assignment)
+    )
