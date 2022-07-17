@@ -118,11 +118,7 @@ Run \`docopt.sh\` to refresh the parser."
   # $ prog command --val=optval "arg val" -s
   # -> (a:command 1:optval a:"arg val" 2:true)
   # It's basically a normalized version of $argv.
-  parsed=()
-  # Array containing indices of the remaining unparsed params.
-  # Initially filled with 0 through ${#parsed[@]}.
-  # Parsers will remove indices on successful parsing
-  left=()
+  params=()
   # Testing depth counter, when >0 nodes only check for potential matches.
   # When ==0 leafs will set the actual variable if a match is found.
   testdepth=0
@@ -134,7 +130,7 @@ Run \`docopt.sh\` to refresh the parser."
       # No more options allowed.
       # Parse everything from here on out as commands or arguments. Then break.
       for arg in "${argv[@]}"; do
-        parsed+=("a:$arg")
+        params+=("a:$arg")
       done
       break
     elif [[ ${argv[0]} = --* ]]; then
@@ -187,21 +183,21 @@ Run \`docopt.sh\` to refresh the parser."
             error "${long_match% *} must not have an argument"
           else
             # Add option as a switch
-            parsed+=("$match:true")
+            params+=("$match:true")
             # Unshift the param from argv
             argv=("${argv[@]:1}")
           fi
         else
           if [[ ${argv[0]} = *=* ]]; then
-            # --long=ARG given, add to parsed and unshift param
-            parsed+=("$match:${argv[0]#*=}")
+            # --long=ARG given, add to params and unshift param
+            params+=("$match:${argv[0]#*=}")
             argv=("${argv[@]:1}")
           else
             if [[ ${#argv[@]} -le 1 || ${argv[1]} = '--' ]]; then
               error "${long} requires argument"
             fi
-            # --long ARG given, add to parsed and unshift both params
-            parsed+=("$match:${argv[1]}")
+            # --long ARG given, add to params and unshift both params
+            params+=("$match:${argv[1]}")
             argv=("${argv[@]:2}")
           fi
         fi
@@ -233,8 +229,8 @@ Run \`docopt.sh\` to refresh the parser."
                 if [[ ${#argv[@]} -le 1 || ${argv[1]} = '--' ]]; then
                   error "${short} requires argument"
                 fi
-                # Add param to parsed and unshift the next param
-                parsed+=("$i:${argv[1]}")
+                # Add param to params and unshift the next param
+                params+=("$i:${argv[1]}")
                 # This is not the actual value param but rather the shortlist
                 # param. The value param will be unshifted at the end of the
                 # shortlist loop.
@@ -243,13 +239,13 @@ Run \`docopt.sh\` to refresh the parser."
                 break 2
               else
                 # The entire remaining part of the shortlist is the argument
-                parsed+=("$i:$remaining")
+                params+=("$i:$remaining")
                 # break out of the shortlist parsing loop, we're done
                 break 2
               fi
             else
-              # Option does not take an argument, add to parsed
-              parsed+=("$i:true")
+              # Option does not take an argument, add to params
+              params+=("$i:true")
               matched=true
               break
             fi
@@ -265,46 +261,39 @@ Run \`docopt.sh\` to refresh the parser."
       # First non-option encountered and all options must be specified first.
       # Parse everything from here on out as commands or arguments. Then break.
       for arg in "${argv[@]}"; do
-        parsed+=("a:$arg")
+        params+=("a:$arg")
       done
       break
     else
-      # Normal argument or command given, unshift to parsed and continue loop
-      parsed+=("a:${argv[0]}")
+      # Normal argument or command given, unshift to params and continue loop
+      params+=("a:${argv[0]}")
       argv=("${argv[@]:1}")
     fi
   done
 
-  # Populate the array of remaining indices to parse
-  i=0
-  while [[ $i -lt ${#parsed[@]} ]]; do
-    left+=("$i")
-    : $((i++))
-  done
-
   # Run through the parsing tree, fail if not all params could be parsed.
-  if ! "node_$root_idx" || [ ${#left[@]} -gt 0 ]; then
+  if ! "node_$root_idx" || [ ${#params[@]} -gt 0 ]; then
     error
   fi
   return 0
 }
 
 sequence() {
-  local initial_left=("${left[@]}") node_idx
+  local initial_params=("${params[@]}") node_idx
   # Increase testdepth, so we don't partially set variables and then fail
   : $((testdepth++))
   # Check if we can match the entire subtree
   for node_idx in "$@"; do
     if ! "node_$node_idx"; then
       # Unable to match the entire subtree, reset the remaining params
-      left=("${initial_left[@]}")
+      params=("${initial_params[@]}")
       : $((testdepth--))
       return 1
     fi
   done
   # Decrease testdepth and let subtree set the variables
   if [[ $((--testdepth)) -eq 0 ]]; then
-    left=("${initial_left[@]}")
+    params=("${initial_params[@]}")
     for node_idx in "$@"; do
       "node_$node_idx"
     done
@@ -313,20 +302,20 @@ sequence() {
 }
 
 choice() {
-  local initial_left=("${left[@]}") best_match_idx match_count node_idx
+  local initial_params=("${params[@]}") best_match_idx match_count node_idx
   # Increase testdepth, so that we can test all subtrees without setting variables
   : $((testdepth++))
   # Determine the best subtree match
   for node_idx in "$@"; do
     if "node_$node_idx"; then
       # Subtree matches
-      # Make it the best match if the previous best match consumed fewer params
-      if [[ -z $match_count || ${#left[@]} -lt $match_count ]]; then
+      if [[ -z $match_count || ${#params[@]} -lt $match_count ]]; then
+        # More params consumed than last iteration, best match so far
         best_match_idx=$node_idx
-        match_count=${#left[@]}
+        match_count=${#params[@]}
       fi
     fi
-    left=("${initial_left[@]}")
+    params=("${initial_params[@]}")
   done
   # Check if any subtree matched
   if [[ -n $best_match_idx ]]; then
@@ -337,7 +326,7 @@ choice() {
     return 0
   fi
   # No subtree matched, reset the remaining params
-  left=("${initial_left[@]}")
+  params=("${initial_params[@]}")
   return 1
 }
 
@@ -352,15 +341,15 @@ optional() {
 }
 
 repeatable() {
-  local matched=false prev=${#left[@]}
+  local matched=false remaining=${#params[@]}
   # Parse until we can't any longer
   while "node_$1"; do
     matched=true
     # Nothing was removed from the remaining params, so stop looping
     # This happens when an optional param can be repeated.
     # An optional subtree parser never fails.
-    [[ $prev -eq ${#left[@]} ]] && break
-    prev=${#left[@]}
+    [[ $remaining -eq ${#params[@]} ]] && break
+    remaining=${#params[@]}
   done
   if $matched; then
     return 0
@@ -400,7 +389,6 @@ repeatable() {
 # Invocation:
 #   $ prog -a X
 # params=(0:true a:X)
-# left=(0 1)
 # We invoked it the other way around, one would expect this to fail, because
 # sequence would expect to get the argument ARG and then the <Choice>.
 #
@@ -409,9 +397,9 @@ repeatable() {
 # When parsing the sequence, we start with node_2 which expects the argument.
 # It succeeds because -a is an option and therefore it's skipped.
 # Then the argument is found as the second entry in $params.
-# That entry is now removed from $left.
+# That entry is now removed from $params.
 # Then we parse the choice with node_3, which expects -a or -b.
-# The only remaining entry in $left is 1 (0:true in $params)
+# The only remaining entry in $params "0:true"
 # So all we have now is the remaining "-a", which is then successfully parsed.
 
 # Signature: $var_name $params_prefix $multiple
@@ -420,12 +408,12 @@ repeatable() {
 switch() {
   # Run though remaining params and check if there is an argument-less option,
   # a command, or argument separator in there
-  local i
-  for i in "${!left[@]}"; do
-    local l=${left[$i]}
-    if [[ ${parsed[$l]} = "$2" || ${parsed[$l]} = "$2":* ]]; then
+  local i param
+  for i in "${!params[@]}"; do
+    local param=${params[$i]}
+    if [[ $param = "$2" || $param = "$2":* ]]; then
       # Name of the option/command matches, remove the param from remaining params
-      left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
+      params=("${params[@]:0:$i}" "${params[@]:((i+1))}")
       [[ $testdepth -gt 0 ]] && return 0
       # Set the variable if we are not in testing mode
       if [[ $3 = true ]]; then
@@ -436,7 +424,7 @@ switch() {
         eval "var_$1=true"
       fi
       return 0
-    elif [[ ${parsed[$l]} = a:* && $2 = a:* ]]; then
+    elif [[ $param = a:* && $2 = a:* ]]; then
       # Fail if we were to parse a non-option and we encountered a non-option
       # where the name doesn't match
       return 1
@@ -452,16 +440,16 @@ switch() {
 value() {
   # Run though remaining params and check if there is an argument or an option
   # with an argument in there
-  local i
-  for i in "${!left[@]}"; do
-    local l=${left[$i]}
-    if [[ ${parsed[$l]} = "$2":* ]]; then
+  local i param
+  for i in "${!params[@]}"; do
+    local param=${params[$i]}
+    if [[ $param = "$2":* ]]; then
       # Argument or option matches, remove the param from remaining params
-      left=("${left[@]:0:$i}" "${left[@]:((i+1))}")
+      params=("${params[@]:0:$i}" "${params[@]:((i+1))}")
       [[ $testdepth -gt 0 ]] && return 0
       # Set the variable if we are not in testing mode
       local value
-      value=$(printf -- "%q" "${parsed[$l]#*:}")
+      value=$(printf -- "%q" "${param#*:}")
       if [[ $3 = true ]]; then
         # Value is repeatable, add it to the array
         eval "var_$1+=($value)"
