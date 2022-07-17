@@ -12,7 +12,7 @@ def test_usecase(monkeypatch, capsys, usecase, bash):
 
 
 def run_usecase(monkeypatch, capsys, usecase, bash):
-  file, lineno, _, doc, prog, argv, expect = usecase
+  file, lineno, _, doc, prog, argv, type, expect = usecase
   program_template = '''
 DOC="{doc}"
 "DOCOPT PARAMS"
@@ -28,7 +28,9 @@ fi
     docopt_params={'DOCOPT_PREFIX': '_usecase_'}
   )
   code, out, err = run(bash, *shlex.split(argv))
-  if code == 0:
+  if type == '>':
+    result = {'code': code, 'stdout': out, 'stderr': err}
+  elif code == 0:
     expr = re.compile('^declare (--|-a) ([^=]+)=')
     out = out.strip('\n')
     result = {}
@@ -37,23 +39,23 @@ fi
     if out != '':
       for line in out.split('\n'):
         if expr.match(line) is None:
-          raise Exception('Unable to match %s for usecase %s:%d' % (file, line, lineno))
+          raise Exception('Unable to match output for usecase %s:%d: %s' % (file, lineno, line))
         result[expr.match(line).group(2)] = line
   else:
     result = 'user-error'
-  return Usecase(file, lineno, bash[0], doc, prog, argv, result)
+  return Usecase(file, lineno, bash[0], doc, prog, argv, type, result)
 
 
 def convert_to_bash(bash, usecase):
-  file, lineno, _, doc, prog, argv, expect = usecase
-  if expect == 'user-error':
+  file, lineno, _, doc, prog, argv, type, expect = usecase
+  if type == '>' or expect == 'user-error':
     declarations = expect
   else:
     declarations = {}
     for key, value in expect.items():
       var = '_usecase_' + re.sub(r'^[^a-z_]|[^a-z0-9_]', '_', key, 0, re.IGNORECASE)
       declarations[var] = bash_decl(bash[0], var, value)
-  return Usecase(file, lineno, bash[0], doc, prog, argv, declarations)
+  return Usecase(file, lineno, bash[0], doc, prog, argv, type, declarations)
 
 
 def bash_decl(bash_version, name, value):
