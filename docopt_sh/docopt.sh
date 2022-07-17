@@ -110,8 +110,17 @@ Run \`docopt.sh\` to refresh the parser."
     elif [[ ${argv[0]} = --* ]]; then
       # Parse long
       local long=${argv[0]%%=*}
-      local similar=() match=false
+      # Bail early if it's a built-in option
+      if ${DOCOPT_ADD_HELP:-true} && [[ $long = "--help" ]]; then
+        # shellcheck disable=SC2154
+        stdout "$trimmed_doc"
+        _return 0
+      elif [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' && $long = "--version" ]]; then
+        stdout "$DOCOPT_PROGRAM_VERSION"
+        _return 0
+      fi
       # Try matching the full long option first
+      local similar=() match=false
       i=0
       for o in "${options[@]}"; do
         if [[ $o = *" $long "? ]]; then
@@ -137,17 +146,8 @@ Run \`docopt.sh\` to refresh the parser."
         # ambiguous prefix found (e.g. --l matches the options --lat and --long)
         error "${long} is not a unique prefix: ${similar[*]}?"
       elif [[ ${#similar[@]} -lt 1 ]]; then
-        # No match found, might be --help or --version
-        if ${DOCOPT_ADD_HELP:-true} && [[ $long = "--help" ]]; then
-          # shellcheck disable=SC2154
-          stdout "$trimmed_doc"
-          _return 0
-        elif [[ ${DOCOPT_PROGRAM_VERSION:-false} != 'false' && $long = "--version" ]]; then
-          stdout "$DOCOPT_PROGRAM_VERSION"
-          _return 0
-        else
-          error
-        fi
+        # No match found
+        error
       else
         # Match found
         if [[ ${options[$match]} = *0 ]]; then
@@ -182,7 +182,14 @@ Run \`docopt.sh\` to refresh the parser."
       local remaining=${argv[0]#-}
       while [[ -n $remaining ]]; do
         # Parse one short at a time
-        local short="-${remaining:0:1}" matched=false
+        local short="-${remaining:0:1}"
+        # Bail early if it's a built-in option
+        if ${DOCOPT_ADD_HELP:-true} && [[ $short = "-h" ]]; then
+          # shellcheck disable=SC2154
+          stdout "$trimmed_doc"
+          _return 0
+        fi
+        local matched=false
         # Unshift current short from list of remaining shorts
         remaining="${remaining:1}"
         i=0
@@ -219,16 +226,8 @@ Run \`docopt.sh\` to refresh the parser."
           fi
           : $((i++))
         done
-        if ! $matched; then
-          # No match found, check if it's -h
-          if ${DOCOPT_ADD_HELP:-true} && [[ $short = "-h" ]]; then
-            # shellcheck disable=SC2154
-            stdout "$trimmed_doc"
-            _return 0
-          else
-            error
-          fi
-        fi
+        # No match found
+        $matched || error
       done
       # Unshift the param
       argv=("${argv[@]:1}")

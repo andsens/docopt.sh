@@ -937,21 +937,3 @@ r"""Usage:
 NOT PART OF SECTION"""
 $ prog --foo
 {"--foo": true, "--bar": false}
-
-#
-# Options-section syntax
-#
-
-r"""Usage: prog [options]
-
-global options: --foo
-local options: --baz
-               --bar
-other options:
- --egg
- --spam
--not-an-option-
-
-"""
-$ prog --baz --egg
-{"--foo": false, "--baz": true, "--bar": false, "--egg": true, "--spam": false}
