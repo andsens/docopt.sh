@@ -70,13 +70,9 @@ class Parser(object):
         length=usage_end - usage_start,
       ),
       '"DOC DIGEST"': hashlib.sha256(script.doc.untrimmed_value.encode('utf-8')).hexdigest()[0:5],
-      '"OPTIONS"': ' '.join([bash_ifs_value(' '.join([
-          node.short_alias or '',
-          node.definition.ident if node.definition.ident.startswith('--') else '',
-          '1' if node.argname else '0',
-        ])) for node in leaf_nodes if type(node) is P.Option]),
+      '"OPTIONS"': generate_options_array(leaf_nodes),
       '  "NODES"': indent('\n'.join(map(str, map(lambda n: ast_cmd(n, nodes), nodes))), level=1),
-      '  "OUTPUT VARNAMES ASSIGNMENTS"': indent('\n'.join([default_assignment(node) for node in leaf_nodes]), level=1),
+      '  "OUTPUT VARNAMES ASSIGNMENTS"': generate_default_assignments(leaf_nodes),
       '"INTERNAL VARNAMES"': ' '.join([f'var_{var_name(node)}' for node in leaf_nodes]),
       '"OUTPUT VARNAMES"': ' '.join([f'"${{p}}{var_name(node)}"' for node in leaf_nodes]),
       '  "EARLY RETURN"\n': '' if leaf_nodes else '  return 0\n',
@@ -244,36 +240,33 @@ def var_name(node):
   )
 
 
-def default_assignment(node):
-  variable_name = var_name(node)
-  if type(node.default) is list:
-    assignment1 = '{name}=("${{{docopt_name}[@]}}")'.format(
-      name=variable_name,
-      docopt_name='var_' + variable_name
-    )
-    assignment2 = '{name}={default}'.format(
-      name=variable_name,
-      default=bash_variable_value(node.default)
-    )
-    return (
-      'if declare -p {docopt_name} >/dev/null 2>&1; then\n'
-      '  eval "$p"{assignment1}\n'
-      'else\n'
-      '  eval "$p"{assignment2}\n'
-      'fi'
-    ).format(
-      docopt_name='var_' + variable_name,
-      assignment1=quote(assignment1),
-      assignment2=quote(assignment2)
-    )
-  else:
-    assignment = '{name}=${{{docopt_name}:-{default}}}'.format(
-      name=variable_name,
-      docopt_name='var_' + variable_name,
-      default=bash_variable_value(node.default)
-    )
-    return (
-      'eval "$p"{assignment}'
-    ).format(
-      assignment=quote(assignment)
-    )
+def generate_options_array(leaf_nodes):
+  return ' '.join([bash_ifs_value(' '.join([
+    node.short_alias or '',
+    node.definition.ident if node.definition.ident.startswith('--') else '',
+    '1' if node.argname else '0',
+  ])) for node in leaf_nodes if type(node) is P.Option])
+
+
+def generate_default_assignments(leaf_nodes):
+  list_assignments = []
+  value_assignments = []
+  for node in leaf_nodes:
+    variable_name = var_name(node)
+    if type(node.default) is list:
+      reassignment = f'{variable_name}=("${{var_{variable_name}[@]}}")'
+      default_assignment = f'{variable_name}={bash_variable_value(node.default)}'
+      list_assignments.append(
+        f'if declare -p var_{variable_name} >/dev/null 2>&1; then\n'
+        f'  eval "$p"{quote(reassignment)}\n'
+        'else\n'
+        f'  eval "$p"{quote(default_assignment)}\n'
+        'fi'
+      )
+    else:
+      assignment = f'{variable_name}=${{var_{variable_name}:-{bash_variable_value(node.default)}}};'
+      value_assignments.append(f'"$p"{quote(assignment)}')
+  joined_list_assignments = '\n'.join(list_assignments)
+  joined_value_assignments = 'eval ' + '\\\n'.join(value_assignments) + '\n'
+
+  return indent(joined_list_assignments + '\n' + joined_value_assignments, level=1)
