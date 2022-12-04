@@ -4,6 +4,10 @@ docopt() {
   # This function will always be directly inlined in the script.
   # It contains all the specifics of $DOC, while the remaining functions
   # are generic. All strings with uppercase letters a placeholders.
+  # The code relies heavily on global variables. Since docopt is called
+  # in a subshell, this shouldn't be a problem for the caller. It does
+  # however mean that we must initialize all global variables before use to
+  # avoid weird behavior caused by naming clashes.
 
   # The library, can be either the complete inline definition of all functions
   # or a `source` call
@@ -21,7 +25,7 @@ docopt() {
   # * short name
   # * long name
   # * argcount (0 or 1)
-  # the items space separated. The order matches the AST node numbering
+  # The items are space separated. The order matches the AST node numbering
   options=("OPTIONS")
   # This is the AST representing the parsed doc.
   "NODES"
@@ -102,11 +106,11 @@ Run \`docopt.sh\` to refresh the parser."
     fi
   fi
 
-  # The AST nodes are indexed. To simplify the code leaf nodes come first.
+  # The AST nodes are indexed. To simplify, the code leaf nodes come first.
   # This allows us to reuse that index in the options array.
   # This also means that the root node isn't 0, so we need to pass that around.
   local root_idx=$1
-  # All remaining arguments are actual arguments to the program
+  # All remaining arguments are actual parameters to the program
   shift
 
   #
@@ -114,9 +118,9 @@ Run \`docopt.sh\` to refresh the parser."
   #
   # Since options can be specified anywhere in the invocation, we cannot simply
   # traverse the generated AST and expect everything to be in its proper place.
-  # Additionaly, an option with an argument can be one or two arguments
+  # Additionally, an option with an argument can be one or two words
   # (--long ARG vs. --long=ARG, or -a ARG vs. -aARG), while multiple short
-  # options can be a single argument (-a -b -c vs. -abc).
+  # options can be a single word (-a -b -c vs. -abc).
   # That is why we do a little pre-parsing of $argv by constructing the "parsed"
   # array. The array contains one parameter value per entry.
   # Each entry is prefixed, with either 'a:', meaning it's a non-option,
@@ -126,12 +130,16 @@ Run \`docopt.sh\` to refresh the parser."
   # $ prog command --val=optval "arg val" -s
   # -> (a:command 1:optval a:"arg val" 2:true)
   # It's basically a normalized version of $argv.
+
+  # Global params array
   params=()
-  # Testing depth counter, when >0 nodes only check for potential matches.
+  # Global testing depth counter.
+  # When >0, nodes only check for potential matches.
   # When ==0 leafs will set the actual variable if a match is found.
   testdepth=0
 
-  # unshift the parameters and parse them one param at a time
+  # Parse argv one word at a time by examining index 0 and then unshifting
+  # every parsed word (argv=("${argv[@]:1}"))
   local argv=("$@") arg i o
   while [[ ${#argv[@]} -gt 0 ]]; do
     if [[ ${argv[0]} = "--" ]]; then
@@ -156,6 +164,8 @@ Run \`docopt.sh\` to refresh the parser."
       # Try matching the full long option first
       local similar=() match=false
       i=0
+      # When used as a library, $options is defined in the sourcing scope
+      # shellcheck disable=2154
       for o in "${options[@]}"; do
         if [[ $o = *" $long "? ]]; then
           similar+=("$long")
@@ -165,7 +175,9 @@ Run \`docopt.sh\` to refresh the parser."
         : $((i++))
       done
       if [[ $match = false ]]; then
-        # No exact match was found, check for a prefix match
+        # No exact match was found, check for a prefix match.
+        # I'm not a big fan of allowing users to shorten long options, but it's
+        # part of the docopt spec (and presumably POSIX), so we implement it.
         i=0
         for o in "${options[@]}"; do
           if [[ $o = *" $long"*? ]]; then
@@ -397,7 +409,7 @@ repeatable() {
 # Invocation:
 #   $ prog -a X
 # params=(0:true a:X)
-# We invoked it the other way around, one would expect this to fail, because
+# If we invoked it the other way around, one would expect this to fail, because
 # sequence would expect to get the argument ARG and then the <Choice>.
 #
 # However, the behavior and interaction between the two leaf parsers ensures
@@ -412,7 +424,7 @@ repeatable() {
 
 # Signature: $var_name $params_prefix $multiple
 # Where $params_prefix in the case of an option is the index
-# and the case of a command is the full command prefixed with "a:"
+# and in the case of a command is the full command prefixed with "a:"
 switch() {
   # Run though remaining params and check if there is an argument-less option,
   # a command, or argument separator in there
@@ -444,7 +456,7 @@ switch() {
 
 # Signature: $var_name $params_prefix $multiple
 # Where $params_prefix in the case of an option is the index
-# and the case of an argument is just "a"
+# and in the case of an argument is just "a"
 value() {
   # Run though remaining params and check if there is an argument or an option
   # with an argument in there
