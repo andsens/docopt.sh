@@ -1,0 +1,6 @@
+{
+  "name": "docopt.sh",
+  "version": "1.0.0-bpkg",
+  "description": "The library component for docopt.sh. Does not contain the parser generator (yet).",
+  "scripts": ["docopt-lib.sh"]
+}
