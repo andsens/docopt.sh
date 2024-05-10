@@ -81,7 +81,8 @@ def minify(parser_str, max_length):
   lines = remove_leading_spaces(lines)
   lines = remove_empty_lines(lines)
   lines = remove_comments(lines)
-  lines = continuate_all_spaces(lines)
+  lines = continuate_spaces(lines)
+  lines = split_sq_strings(lines)
   lines = remove_newlines(lines, max_length)
   return '\n'.join(lines) + '\n'
 
@@ -103,11 +104,21 @@ def remove_comments(lines):
       yield line
 
 
-def continuate_all_spaces(lines):
+def continuate_spaces(lines):
   for line in lines:
     # Split whenever there's a space, but make sure to keep single quoted
     # strings on one line
     yield from re.sub(r"('[^']* [^']*')|( )", r'\1\2\\\n', line).split('\n')
+
+
+def split_sq_strings(lines):
+  for line in lines:
+    # Split every character in a single quoted string
+    yield from re.sub(
+      r"'([^']+)'",
+      lambda sq: ''.join(map(lambda c: f"'{c}'\\\n", sq.group(1))),
+      line,
+    ).split('\n')
 
 
 def remove_newlines(lines, max_length):
@@ -128,6 +139,7 @@ def remove_newlines(lines, max_length):
   previous = next(lines)
   for line in lines:
     combined = combine(previous, line)
+    combined = merge_sq_strings(combined)
     if len(combined) > max_length:
       yield previous
       previous = line
@@ -135,3 +147,10 @@ def remove_newlines(lines, max_length):
       previous = combined
   if previous:
     yield previous
+
+
+def merge_sq_strings(line):
+  # We don't need to look for more than a single pair, because
+  # all strings were on their own line and remove_newlines()
+  # merges one line at a time
+  return re.sub(r"'([^']+)''([^']+)'", r"'\1\2'", line)
