@@ -2,26 +2,31 @@ name: Lint & test
 
 on:
   push:
-    branches: [ '*' ]
+    branches: ['*']
+    tags:
+    - '*'
+    - '!v*' # Don't run on version tags, instead the release workflow will include this file and call the build step
+  workflow_call: {}
   pull_request:
-    branches: [ '*' ]
+    branches: ['*']
 
 jobs:
   lint:
-
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout the project
-      uses: actions/checkout@v2
-    - name: Set up Python 3.8
-      uses: actions/setup-python@v2
+      uses: actions/checkout@v4
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.8'
+        python-version: '3.11'
+    - name: Cache virtualenv
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv
     - name: Install dependencies
-      run: |
-        pip --disable-pip-version-check --no-cache-dir install --user poetry
-        poetry install
+      run: .devcontainer/post.sh
     - name: Lint with shellcheck
       uses: ludeeus/action-shellcheck@master
       with:
@@ -29,31 +34,33 @@ jobs:
     - name: Lint with flake8
       run: |
         # error out if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        .venv/bin/flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+        .venv/bin/flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
   test-python:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
-
+        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
     steps:
     - name: Checkout the project
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Cache virtualenv
+      uses: actions/cache@v4
+      with:
+        path: .venv
+        key: venv
     - name: Install dependencies
       run: .devcontainer/post.sh
     - name: Test with pytest
-      run: pytest
+      run: .venv/bin/pytest
 
   test-bash:
-
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -61,15 +68,17 @@ jobs:
         bash-version: ['3.2', '3.2.48', '3.2.57', '4.0', '4.1', '4.2', '4.3', '4.3.30', '4.4', '5.0']
     steps:
     - name: Checkout the project
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.8'
+        python-version: '3.11'
     - name: Install dependencies
       run: .devcontainer/post.sh
+    - name: Add .venv/bin to path
+      run: printf "$PWD/.venv/bin" >> $GITHUB_PATH
     - name: Cache bash versions
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       env:
         cache-name: bash-version
       with:

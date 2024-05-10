@@ -5,12 +5,14 @@ docopt.sh - Bash argument parser generator.
 """
 # The "... Usage: ..." above contains a zero-width space between `Usage` and `:`
 # in order to prevent docopt from parsing it as a `usage:`` section
+import importlib.metadata
+
+try:
+  __version__ = importlib.metadata.version('docopt-sh')
+except importlib.metadata.PackageNotFoundError:
+  __version__ = '0.0.0-dev'
 
 __all__ = ['docopt_sh']
-try:
-  from .version import __version__
-except ImportError:
-  __version__ = '0.0.0-dev'
 
 
 class DocoptError(Exception):

@@ -2,61 +2,30 @@ name: Create release
 
 on:
   push:
-    tags:
-    - 'v*'
+    tags: ['v*']
 
 jobs:
-  create-release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
-    steps:
-      - name: Determine tag name
-        id: tag-name
-        env:
-          REF: ${{ github.ref }}
-        run: |
-          printf "::set-output name=tag::%s\n" "$(basename "${{ github.ref }}")"
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ steps.tag-name.outputs.tag }}
-      - name: Get release notes from tag
-        id: tag-message
-        env:
-          REF: ${{ github.ref }}
-        run: |
-          MESSAGE=$(git tag -l --format='%(contents)' "${{ steps.tag-name.outputs.tag }}")
-          MESSAGE=${MESSAGE//'%'/'%25'}
-          MESSAGE=${MESSAGE//$'\n'/'%0A'}
-          MESSAGE=${MESSAGE//$'\r'/'%0D'}
-          printf "::set-output name=message::%s\n" "$MESSAGE"
-      - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.tag-name.outputs.tag }}
-          release_name: ${{ steps.tag-name.outputs.tag }}
-          body: ${{ steps.tag-message.outputs.message }}
-          draft: false
-          prerelease: false
-
+  test:
+    uses: ./.github/workflows/test.yaml
   publish:
-
+    needs: [test]
     runs-on: ubuntu-latest
-
+    environment: release
+    permissions:
+      id-token: write
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.8'
-    - name: Set release version from tag name
-      id: release-version
-      env:
-        REF: ${{ github.ref }}
-      run: printf "__version__ = \"%s\"\n" "${REF/#refs\/tags\/v/}" > docopt_sh/version.py
+        python-version: '3.11'
     - name: Install dependencies
       run: .devcontainer/post.sh
-    - name: Build and publish
-      run: poetry publish -u __token__ -p ${{ secrets.PYPI_PASSWORD }}
+    - name: Set version
+      run: poetry version ${REF/#refs\/tags\/v/}
+      env:
+        REF: ${{ github.ref }}
+    - name: Build
+      run: poetry build
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1.8
