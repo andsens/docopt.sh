@@ -7,7 +7,8 @@ on:
 jobs:
   test:
     uses: ./.github/workflows/test.yaml
-  publish:
+  pypi-publish:
+    name: Publish docopt.sh to PyPI
     needs: [test]
     runs-on: ubuntu-latest
     environment: release
@@ -29,3 +30,53 @@ jobs:
       run: poetry build
     - name: Publish package distributions to PyPI
       uses: pypa/gh-action-pypi-publish@release/v1.8
+  docopt-lib-release:
+    needs: [test]
+    name: Create docopt-lib.sh GitHub Release
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+    - name: Determine version
+      id: version
+      run: printf "tag=%s\n" "${REF#refs\/tags\/}" >> $GITHUB_OUTPUT
+      env:
+        REF: ${{ github.ref }}
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ steps.version.outputs.tag }}
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Create release tarball
+      run: |
+        .devcontainer/post.sh
+        poetry version ${{ steps.version.outputs.tag }}
+        poetry install
+        mkdir dist
+        .venv/bin/docopt.sh generate-library >dist/docopt-lib.sh
+        cd dist
+        printf '{
+          "name": "docopt-lib.sh",
+          "version": "${{ steps.version.outputs.tag }}"
+        }' >upkg.json
+        tar -czf ../docopt-lib.sh-${{ steps.version.outputs.tag }}.tar.gz *
+    - name: Get release notes from tag
+      id: tag-message
+      run: |
+        eof="$(openssl rand -hex 8)"
+        msg=$(git tag -l --format='%(contents)' "${{ steps.version.outputs.tag }}")
+        msg=${msg%%'-----BEGIN'*}
+        printf "message<<%s\n%s\n%s\n" "$eof" "$msg" "$eof" >> $GITHUB_OUTPUT
+      env:
+        REF: ${{ github.ref }}
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      with:
+        name: ${{ steps.version.outputs.tag }}
+        body: ${{ steps.tag-message.outputs.message }}
+        draft: false
+        prerelease: false
+        artifacts: docopt-lib.sh-${{ steps.version.outputs.tag }}.tar.gz
+        artifactErrorsFailBuild: true
+        artifactContentType: application/gzip
