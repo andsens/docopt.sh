@@ -406,3 +406,11 @@ DOCOPT_ADD_HELP=false
   assert (
     'STDIN:4 $DOCOPT_ADD_HELP has no effect when specified after invoking docopt, '
     + 'make sure to place docopt options before calling `eval "$(docopt "$@")"`.') in err
+
+
+def test_multibyte_doc(monkeypatch, capsys, bash):
+  run = patch_file(monkeypatch, capsys, 'multibyte_doc.sh')
+  code, out, err = run(bash, 'invalid')
+  assert err == 'Usage: uprog.sh [options]\n'
+  assert code == 1
+  assert out == ''
