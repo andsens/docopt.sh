@@ -101,7 +101,7 @@ def setup_logging():
 
 def main():
   setup_logging()
-  params = docopt.docopt(__doc__, version=__version__)
+  params = docopt.docopt(__doc__, version=__version__)  # type: ignore
   docopt_sh(params)
 
 

@@ -119,7 +119,7 @@ def get_installed_bash_versions():
   versions = [get_system_bash()]
   for executable in glob.glob('tests/bash-versions/bash-*/bash'):
     folder_name = os.path.basename(os.path.dirname(executable))
-    versions.append((parse_version(re.search(r'bash-(.+)', folder_name).group(1)), executable))
+    versions.append((parse_version(re.search(r'bash-(.+)', folder_name).group(1)), executable))  # type: ignore
   return versions
 
 

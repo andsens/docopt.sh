@@ -94,7 +94,7 @@ class Parser(object):
       # Ignore else .. if issue in parse_long,
       # see https://github.com/koalaman/shellcheck/issues/1584 for more details
       shellcheck_ignores.append('1075')
-    if any([type(node.default) is list for node in leaf_nodes]):
+    if any([type(node.default) is list for node in leaf_nodes]):  # type: ignore
       # Unlike non-array values, array values will output a "declare -p var_..."
       # to check in what way they should be set (${var:-VAL} does not work with arrays)
       # So we ignore the "referenced but not assigned" error
@@ -211,7 +211,7 @@ def helper_name(node):
       P.Choice: 'choice',
       P.Optional: 'optional',
       P.Repeatable: 'repeatable',
-    }[type(node)]
+    }[type(node)]  # type: ignore
   elif type(node) is P.Argument or type(node.default) not in [bool, int]:
     return 'value'
   else:

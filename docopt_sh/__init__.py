@@ -12,8 +12,6 @@ try:
 except importlib.metadata.PackageNotFoundError:
   __version__ = '0.0.0-dev'
 
-__all__ = ['docopt_sh']
-
 
 class DocoptError(Exception):
   def __init__(self, message, exit_code=1):
