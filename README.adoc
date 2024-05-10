@@ -96,8 +96,8 @@ shipped as a single file.
 To reduce the amount of code added to the it, the script will only contain a
 parser made for that specific help text. For that reason there is no need for
 the generator itself to be written in bash, instead that part is written in
-Python 3. Though, this also means that you have to regenerate your parser every
-time you change the help text (see link:#on-the-fly-parser-generation[On-the-fly
+Python 3.11. Though, this also means that you have to regenerate your parser
+every time you change the help text (see link:#on-the-fly-parser-generation[On-the-fly
 parser generation] for automating that part while developing).
 
 ==== Local vs. global variables
