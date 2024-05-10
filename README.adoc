@@ -60,22 +60,22 @@ and reusing them.
 === Table of contents
 
 Introduction::
-  ** link:#quick-start[Quick start]
-  ** link:#installation[Installation]
-  ** link:#how-it-works[How it works]
-  ** link:#local-vs.-global-variables[Local vs. global variables]
-  ** link:#refreshing-the-parser[Refreshing the parser]
-  ** link:#parser-output[Parser output]
+- link:#quick-start[Quick start]
+- link:#installation[Installation]
+- link:#how-it-works[How it works]
+- link:#local-vs.-global-variables[Local vs. global variables]
+- link:#refreshing-the-parser[Refreshing the parser]
+- link:#parser-output[Parser output]
 
 Advanced usage::
-  ** link:#commandline-options[Commandline options]
-  ** link:#parser-options[Parser options]
-  ** link:#exiting-with-a-usage-message[Exiting with a usage message]
-  ** link:#library-mode[Library mode]
-  ** link:#on-the-fly-parser-generation[On-the-fly parser generation]
+- link:#commandline-options[Commandline options]
+- link:#parser-options[Parser options]
+- link:#exiting-with-a-usage-message[Exiting with a usage message]
+- link:#library-mode[Library mode]
+- link:#on-the-fly-parser-generation[On-the-fly parser generation]
 
 Developers::
-  ** link:#testing[Testing]
+- link:#testing[Testing]
 
 === Installation
 
