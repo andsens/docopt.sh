@@ -223,6 +223,9 @@ def helper_name(node):
 def ast_cmd(node, sorted_nodes):
   idx = sorted_nodes.index(node)
   if isinstance(node, P.Group):
+    if len(sorted_nodes) == 1 and isinstance(node, P.Sequence):
+      # noop program. Avoid a shellcheck error by calling `sequence` without params
+      return Code(f'# parsing is a no-op\nnode_{idx}(){{\n  return 0\n}}\n')
     args = ' '.join([str(sorted_nodes.index(item)) for item in node.items])
   else:
     args = var_name(node)
