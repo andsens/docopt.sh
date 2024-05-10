@@ -4,18 +4,14 @@
   "postCreateCommand": ".devcontainer/post.sh",
   "containerUser": "vscode",
   "updateRemoteUserUID": true,
-  "mounts": [
-    "source=${localWorkspaceFolder}/../docopt-parser,target=/workspaces/docopt-parser,type=bind"
-  ],
   "customizations": {
     "vscode": {
       "settings": {
-        "python.analysis.typeCheckingMode": "strict",
+        "python.defaultInterpreterPath": ".venv/bin/python",
+        "python.analysis.typeCheckingMode": "basic",
         "python.poetryPath": "${userHome}/.local/bin/poetry",
         "python.testing.pylintEnabled": true,
         "python.testing.pytestEnabled": true,
-        "python.testing.pytestPath": "./.venv/bin/pytest",
-        "python.venvPath": "./.venv",
         "terminal.integrated.env.linux": {
           "VIRTUAL_ENV_DISABLE_PROMPT": "true"
         },

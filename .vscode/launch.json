@@ -3,7 +3,7 @@
 	"configurations": [
 		{
 			"name": "docopt.sh",
-			"type": "python",
+			"type": "debugpy",
 			"request": "launch",
 			"module": "docopt_sh"
 		}
