@@ -27,9 +27,14 @@ docopt() {
   # * argcount (0 or 1)
   # The items are space separated. The order matches the AST node numbering
   options=("OPTIONS")
-  # This is the AST representing the parsed doc.
+  # This is the AST representing the parsed doc. The last node is the root.
+  # Options are first, as mentioned above. The comments above each node is
+  # shows what part of the DOC it is parsing (with line numbers).
+
   "NODES"
 
+  # Exit function that is callable from the parent shell. It outputs an
+  # optional error message and then prints the usage part of the doc
   # shellcheck disable=2016
   cat <<<' docopt_exit() {
   [[ -n $1 ]] && printf "%s\n" "$1" >&2

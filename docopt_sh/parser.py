@@ -71,7 +71,9 @@ class Parser(object):
       ),
       '"DOC DIGEST"': hashlib.sha256(script.doc.untrimmed_value.encode('utf-8')).hexdigest()[0:5],
       '"OPTIONS"': generate_options_array(leaf_nodes),
-      '  "NODES"': indent('\n'.join(map(str, map(lambda n: ast_cmd(n, nodes), nodes))), level=1),
+      '  "NODES"': indent('\n'.join(
+        map(str, map(lambda n: ast_cmd(n, nodes, script.doc.trimmed_value), nodes))), level=1
+      ),
       '"VARNAMES"': ' '.join([bash_ifs_value(var_name(node)) for node in leaf_nodes]),
       '  "OUTPUT VARNAMES ASSIGNMENTS"': generate_default_assignments(leaf_nodes),
       '  "EARLY RETURN"\n': '' if leaf_nodes else '  return 0\n',
@@ -220,7 +222,7 @@ def helper_name(node):
     return 'switch'
 
 
-def ast_cmd(node, sorted_nodes):
+def ast_cmd(node, sorted_nodes, doc):
   idx = sorted_nodes.index(node)
   if isinstance(node, P.Group):
     if len(sorted_nodes) == 1 and isinstance(node, P.Sequence):
@@ -235,7 +237,9 @@ def ast_cmd(node, sorted_nodes):
       args += ' ' + bash_ifs_value(idx if type(node) is P.Option else f'a:{node.ident}')
     if type(node.default) in [list, int]:
       args += ' true'
-  return Code(f'node_{idx}(){{\n  {helper_name(node)} {args}\n}}\n')
+  # Show where in the DOC the parsing node originates from
+  marked_source = '\n'.join(map(lambda line: f'# {line}', node.mark.show(doc).split('\n')))
+  return Code(f'{marked_source}\nnode_{idx}(){{\n  {helper_name(node)} {args}\n}}\n')
 
 
 def var_name(node):

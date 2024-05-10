@@ -73,6 +73,7 @@ Advanced usage::
 - link:#exiting-with-a-usage-message[Exiting with a usage message]
 - link:#library-mode[Library mode]
 - link:#on-the-fly-parser-generation[On-the-fly parser generation]
+- link:#understanding-the-parser[Understanding the parser]
 
 Developers::
 - link:#testing[Testing]
@@ -313,6 +314,62 @@ naval_fate "$@"
 Since `docopt.sh` is not patching the script, you also avoid any line number
 jumps in your IDE. However, remember to replace this with the proper parser
 before you ship the script.
+
+=== Understanding the parser
+
+You can turn of minifaction with `-n 0`. This outputs the parser in its full
+form. The parser and the generated AST code is heavily documented and includes
+references to the analyzed DOC, showing what each part does.
+
+e.g. `docopt.sh -n 0 naval_fate.sh`
+
+[source,sh]
+----
+#!/usr/bin/env bash
+
+DOC="Naval Fate.
+  ...
+  --speed=<kn>  Speed in knots [default: 10]."
+# docopt parser below, refresh this parser with `docopt.sh naval_fate.library.sh`
+# shellcheck disable=2016,2086,2317
+docopt() {
+  ...
+  # This is the AST representing the parsed doc. The last node is the root.
+  # Options are first, as mentioned above. The comments above each node is
+  # shows what part of the DOC it is parsing (with line numbers).
+
+  # 03   naval_fate.sh <name> move <x> <y> [--speed=<kn>]
+  #                                         ~~~~~~~
+  node_0(){
+    value __speed 0
+  }
+
+  # 03   naval_fate.sh <name> move <x> <y> [--speed=<kn>]
+  #                    ~~~~~~
+  node_1(){
+    value _name_ a
+  }
+  ...
+  # Unset exported variables from parent shell
+  # that may clash with names derived from the doc
+  for varname in "${varnames[@]}"; do
+    unset "$p$varname"
+  done
+  # Assign internal varnames to output varnames and set defaults
+
+  eval $p'__speed=${var___speed:-10};'\
+  ...
+
+}
+# docopt parser above, complete command for generating this parser is `docopt.sh --line-length=0 naval_fate.library.sh`
+
+naval_fate() {
+  eval "$(docopt "$@")"
+  ...
+}
+naval_fate "$@"
+----
+
 
 === Developers
 
