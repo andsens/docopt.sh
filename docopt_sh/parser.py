@@ -83,6 +83,8 @@ class Parser(object):
 
     shellcheck_ignores = [
       '2016',  # Ignore unexpanded variables in single quotes (used for docopt_exit generation)
+      '2086',  # Ignore unquoted vars, the DOCOPT_PREFIX var is unquoted to save some space
+      '2317',  # Ignore unreachable code, the parse functions are invoked via "node_$idx"
     ]
     if self.parameters.library_path:
       shellcheck_ignores.extend([
@@ -257,14 +259,14 @@ def generate_default_assignments(leaf_nodes):
       default_assignment = f'{variable_name}={bash_variable_value(node.default)}'
       list_assignments.append(
         f'if declare -p var_{variable_name} >/dev/null 2>&1; then\n'
-        f'  eval "$p"{quote(reassignment)}\n'
+        f'  eval $p{quote(reassignment)}\n'
         'else\n'
-        f'  eval "$p"{quote(default_assignment)}\n'
+        f'  eval $p{quote(default_assignment)}\n'
         'fi'
       )
     else:
       assignment = f'{variable_name}=${{var_{variable_name}:-{bash_variable_value(node.default)}}};'
-      value_assignments.append(f'"$p"{quote(assignment)}')
+      value_assignments.append(f'$p{quote(assignment)}')
   joined_list_assignments = '\n'.join(list_assignments)
   joined_value_assignments = 'eval ' + '\\\n'.join(value_assignments) + '\n'
 
