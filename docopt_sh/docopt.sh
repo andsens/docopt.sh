@@ -328,7 +328,7 @@ sequence() {
 
 choice() {
   local initial_params=("${params[@]}") best_match_idx match_count node_idx
-  # Increase testdepth, so that we can test all subtrees without setting variables
+  # Increase testdepth so that we can test all subtrees without setting variables
   : $((testdepth++))
   # Determine the best subtree match
   for node_idx in "$@"; do
@@ -342,12 +342,12 @@ choice() {
     fi
     params=("${initial_params[@]}")
   done
+  # Done checking, decrease the testdepth again
+  : $((testdepth--))
   # Check if any subtree matched
   if [[ -n $best_match_idx ]]; then
-    # Decrease testdepth and let the best-matching subtree set the variables
-    if [[ $((--testdepth)) -eq 0 ]]; then
-      "node_$best_match_idx"
-    fi
+    # Let the best-matching subtree set the variables
+    [[ $testdepth -eq 0 ]] && "node_$best_match_idx"
     return 0
   fi
   # No subtree matched, reset the remaining params

@@ -114,3 +114,14 @@ r"""Usage: prog ARG (-a|-b)
 """
 $ prog -a A
 {"ARG": "A", "-a": true, "-b": false}
+
+#
+# choice not reducing testdepth on failed match
+#
+
+r"""Usage:
+  prog (a|b) [OPT]
+  prog ARG
+"""
+$ prog test
+{"a": false, "b": false, "ARG": "test", "OPT": null}
