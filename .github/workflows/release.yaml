@@ -16,6 +16,10 @@ jobs:
       id-token: write
     steps:
     - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref }}
+    - uses: orbit-online/git-release@v1
+      id: tag
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
@@ -23,9 +27,7 @@ jobs:
     - name: Install dependencies
       run: .devcontainer/post.sh
     - name: Set version
-      run: poetry version ${REF/#refs\/tags\/v/}
-      env:
-        REF: ${{ github.ref }}
+      run: poetry version ${{ steps.tag.outputs.tag }}
     - name: Build
       run: poetry build
     - name: Publish package distributions to PyPI
@@ -36,47 +38,33 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     steps:
-    - name: Determine version
-      id: version
-      run: printf "tag=%s\n" "${REF#refs\/tags\/}" >> $GITHUB_OUTPUT
-      env:
-        REF: ${{ github.ref }}
     - uses: actions/checkout@v4
       with:
-        ref: ${{ steps.version.outputs.tag }}
+        ref: ${{ github.ref }}
+    - uses: orbit-online/git-release@v1
+      id: tag
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: '3.11'
-    - name: Create release tarball
+    - name: Create release assets
+      id: assets
       run: |
         .devcontainer/post.sh
-        poetry version ${{ steps.version.outputs.tag }}
+        poetry version ${{ steps.tag.outputs.tag }}
         poetry install
+        version=$(.venv/bin/docopt.sh --version)
+        printf "version=%s\n" "$version" >> $GITHUB_OUTPUT
+
         mkdir dist
+        cp README.adoc LICENSE dist/
         .venv/bin/docopt.sh generate-library >dist/docopt-lib.sh
-        cd dist
         printf '{
           "name": "docopt-lib.sh",
-          "version": "${{ steps.version.outputs.tag }}"
-        }' >upkg.json
-        tar -czf ../docopt-lib.sh-${{ steps.version.outputs.tag }}.tar.gz *
-    - name: Get release notes from tag
-      id: tag-message
-      run: |
-        eof="$(openssl rand -hex 8)"
-        msg=$(git tag -l --format='%(contents)' "${{ steps.version.outputs.tag }}")
-        msg=${msg%%'-----BEGIN'*}
-        printf "message<<%s\n%s\n%s\n" "$eof" "$msg" "$eof" >> $GITHUB_OUTPUT
-      env:
-        REF: ${{ github.ref }}
-    - name: Create Release
-      uses: ncipollo/release-action@v1
+          "version": "%s"
+        }' "$version" >dist/upkg.json
+    - uses: orbit-online/upkg-release@v1
       with:
-        name: ${{ steps.version.outputs.tag }}
-        body: ${{ steps.tag-message.outputs.message }}
-        draft: false
-        prerelease: false
-        artifacts: docopt-lib.sh-${{ steps.version.outputs.tag }}.tar.gz
-        artifactErrorsFailBuild: true
-        artifactContentType: application/gzip
+        working-directory: dist
+        version: ${{ steps.assets.outputs.version }}
+        paths: docopt-lib.sh README.adoc LICENSE
