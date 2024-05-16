@@ -36,3 +36,92 @@ Options: -o OPT  Option [default: \"]
 $ prog
 {"-o": "\""}
 
+#
+# Options-section syntax
+#
+
+r"""Usage: prog [options]
+
+global options: --foo
+local options: --baz
+               --bar
+other options:
+ --egg
+ --spam
+-not-an-option-
+
+"""
+$ prog --baz --egg
+{"--foo": false, "--baz": true, "--bar": false, "--egg": true, "--spam": false}
+
+#
+# Optional order
+#
+
+r"""Usage: prog [a b c]
+"""
+$ prog a b c
+{"a": true, "b": true, "c": true}
+
+$ prog b a c
+"user-error"
+
+#
+# value=false bug
+#
+
+r"""Usage: prog --long=ARG
+"""
+$ prog --long=false
+{"--long": "false"}
+
+r"""Usage: prog --s=ARG
+"""
+$ prog --s=false
+{"--s": "false"}
+
+#
+# shortlist parser gobbling too much
+#
+
+r"""Usage: prog [-ab --long]
+"""
+$ prog -ab --long
+{"-a": true, "-b": true, "--long": true}
+
+#
+# prefix error
+#
+
+r"""Usage: prog --lat=A --long=B
+"""
+> prog --lat 5 --l 1
+{"code": 1, "stdout": "", "stderr": "--l is not a unique prefix: --lat --long?\nUsage: prog --lat=A --long=B\n"}
+
+#
+# explicit help option
+#
+r"""Usage: prog [-ah]
+"""
+> prog -ah
+{"code": 0, "stdout": "Usage: prog [-ah]\n", "stderr": ""}
+
+> prog --help
+{"code": 0, "stdout": "Usage: prog [-ah]\n", "stderr": ""}
+
+
+r"""Usage: prog ARG (-a|-b)
+"""
+$ prog -a A
+{"ARG": "A", "-a": true, "-b": false}
+
+#
+# choice not reducing testdepth on failed match
+#
+
+r"""Usage:
+  prog (a|b) [OPT]
+  prog ARG
+"""
+$ prog test
+{"a": false, "b": false, "ARG": "test", "OPT": null}

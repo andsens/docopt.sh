@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """
 Downloads, extracts, configures, and compiles bash versions for testing
 Usage:

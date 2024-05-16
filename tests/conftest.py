@@ -63,7 +63,10 @@ def pytest_assertrepr_compare(config, op, left, right):
       for key, value in left.expect.items():
         if key in right.expect:
           if value != right.expect[key]:
-            error.append('%s != %s' % (repr(value), repr(right.expect[key])))
+            if right.type == '>':
+              error.append('%s: %s != %s' % (key, repr(value), repr(right.expect[key])))
+            else:
+              error.append('%s != %s' % (repr(value), repr(right.expect[key])))
         else:
           error.append('%s != (key %s not found)' % (repr(value), key))
       for key, value in right.expect.items():
@@ -75,16 +78,17 @@ def pytest_assertrepr_compare(config, op, left, right):
 def parse_usecases(path):
   with open(path, 'r') as handle:
     raw = handle.read()
-  fixture_pattern = re.compile(r'r"""(?P<doc>.+?)""".*?(?=r"""|$(?!.))', re.DOTALL)
+  fixture_pattern = re.compile(r'r"""(?P<doc>.+?)"""(.*?)(?=r"""|$(?!.))', re.DOTALL)
   case_pattern = re.compile(
-    r'\$ (?P<prog>[^\n ]+)( (?P<argv>[^\n]+))?\n(?P<expect>(\n|.)+?)(?P<comment>\s*#[^\n]*)?\n(\n|$(?!.))')
+    r'(?P<type>\$|>) (?P<prog>[^\n ]+)( (?P<argv>[^\n]+))?\n(?P<expect>(\n|.)+?)(?P<comment>\s*#[^\n]*)?\n(\n|$(?!.))')
   for fixture_match in fixture_pattern.finditer(raw):
     line_offset = raw[:fixture_match.start(0)].count('\n') + 1
-    fixture = fixture_match.group(0)
+    fixture = fixture_match.group(2)
     doc = fixture_match.group('doc')
     for case_match in case_pattern.finditer(fixture):
       file = os.path.basename(path)
       line = line_offset + fixture[:case_match.start(0)].count('\n')
+      type = case_match.group('type')
       case = case_match.group(0)
       prog = case_match.group('prog')
       argv = case_match.group('argv')
@@ -93,8 +97,8 @@ def parse_usecases(path):
         expect = json.loads(case_match.group('expect'))
       except json.decoder.JSONDecodeError as e:
         json_line = line_offset + fixture[:case_match.start('expect')].count('\n')
-        raise Exception('Error on line %d:\n%s\n---\n%s' % (json_line, case, str(e)))
-      yield Usecase(file, line, None, doc, prog, argv, expect)
+        raise Exception('Error in %s:%d:\n%s\n---\n%s' % (file, json_line, case, str(e)))
+      yield Usecase(file, line, None, doc, prog, argv, type, expect)
 
 
 def get_system_bash():
@@ -115,7 +119,7 @@ def get_installed_bash_versions():
   versions = [get_system_bash()]
   for executable in glob.glob('tests/bash-versions/bash-*/bash'):
     folder_name = os.path.basename(os.path.dirname(executable))
-    versions.append((parse_version(re.search(r'bash-(.+)', folder_name).group(1)), executable))
+    versions.append((parse_version(re.search(r'bash-(.+)', folder_name).group(1)), executable))  # type: ignore
   return versions
 
 

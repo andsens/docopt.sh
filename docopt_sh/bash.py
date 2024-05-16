@@ -81,6 +81,8 @@ def minify(parser_str, max_length):
   lines = remove_leading_spaces(lines)
   lines = remove_empty_lines(lines)
   lines = remove_comments(lines)
+  lines = continuate_spaces(lines)
+  lines = split_sq_strings(lines)
   lines = remove_newlines(lines, max_length)
   return '\n'.join(lines) + '\n'
 
@@ -98,31 +100,46 @@ def remove_empty_lines(lines):
 
 def remove_comments(lines):
   for line in lines:
-    if re.match(r'^\s*#', line) is None:
+    if re.match(r'\s*#', line) is None:
       yield line
 
 
+def continuate_spaces(lines):
+  for line in lines:
+    # Split whenever there's a space, but make sure to keep single quoted
+    # strings on one line
+    yield from re.sub(r"('[^']* [^']*')|( )", r'\1\2\\\n', line).split('\n')
+
+
+def split_sq_strings(lines):
+  for line in lines:
+    # Split every character in a single quoted string
+    yield from re.sub(
+      r"'([^']+)'",
+      lambda sq: ''.join(map(lambda c: f"'{c}'\\\n", sq.group(1))),
+      line,
+    ).split('\n')
+
+
 def remove_newlines(lines, max_length):
-  def needs_separator(line):
-    return re.search(r'; (then|do)$|else$|\{$', line) is None
+  def get_seperator(line):
+    return ';' if re.search(r'(then|do|else|\{)$', line) is None else ' '
 
   def has_continuation(line):
     return re.search(r'\\\s*$', line) is not None
 
   def remove_continuation(line):
-    return re.sub(r'\s*\\\s*$', '', line)
+    return re.sub(r'\\(\s*)$', r'\1', line)
 
   def combine(line1, line2):
     if has_continuation(line1):
-      return remove_continuation(line1) + ' ' + line2
-    if needs_separator(line1):
-      return line1 + '; ' + line2
-    else:
-      return line1 + ' ' + line2
+      return remove_continuation(line1) + line2
+    return line1 + get_seperator(line1) + line2
 
   previous = next(lines)
   for line in lines:
     combined = combine(previous, line)
+    combined = merge_sq_strings(combined)
     if len(combined) > max_length:
       yield previous
       previous = line
@@ -130,3 +147,10 @@ def remove_newlines(lines, max_length):
       previous = combined
   if previous:
     yield previous
+
+
+def merge_sq_strings(line):
+  # We don't need to look for more than a single pair, because
+  # all strings were on their own line and remove_newlines()
+  # merges one line at a time
+  return re.sub(r"'([^']+)''([^']+)'", r"'\1\2'", line)

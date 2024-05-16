@@ -8,7 +8,7 @@ from contextlib import contextmanager
 from docopt_sh.__main__ import main as docopt_sh_main
 from docopt_sh.bash import bash_variable_value
 
-Usecase = namedtuple('Usecase', ['file', 'line', 'bash', 'doc', 'prog', 'argv', 'expect'])
+Usecase = namedtuple('Usecase', ['file', 'line', 'bash', 'doc', 'prog', 'argv', 'type', 'expect'])
 
 
 def bash_eval_script(bash, script, argv):
@@ -38,7 +38,7 @@ def patch_stream(monkeypatch, capsys, stream, program_params=[], docopt_params={
   captured = invoke_docopt(monkeypatch, capsys, stdin=stream, program_params=program_params + ['-'])
 
   def run(bash, *argv):
-    return bash_eval_script(bash, captured.out, argv)
+    return bash_eval_script(bash, captured.out, argv)  # type: ignore
   return run
 
 
@@ -72,7 +72,7 @@ def generated_library(monkeypatch, capsys, program_params=[]):
   file = NamedTemporaryFile(mode='w', delete=False)
   try:
     captured = invoke_docopt(monkeypatch, capsys, program_params=['generate-library'] + program_params)
-    file.write(captured.out)
+    file.write(captured.out)  # type: ignore
     file.close()
     yield file
   finally:

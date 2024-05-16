@@ -144,7 +144,9 @@ def test_parser_only(monkeypatch, capsys, bash):
 DOC="{doc}"
 eval "$(docopt "$@")"
 '''.format(doc=doc)
-  parser = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)).out
+  parser = invoke_docopt(
+    monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)
+  ).out  # type: ignore
   program = '''
 DOC="{doc}"
 {parser}
@@ -154,7 +156,7 @@ if $ship && $new; then
 fi
 '''.format(doc=doc, parser=parser)
   captured = invoke_docopt(monkeypatch, capsys, program_params=['-'], stdin=StringIO(program))
-  code, out, err = bash_eval_script(bash, captured.out, ['ship', 'new', 'Argo'])
+  code, out, err = bash_eval_script(bash, captured.out, ['ship', 'new', 'Argo'])  # type: ignore
   assert err == ''
   assert code == 0
   assert out == 'Argo\n'
@@ -374,7 +376,9 @@ def test_no_invocations(monkeypatch, capsys):
   script = '''
 DOC='Usage: echo_ship_name.sh ship new <name>...'
 '''
-  err = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)).err
+  err = invoke_docopt(
+    monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)
+  ).err  # type: ignore
   assert 'No invocations of docopt found, check your script to make sure this is correct.' in err
 
 
@@ -384,7 +388,9 @@ DOC='Usage: echo_ship_name.sh ship new <name>...'
 eval "$(docopt "$@")"
 eval "$(docopt "$@")"
 '''
-  err = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)).err
+  err = invoke_docopt(
+    monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)
+  ).err  # type: ignore
   assert 'STDIN:3,4 Multiple invocations of docopt found, check your script to make sure this is correct.' in err
 
 
@@ -394,7 +400,17 @@ DOC='Usage: echo_ship_name.sh ship new <name>...'
 eval "$(docopt "$@")"
 DOCOPT_ADD_HELP=false
 '''
-  err = invoke_docopt(monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)).err
+  err = invoke_docopt(
+    monkeypatch, capsys=capsys, program_params=['--parser', '-'], stdin=StringIO(script)
+  ).err  # type: ignore
   assert (
     'STDIN:4 $DOCOPT_ADD_HELP has no effect when specified after invoking docopt, '
     + 'make sure to place docopt options before calling `eval "$(docopt "$@")"`.') in err
+
+
+def test_multibyte_doc(monkeypatch, capsys, bash):
+  run = patch_file(monkeypatch, capsys, 'multibyte_doc.sh')
+  code, out, err = run(bash, 'invalid')
+  assert err == 'Usage: uprog.sh [options]\n'
+  assert code == 1
+  assert out == ''

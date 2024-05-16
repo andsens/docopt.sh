@@ -2,69 +2,69 @@ name: Create release
 
 on:
   push:
-    tags:
-    - 'v*'
+    tags: ['v*']
 
 jobs:
-  create-release:
-    name: Create GitHub Release
+  test:
+    uses: ./.github/workflows/test.yaml
+  pypi-publish:
+    name: Publish docopt.sh to PyPI
+    needs: [test]
     runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
     steps:
-      - name: Determine tag name
-        id: tag-name
-        env:
-          REF: ${{ github.ref }}
-        run: |
-          printf "::set-output name=tag::%s\n" "$(basename "${{ github.ref }}")"
-      - name: Checkout code
-        uses: actions/checkout@v2
-        with:
-          ref: ${{ steps.tag-name.outputs.tag }}
-      - name: Get release notes from tag
-        id: tag-message
-        env:
-          REF: ${{ github.ref }}
-        run: |
-          MESSAGE=$(git tag -l --format='%(contents)' "${{ steps.tag-name.outputs.tag }}")
-          MESSAGE=${MESSAGE//'%'/'%25'}
-          MESSAGE=${MESSAGE//$'\n'/'%0A'}
-          MESSAGE=${MESSAGE//$'\r'/'%0D'}
-          printf "::set-output name=message::%s\n" "$MESSAGE"
-      - name: Create Release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.tag-name.outputs.tag }}
-          release_name: ${{ steps.tag-name.outputs.tag }}
-          body: ${{ steps.tag-message.outputs.message }}
-          draft: false
-          prerelease: false
-
-  publish:
-
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python
-      uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
       with:
-        python-version: '3.8'
-    - name: Set release version from tag name
-      id: release-version
-      env:
-        REF: ${{ github.ref }}
-      run: printf "__version__ = \"%s\"\n" "${REF/#refs\/tags\/v/}" > docopt_sh/version.py
+        ref: ${{ github.ref }}
+    - uses: orbit-online/git-release@v1
+      id: tag
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
     - name: Install dependencies
+      run: .devcontainer/post.sh
+    - name: Set version
+      run: poetry version ${{ steps.tag.outputs.tag }}
+    - name: Build
+      run: poetry build
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1.8
+  docopt-lib-release:
+    needs: [test]
+    name: Create docopt-lib.sh GitHub Release
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        ref: ${{ github.ref }}
+    - uses: orbit-online/git-release@v1
+      id: tag
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    - name: Create release assets
+      id: assets
       run: |
-        python -m pip install --upgrade pip
-        pip install pygments flit
-        flit install
-    - name: Build and publish
-      env:
-        FLIT_INDEX_URL: https://upload.pypi.org/legacy/
-        FLIT_USERNAME: __token__
-        FLIT_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-      run: |
-        flit publish
+        .devcontainer/post.sh
+        poetry version ${{ steps.tag.outputs.tag }}
+        poetry install
+        version=$(.venv/bin/docopt.sh --version)
+        printf "version=%s\n" "$version" >> $GITHUB_OUTPUT
+
+        mkdir dist
+        cp README.adoc LICENSE dist/
+        .venv/bin/docopt.sh generate-library >dist/docopt-lib.sh
+        printf '{
+          "name": "docopt-lib.sh",
+          "version": "%s"
+        }' "$version" >dist/upkg.json
+    - uses: orbit-online/upkg-release@v1
+      with:
+        working-directory: dist
+        version: ${{ steps.assets.outputs.version }}
+        paths: docopt-lib.sh README.adoc LICENSE

@@ -1,9 +1,9 @@
 /build
 /dist
-/docopt_sh.egg-info
-/tests/bash-versions
 __pycache__/
 *.pyc
-/.vscode
-/docopt.code-workspace
+/docopt_sh.egg-info
 /docopt_sh/version.py
+/tests/bash-versions
+/.vscode/settings.json
+/*.code-workspace

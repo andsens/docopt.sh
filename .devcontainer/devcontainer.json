@@ -1,47 +1,40 @@
-// For format details, see https://aka.ms/vscode-remote/devcontainer.json or this file's README at:
-// https://github.com/microsoft/vscode-dev-containers/tree/v0.122.1/containers/python-3
 {
   "name": "Python 3",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".",
-    // Update 'VARIANT' to pick a Python version. Rebuild the container
-    // if it already exists to update. Available variants: 3, 3.6, 3.7, 3.8
-    "args": {
-      "VARIANT": "3"
+  "image": "mcr.microsoft.com/vscode/devcontainers/python:0-3.11",
+  "postCreateCommand": ".devcontainer/post.sh",
+  "containerUser": "vscode",
+  "updateRemoteUserUID": true,
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": ".venv/bin/python",
+        "python.analysis.typeCheckingMode": "basic",
+        "python.poetryPath": "${userHome}/.local/bin/poetry",
+        "python.testing.pylintEnabled": true,
+        "python.testing.pytestEnabled": true,
+        "terminal.integrated.env.linux": {
+          "VIRTUAL_ENV_DISABLE_PROMPT": "true"
+        },
+        "files.exclude": {
+          ".venv": true,
+          ".pytest_cache": true
+        },
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.insertSpaces": true,
+          "editor.tabSize": 2
+        }
+      },
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.flake8",
+        "timonwong.shellcheck",
+        "bungcip.better-toml",
+        "asciidoctor.asciidoctor-vscode",
+        "me-dutour-mathieu.vscode-github-actions"
+      ]
     }
-  },
-  // Set *default* container specific settings.json values on container create.
-  "settings": {
-    "terminal.integrated.shell.linux": "/bin/bash",
-    "python.linting.enabled": true,
-    "python.pythonPath": "/usr/local/bin/python3",
-    "python.testing.pytestPath": "/usr/local/bin/pytest",
-    "python.linting.flake8Path": "/usr/local/bin/flake8",
-    "python.linting.flake8Enabled": true,
-    "python.linting.flake8Args": [
-      "--ignore=E111,E114,E121",
-      "--max-line-length=120",
-      "--exclude=tests/bash-versions"
-    ],
-    "python.testing.pytestArgs": [
-      "tests"
-    ],
-    "python.testing.pytestEnabled": true,
-    "shellcheck.executablePath": "/usr/local/bin/shellcheck"
-  },
-  // Add the IDs of extensions you want installed when the container is created.
-  "extensions": [
-    "ms-python.python",
-    "timonwong.shellcheck",
-    "bungcip.better-toml",
-    "asciidoctor.asciidoctor-vscode",
-    "me-dutour-mathieu.vscode-github-actions"
-  ],
-  "postCreateCommand": "pip3 --disable-pip-version-check --no-cache-dir install rstcheck pygments flit && FLIT_ROOT_INSTALL=1 flit install && tests/get_bash.py 3.2 4.4",
-  // Use 'forwardPorts' to make a list of ports inside the container available locally.
-  // "forwardPorts": [],
-  // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
-  // "remoteUser": "vscode"
-  "updateRemoteUserUID": true
+  }
 }

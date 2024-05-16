@@ -1,34 +1,48 @@
-[build-system]
-requires = ["flit"]
-build-backend = "flit.buildapi"
-
-[tool.flit.metadata]
-dist-name = "docopt-sh"
-module = "docopt_sh"
-author = "Anders Ingemann"
-author-email = "anders@ingemann.de"
-home-page = "https://github.com/andsens/docopt.sh"
-description-file = "docs/README.pypi.md"
+[tool.poetry]
+name = "docopt-sh"
+description = "Command-line argument parser for bash 3.2, 4+, and 5+."
+version = "0.0.0-dev"
+authors = ["Anders Ingemann <anders@ingemann.de>"]
+license = "MIT"
+readme = "docs/README.pypi.md"
+homepage = "https://github.com/andsens/docopt.sh"
+repository = "https://github.com/andsens/docopt.sh"
 classifiers = [
   "Topic :: Utilities",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.5",
-  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
   "License :: OSI Approved :: MIT License",
 ]
-requires-python = ">=3.5"
-requires = ["docopt", "termcolor"]
+packages = [{ include = "docopt_sh" }]
 
-[tool.flit.scripts]
+[tool.pylint.'MESSAGES CONTROL']
+indent-string = "  "
+disable = [
+  "missing-function-docstring",
+  "missing-class-docstring",
+]
+
+[tool.flake8]
+max-line-length = 120
+ignore = "E111,E114,E121,W503,E302,E303,E305"
+
+[tool.poetry.dependencies]
+python = ">=3.11.0,<4.0"
+docopt = "^0.6.2"
+termcolor = "^1.1.0"
+docopt-parser = ">=0.0.1"
+flake8-pyproject = "^1.1.0.post0"
+
+[tool.poetry.dev-dependencies]
+flake8 = "^6.0.0"
+pytest = "^7.1.1"
+pytest-xdist = "^2.5.0"
+pytest-flake8 = "^1.1.1"
+
+[tool.poetry.scripts]
 "docopt.sh" = "docopt_sh.__main__:main"
 
-[tool.flit.sdist]
-include = ["docopt_sh/version.py"]
-exclude = ["tests", "pytest.ini", ".*"]
-
-[tool.flit.metadata.requires-extra]
-test = [
-  "pytest",
-  "pytest-xdist",
-  "pytest-flake8",
-]
+[build-system]
+requires = ["poetry_core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

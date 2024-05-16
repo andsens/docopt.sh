@@ -1,0 +1,47 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Install dev dependencies",
+			"type": "shell",
+			"command": "FLIT_ROOT_INSTALL=1 flit install --dep develop",
+			"problemMatcher": []
+		},
+		{
+			"label": "Download & compile bash 3.2",
+			"type": "shell",
+			"command": "tests/get_bash.py 3.2",
+			"problemMatcher": []
+		},
+		{
+			"label": "Download & compile bash 4.4",
+			"type": "shell",
+			"command": "tests/get_bash.py 4.4",
+			"problemMatcher": []
+		},
+		{
+			"label": "Download & compile bash 5.0",
+			"type": "shell",
+			"command": "tests/get_bash.py 5.0",
+			"problemMatcher": []
+		},
+		{
+			"label": "Run tests",
+			"type": "shell",
+			"command": "pytest",
+			"problemMatcher": [],
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "Run tests (all bash versions)",
+			"type": "shell",
+			"command": "pytest --bash-version all",
+			"problemMatcher": []
+		}
+	]
+}

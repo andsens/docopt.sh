@@ -64,7 +64,7 @@ class Script(object):
         self.invocation
       )
     for option in self.options:
-      if self.invocation.present and option.present and option.start > self.invocation.last.end:
+      if self.invocation.present and option.present and option.start > self.invocation.last.end:  # type: ignore
         log.warning(
           '%s $%s has no effect when specified after invoking docopt, '
           'make sure to place docopt options before calling `eval "$(docopt "$@")"`.',
@@ -102,8 +102,8 @@ class ScriptLocation(object):
     self.offset = offset
     self.present = self.match is not None
     self.count = len(self.matches)
-    self.start = self.match.start(0) + (self.offset or 0) if self.present else None
-    self.end = self.match.end(0) + (self.offset or 0) if self.present else None
+    self.start = self.match.start(0) + (self.offset or 0) if self.present else None  # type: ignore
+    self.end = self.match.end(0) + (self.offset or 0) if self.present else None  # type: ignore
     self.line = self.script.contents[:self.start].count('\n') + 1
     self.all = [self] + [ScriptLocation(self.script, iter([match]), self.offset) for match in self.matches[1:]]
     if self.count == 0:
@@ -114,14 +114,14 @@ class ScriptLocation(object):
       self.last = ScriptLocation(self.script, iter([self.matches[-1]]), self.offset)
 
   def __len__(self):
-    return self.end - self.start if self.present else 0
+    return self.end - self.start if self.present else 0  # type: ignore
 
   def __str__(self):
     path = self.script.path if self.script.path is not None else 'STDIN'
     if not self.present:
       return '%s' % (path)
     if self.count > 1:
-      return '%s:%s' % (path, ','.join(map(lambda l: str(l.line), self.all)))
+      return '%s:%s' % (path, ','.join(map(lambda loc: str(loc.line), self.all)))
     else:
       return '%s:%d' % (path, self.line)
 
@@ -147,8 +147,8 @@ class Doc(ScriptLocation):
     if self.present:
       # Get bash to output what the docstring looks like when evaluated
       output_doc = 'DOC={quote}{trimmed_raw_value}{quote};printf "%s" "$DOC"'.format(
-        trimmed_raw_value=self.match.group('trimmed_raw_value'),
-        quote=self.match.group('quote_start')
+        trimmed_raw_value=self.match.group('trimmed_raw_value'),  # type: ignore
+        quote=self.match.group('quote_start')  # type: ignore
       )
       process = subprocess.run(
         ['bash', '-c', 'eval "$(cat)"'],
@@ -160,11 +160,11 @@ class Doc(ScriptLocation):
           self, 'Unable to evaluate DOC= with system bash: %s' % process.stderr.decode('utf-8')
         )
       self.trimmed_value = process.stdout.decode('utf-8')
-      self.trimmed_value_start = self.match.start('trimmed_raw_value') - self.match.end('quote_start')
+      self.trimmed_value_start = self.match.start('trimmed_raw_value') - self.match.end('quote_start')  # type: ignore
       self.untrimmed_value = (
-        self.match.group('trimmed_before')
+        self.match.group('trimmed_before')  # type: ignore
         + self.trimmed_value
-        + self.match.group('trimmed_after')
+        + self.match.group('trimmed_after')  # type: ignore
       )
     else:
       self.value = None
@@ -191,10 +191,10 @@ class BottomGuard(ScriptLocation):
     )
     super(BottomGuard, self).__init__(script, matches, offset)
     self.refresh_command_params = None
-    if self.present and self.match.group(2) is not None:
+    if self.present and self.match.group(2) is not None:  # type: ignore
       from .__main__ import __doc__
       try:
-        self.refresh_command_params = docopt.docopt(__doc__, shlex.split(self.match.group(2))[1:])
+        self.refresh_command_params = docopt.docopt(__doc__, shlex.split(self.match.group(2))[1:])  # type: ignore
       except (docopt.DocoptLanguageError, docopt.DocoptExit):
         pass
 
@@ -214,7 +214,7 @@ class Guards(object):
     self.end = self.bottom.end if self.present else doc.end
 
   def __len__(self):
-    return self.end - self.start if self.present else 0
+    return self.end - self.start if self.present else 0  # type: ignore
 
 
 class Invocation(ScriptLocation):
