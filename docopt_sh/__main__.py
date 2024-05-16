@@ -4,7 +4,7 @@ import os
 import docopt
 import logging
 import termcolor
-from . import __doc__ as pkg_doc, __name__ as root_name, DocoptError, __version__
+from . import __doc__ as pkg_doc, __name__ as root_name, __version__
 from .parser import ParserParameters, Parser, Library
 from .script import Script
 
@@ -75,7 +75,7 @@ def docopt_sh(params):
             log.info('The parser in %s is already up-to-date.', params['SCRIPT'])
           else:
             log.info('%s has been updated.', params['SCRIPT'])
-    except DocoptError as e:
+    except Exception as e:
       log.error(str(e))
       sys.exit(e.exit_code)
 
