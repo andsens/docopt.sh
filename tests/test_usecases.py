@@ -36,11 +36,12 @@ fi
     result = {}
     if err != '':
       result = 'Errors encountered while running usecase %s:%d: %s' % (file, lineno, err)
-    if out != '':
-      for line in out.split('\n'):
-        if expr.match(line) is None:
-          raise Exception('Unable to match output for usecase %s:%d: %s' % (file, lineno, line))
-        result[expr.match(line).group(2)] = line  # type: ignore
+    else:
+      if out != '':
+        for line in out.split('\n'):
+          if expr.match(line) is None:
+            raise Exception('Unable to match output for usecase %s:%d: %s' % (file, lineno, line))
+          result[expr.match(line).group(2)] = line  # type: ignore
   else:
     result = 'user-error'
   return Usecase(file, lineno, bash[0], doc, prog, argv, type, result)
