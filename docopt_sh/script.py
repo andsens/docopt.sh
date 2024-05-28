@@ -139,7 +139,7 @@ class Doc(ScriptLocation):
       r'(?P<trimmed_before>\s*)'
       r'(?P<trimmed_raw_value>(?:.(?!(?<![\\])\1))*?.?)'
       r'(?P<trimmed_after>\s*))'
-      r'(?P<quote_end>\1)(?:\n|;)',
+      r'(?P<quote_end>(?<![\\])\1)(?:\n|;)',
       script.contents,
       re.MULTILINE | re.DOTALL
     )
@@ -157,7 +157,10 @@ class Doc(ScriptLocation):
       )
       if process.returncode != 0:
         raise DocoptScriptValidationError(
-          self, 'Unable to evaluate DOC= with system bash: %s' % process.stderr.decode('utf-8')
+          self, (
+            f"Unable to evaluate DOC= with system bash: {process.stderr.decode('utf-8')}"
+            + f"The DOC region recognized was:\n{self.match.group(0)}"  # type: ignore
+          )
         )
       self.trimmed_value = process.stdout.decode('utf-8')
       self.trimmed_value_start = self.match.start('trimmed_raw_value') - self.match.end('quote_start')  # type: ignore

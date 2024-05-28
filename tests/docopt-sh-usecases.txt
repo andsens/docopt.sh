@@ -125,3 +125,15 @@ r"""Usage:
 """
 $ prog test
 {"a": false, "b": false, "ARG": "test", "OPT": null}
+
+#
+# Ending escaped double quote is parsable
+#
+
+r"""Usage:
+  prog
+
+Ending with an escaped doublequote: \"
+"""
+$ prog
+{}
