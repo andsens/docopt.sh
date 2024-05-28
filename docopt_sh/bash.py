@@ -2,6 +2,9 @@ import re
 from shlex import quote
 from itertools import chain
 
+# WARNING: This code for transforming bash code is built very specifically for
+# the docopt.sh code. It is almost guaranteed to give wrong results when used in
+# any other context.
 
 class Code(object):
 
@@ -115,7 +118,7 @@ def split_sq_strings(lines):
   for line in lines:
     # Split every character in a single quoted string
     yield from re.sub(
-      r"'([^']+)'",
+      r"(?<!\")'([^']+)'",
       lambda sq: ''.join(map(lambda c: f"'{c}'\\\n", sq.group(1))),
       line,
     ).split('\n')
