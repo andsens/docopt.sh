@@ -77,7 +77,7 @@ def docopt_sh(params):
             log.info('%s has been updated.', params['SCRIPT'])
     except Exception as e:
       log.error(str(e))
-      sys.exit(e.exit_code)
+      sys.exit(getattr(e, 'exit_code', 1))
 
 
 def setup_logging():
