@@ -48,7 +48,7 @@ class Parser(object):
     )
 
     if self.parameters.library_path:
-      library = indent(f'''source {self.parameters.library_path} '{__version__}' || {{
+      library = indent(f'''local v='{__version__}'; source {self.parameters.library_path} "$v" || {{
   ret=$?
   printf -- "exit %d\\n" "$ret"
   exit "$ret"

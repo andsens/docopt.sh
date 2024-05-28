@@ -224,7 +224,7 @@ def test_library_version(monkeypatch, capsys, bash):
       invoke_docopt(monkeypatch, program_params=['--library', library.name, script.name])
       with open(script.name, 'r') as h:
         contents = h.read()
-      contents = re.sub(r"source (\S+) '([^']+)'", r"source \1 '0.0.0'", contents)
+      contents = re.sub(r'source (\S+) "([^"]+)"', r"source \1 '0.0.0'", contents)
       with open(script.name, 'w') as h:
         h.write(contents)
       code, out, err = run(bash, 'ship', 'new', 'Olympia')

@@ -264,7 +264,8 @@ automatically glean the previously used parameters from your script and re-apply
 them.
 
 `--library` can be any valid bash expression, meaning you can use things like
-`"$(dirname "$0")"`.
+`"$(dirname "$0")/docopt-lib-$v.sh"` (the `$v` is the version of docopt
+the parser AST was generated with).
 
 On every invocation docopt checks that the library version and the version of
 the dynamic part in the script match. The parser exits with an error if that is
