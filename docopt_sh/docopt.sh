@@ -327,17 +327,17 @@ sequence() {
 }
 
 choice() {
-  local initial_params=("${params[@]}") best_match_idx match_count node_idx
+  local initial_params=("${params[@]}") best_match_idx unmatched_count node_idx
   # Increase testdepth so that we can test all subtrees without setting variables
   : $((testdepth++))
   # Determine the best subtree match
   for node_idx in "$@"; do
     if "node_$node_idx"; then
       # Subtree matches
-      if [[ -z $match_count || ${#params[@]} -lt $match_count ]]; then
+      if [[ -z $unmatched_count || ${#params[@]} -lt $unmatched_count ]]; then
         # More params consumed than last iteration, best match so far
         best_match_idx=$node_idx
-        match_count=${#params[@]}
+        unmatched_count=${#params[@]}
       fi
     fi
     params=("${initial_params[@]}")
