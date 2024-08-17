@@ -346,8 +346,9 @@ choice() {
   : $((testdepth--))
   # Check if any subtree matched
   if [[ -n $best_match_idx ]]; then
-    # Let the best-matching subtree set the variables
-    [[ $testdepth -eq 0 ]] && "node_$best_match_idx"
+    # Let the best-matching subtree consume the params
+    # and potentially set the variables
+    "node_$best_match_idx"
     return 0
   fi
   return 1

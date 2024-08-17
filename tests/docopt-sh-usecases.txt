@@ -137,3 +137,14 @@ Ending with an escaped doublequote: \"
 """
 $ prog
 {}
+
+#
+# Sequence of choices works
+#
+
+r"""Usage:
+  prog (a|b) (c|d)
+
+"""
+$ prog a d
+{"a": true, "b": false, "c": false, "d": true}
