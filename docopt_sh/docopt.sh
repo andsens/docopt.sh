@@ -350,8 +350,6 @@ choice() {
     [[ $testdepth -eq 0 ]] && "node_$best_match_idx"
     return 0
   fi
-  # No subtree matched, reset the remaining params
-  params=("${initial_params[@]}")
   return 1
 }
 
