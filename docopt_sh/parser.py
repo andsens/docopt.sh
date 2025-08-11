@@ -86,7 +86,7 @@ class Parser(object):
     shellcheck_ignores = [
       '2016',  # Ignore unexpanded variables in single quotes (used for docopt_exit generation)
       '2086',  # Ignore unquoted vars, the DOCOPT_PREFIX var is unquoted to save some space
-      '2317',  # Ignore unreachable code, the parse functions are invoked via "node_$idx"
+      '2329',  # Ignore unreachable code, the parse functions are invoked via "node_$idx"
     ]
     if self.parameters.library_path:
       shellcheck_ignores.extend([
