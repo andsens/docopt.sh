@@ -472,14 +472,12 @@ value() {
       params=("${params[@]:0:$i}" "${params[@]:((i+1))}")
       [[ $testdepth -gt 0 ]] && return 0
       # Set the variable if we are not in testing mode
-      local value
-      value=$(printf -- "%q" "${param#*:}")
       if [[ $3 = true ]]; then
         # Value is repeatable, add it to the array
-        eval "var_$1+=($value)"
+        eval "var_$1+="'("${param#*:}")'
       else
         # Value is not repeatable, set the value
-        eval "var_$1=$value"
+        eval "var_$1="'${param#*:}'
       fi
       return 0
     fi

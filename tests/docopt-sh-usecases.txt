@@ -148,3 +148,15 @@ r"""Usage:
 """
 $ prog a d
 {"a": true, "b": false, "c": false, "d": true}
+
+#
+# Values with a ~ are not tilde-expanded
+#
+
+r"""Usage:
+  prog [-o OPT] ARG...
+
+Options: -o OPT  Option
+"""
+$ prog -o ~/x ~/y a:~/z b=~/w
+{"-o": "~/x", "ARG": ["~/y", "a:~/z", "b=~/w"]}
