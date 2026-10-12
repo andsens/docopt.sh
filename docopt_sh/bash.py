@@ -48,7 +48,7 @@ def indent(script, level=1):
 
 
 def bash_variable_name(name):
-  return re.sub(r'^[^a-z_]|[^a-z0-9_]', '_', name, 0, re.IGNORECASE)
+  return re.sub(r'^[^a-z_]|[^a-z0-9_]', '_', name, count=0, flags=re.IGNORECASE)
 
 
 def bash_variable_value(value):

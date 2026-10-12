@@ -54,7 +54,7 @@ def convert_to_bash(bash, usecase):
   else:
     declarations = {}
     for key, value in expect.items():
-      var = '_usecase_' + re.sub(r'^[^a-z_]|[^a-z0-9_]', '_', key, 0, re.IGNORECASE)
+      var = '_usecase_' + re.sub(r'^[^a-z_]|[^a-z0-9_]', '_', key, count=0, flags=re.IGNORECASE)
       declarations[var] = bash_decl(bash[0], var, value)
   return Usecase(file, lineno, bash[0], doc, prog, argv, type, declarations)
 
