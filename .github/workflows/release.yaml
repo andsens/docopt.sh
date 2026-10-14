@@ -31,7 +31,7 @@ jobs:
     - name: Build
       run: poetry build
     - name: Publish package distributions to PyPI
-      uses: pypa/gh-action-pypi-publish@release/v1.8
+      uses: pypa/gh-action-pypi-publish@release/v1
   docopt-lib-release:
     needs: [test]
     name: Create docopt-lib.sh GitHub Release
