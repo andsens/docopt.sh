@@ -69,6 +69,9 @@ class Parser(object):
         start=script.doc.trimmed_value_start + usage_start,
         length=usage_end - usage_start,
       ),
+      '"PREFIX"': (
+        bash_ifs_value(self.parameters.prefix) if self.parameters.prefix_fixed else "${DOCOPT_PREFIX:-''}"
+      ),
       '"DOC DIGEST"': hashlib.sha256(script.doc.untrimmed_value.encode('utf-8')).hexdigest()[0:5],
       '"OPTIONS"': generate_options_array(leaf_nodes),
       '  "NODES"': indent('\n'.join(
@@ -77,6 +80,10 @@ class Parser(object):
       '"VARNAMES"': ' '.join([bash_ifs_value(var_name(node)) for node in leaf_nodes]),
       '  "OUTPUT VARNAMES ASSIGNMENTS"': generate_default_assignments(leaf_nodes),
       '  "EARLY RETURN"\n': '' if leaf_nodes else '  return 0\n',
+      # Use "" instead of '' to keep the minifier from merging the quotes
+      '  "SHELLCHECK ASSIGNMENTS"\n': '  if false; then {assignments}; fi\n'.format(
+        assignments=' '.join([f'{self.parameters.prefix}{var_name(node)}=""' for node in leaf_nodes])
+      ) if leaf_nodes else '',
       '"ROOT NODE IDX"': len(nodes) - 1,
     }
     main = self.library.functions['docopt'].replace_literal(replacements)
@@ -87,12 +94,12 @@ class Parser(object):
       '2016',  # Ignore unexpanded variables in single quotes (used for docopt_exit generation)
       '2086',  # Ignore unquoted vars, the DOCOPT_PREFIX var is unquoted to save some space
       '2329',  # Ignore unreachable code, the parse functions are invoked via "node_$idx"
+      '2034',  # Ignore unused vars, the shellcheck assignments cover variables the script might not use
     ]
     if self.parameters.library_path:
       shellcheck_ignores.extend([
         '1090',  # Ignore non-constant library sourcing
         '1091',  # Ignore library sourcing
-        '2034',  # Ignore unused vars (they refer to things in the library)
       ])
     if not self.parameters.library_path and self.parameters.minify:
       # Ignore else .. if issue in parse_long,
@@ -174,6 +181,7 @@ class ParserParameters(object):
     params = OrderedDict([])
     params['--line-length'] = ParserParameter('--line-length', invocation_params, script_params, default='80')
     params['--library'] = ParserParameter('--library', invocation_params, script_params, default=None)
+    params['--prefix'] = ParserParameter('--prefix', invocation_params, script_params, default=None)
 
     merged_from_script = list(filter(lambda p: p.merged_from_script, params.values()))
     if merged_from_script:
@@ -184,6 +192,20 @@ class ParserParameters(object):
       )
 
     self.max_line_length = int(params['--line-length'].value)
+    self.prefix = params['--prefix'].value
+    # An explicit --prefix is fixed in the parser, a detected one is still read from $DOCOPT_PREFIX
+    self.prefix_fixed = self.prefix is not None
+    if self.prefix is None:
+      self.prefix = ''
+      detected = next(filter(lambda o: o.name == 'DOCOPT_PREFIX', script.options), None) if script else None
+      if detected is not None and detected.value is not None and not invocation_params['--no-auto-params']:
+        self.prefix = detected.value
+        log.info(
+          'Using `--prefix=%s` from the `DOCOPT_PREFIX` assignment in the script. '
+          'Use --prefix or --no-auto-params to override.', shlex.quote(self.prefix)
+        )
+    if not re.match(r'^([a-z_][a-z0-9_]*)?$', self.prefix, re.IGNORECASE):
+      raise DocoptError(f'The prefix `{self.prefix}` cannot be used in bash variable names')
     self.library_path = params['--library'].value
     self.minify = self.max_line_length > 0
 
@@ -193,6 +215,8 @@ class ParserParameters(object):
       command.append(str(params['--line-length']))
     if params['--library'].defined:
       command.append(str(params['--library']))
+    if params['--prefix'].defined:
+      command.append(str(params['--prefix']))
     if script is not None and script.path:
       command.append(os.path.basename(script.path))
       command_short.append(os.path.basename(script.path))

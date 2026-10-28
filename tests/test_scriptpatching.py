@@ -1,7 +1,9 @@
 import re
+import shutil
+import subprocess
 import pytest
 from io import StringIO
-from . import bash_eval_script, patch_file, invoke_docopt, temp_file, generated_library
+from . import bash_eval_script, patch_file, patch_stream, invoke_docopt, temp_file, generated_library
 
 
 def test_arg(monkeypatch, capsys, bash):
@@ -414,3 +416,74 @@ def test_multibyte_doc(monkeypatch, capsys, bash):
   assert err == 'Usage: uprog.sh [options]\n'
   assert code == 1
   assert out == ''
+
+
+prefix_script = '''#!/usr/bin/env bash
+DOC="Usage: prog [-v] cmd ARG [UNUSED]"
+%s
+eval "$(docopt "$@")"
+if $%s_v && $%scmd; then echo "$%sARG"; fi
+'''
+
+
+@pytest.mark.skipif(shutil.which('shellcheck') is None, reason='shellcheck is not installed')
+@pytest.mark.parametrize('assignment,prefix,params', [
+  ('', '', []),
+  ('DOCOPT_PREFIX=pre_', 'pre_', []),
+  ('', 'pre_', ['--prefix', 'pre_']),
+])
+def test_shellcheck_vars(monkeypatch, capsys, assignment, prefix, params):
+  script = prefix_script % (assignment, prefix, prefix, prefix)
+  out = invoke_docopt(
+    monkeypatch, capsys=capsys, program_params=params + ['-'], stdin=StringIO(script)
+  ).out  # type: ignore
+  process = subprocess.run(['shellcheck', '-'], input=out.encode('utf-8'), stdout=subprocess.PIPE)
+  assert process.stdout.decode('utf-8') == ''
+  assert process.returncode == 0
+
+
+def test_prefix_flag(monkeypatch, capsys, bash):
+  script = prefix_script % ('', 'pre_', 'pre_', 'pre_')
+  run = patch_stream(monkeypatch, capsys, StringIO(script), program_params=['--prefix', 'pre_'])
+  code, out, err = run(bash, '-v', 'cmd', 'arg')
+  assert err == ''
+  assert code == 0
+  assert out == 'arg\n'
+
+
+def test_prefix_flag_overrides_variable(monkeypatch, capsys, bash):
+  script = prefix_script % ('DOCOPT_PREFIX=other_', 'pre_', 'pre_', 'pre_')
+  run = patch_stream(monkeypatch, capsys, StringIO(script), program_params=['--prefix', 'pre_'])
+  code, out, err = run(bash, '-v', 'cmd', 'arg')
+  assert err == ''
+  assert code == 0
+  assert out == 'arg\n'
+
+
+def test_prefix_detected(monkeypatch, capsys):
+  script = prefix_script % ('DOCOPT_PREFIX=pre_', 'pre_', 'pre_', 'pre_')
+  captured = invoke_docopt(monkeypatch, capsys=capsys, program_params=['-'], stdin=StringIO(script))
+  assert "local p=${DOCOPT_PREFIX:-''}" in captured.out  # type: ignore
+  assert 'pre__v=""' in captured.out  # type: ignore
+  assert 'Using `--prefix=pre_` from the `DOCOPT_PREFIX` assignment in the script.' in captured.err  # type: ignore
+
+
+def test_prefix_not_literal(monkeypatch, capsys):
+  script = prefix_script % ('DOCOPT_PREFIX=$prefix', '', '', '')
+  captured = invoke_docopt(monkeypatch, capsys=capsys, program_params=['-'], stdin=StringIO(script))
+  assert "${DOCOPT_PREFIX:-''}" in captured.out  # type: ignore
+
+
+def test_invalid_prefix(monkeypatch, capsys):
+  with pytest.raises(SystemExit):
+    invoke_docopt(monkeypatch, program_params=['--prefix', '1x', '-'], stdin=StringIO(prefix_script % ('', '', '', '')))
+  assert 'The prefix `1x` cannot be used in bash variable names' in capsys.readouterr().err
+
+
+def test_prefix_flag_changes_variable(monkeypatch, capsys):
+  script = prefix_script % ('DOCOPT_PREFIX=other_', 'pre_', 'pre_', 'pre_')
+  captured = invoke_docopt(
+    monkeypatch, capsys=capsys, program_params=['--prefix', 'pre_', '-'], stdin=StringIO(script)
+  )
+  assert '\nDOCOPT_PREFIX=pre_\n' in captured.out  # type: ignore
+  assert 'STDIN:3 Changing `DOCOPT_PREFIX=other_` to `DOCOPT_PREFIX=pre_`' in captured.err  # type: ignore

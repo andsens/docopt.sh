@@ -71,7 +71,31 @@ class Script(object):
           option, option.name
         )
 
+  def set_option(self, name, value):
+    # Returns a copy of the script where all assignments of the option are
+    # changed to the specified value
+    option = next(filter(lambda o: o.name == name, self.options))
+    contents = self.contents
+    for match in reversed(option.matches):
+      try:
+        if ''.join(shlex.split(match.group(1))) == value:
+          continue
+      except ValueError:
+        pass
+      log.info(
+        '%s Changing `%s=%s` to `%s=%s`',
+        ScriptLocation(self, iter([match]), 0), name, match.group(1), name, shlex.quote(value)
+      )
+      contents = contents[:match.start(1)] + shlex.quote(value) + contents[match.end(1):]
+    return Script(contents, self.path)
+
   def patch(self, parser):
+    if parser.parameters.prefix_fixed:
+      # Keep the script consistent with the prefix the parser uses
+      return self.set_option('DOCOPT_PREFIX', parser.parameters.prefix).patch_parser(parser)
+    return self.patch_parser(parser)
+
+  def patch_parser(self, parser):
     return Script(
       "{start}{guard_begin}\n{parser}{guard_end}\n{end}".format(
         start=self.contents[:self.guards.start],
@@ -231,12 +255,19 @@ class Option(ScriptLocation):
 
   def __init__(self, script, name):
     self.name = name
-    matches = re.finditer(r'^%s=' % name, script.contents, re.MULTILINE)
+    matches = re.finditer(r'^%s=([^\s;&|]*)' % name, script.contents, re.MULTILINE)
     super(Option, self).__init__(script, matches, 0)
     if self.count > 1:
       # Override parent class selection of first match, previous assignments
       # would be overwritten so it's the last match that has an effect
       self.match = self.matches[-1]
+    # The assigned value, unless it isn't a literal (e.g. `$var` or `$(cmd)`)
+    self.value = None
+    if self.present and not re.search(r'[$`]', self.match.group(1)):  # type: ignore
+      try:
+        self.value = ''.join(shlex.split(self.match.group(1)))  # type: ignore
+      except ValueError:
+        pass
 
 
 class DocoptScriptValidationError(DocoptError):

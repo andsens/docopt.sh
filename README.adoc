@@ -199,6 +199,14 @@ string (e.g. specifying `DOCOPT_PREFIX=prog` would change `ARG` to
 `progARG`). See link:#parser-options[parser options] for additional parser
 options.
 
+Since the variables are assigned with `eval`, shellcheck can't see them and
+would complain about them not being assigned (SC2154). To avoid that, the
+parser contains assignments that never run, but which shellcheck does see.
+When you use `$DOCOPT_PREFIX`, `docopt.sh` detects the prefix from the
+`DOCOPT_PREFIX=...` assignment in your script. Alternatively you can fix the
+prefix in the parser with `--prefix`, `$DOCOPT_PREFIX` is then ignored and
+`DOCOPT_PREFIX=...` assignments in the script are changed to match.
+
 === Commandline options
 
 The commandline options of `docopt.sh` only change _how_ the parser is
@@ -211,6 +219,7 @@ The commandline options are:
 | Option | Description
 | `--line-length -n N` | Max line length when minifying. Disable with `0` (default: 80)
 | `--library -l SRC` | link:#library-mode[Generates the dynamic part of the parser] and includes the static parts with `source SRC`.
+| `--prefix PREFIX` | Prefix the variable names with `PREFIX`, overrides `$DOCOPT_PREFIX` and changes `DOCOPT_PREFIX=...` in the script to match. When not specified, it is detected from `DOCOPT_PREFIX=...` in the script.
 | `--no-auto-params -P` | Disable auto-detection of parser generation parameters.
 | `--parser -p` | link:#on-the-fly-parser-generation[Output the parser] instead of inserting it in the script.
 | `--help -h` | Show the help screen.

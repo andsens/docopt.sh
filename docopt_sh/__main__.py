@@ -20,6 +20,10 @@ Options:
   --library -l SRC     Generates only the dynamic part of the parser and
                        includes the static parts using `source SRC`.
                        Use `generate-library` to create that file.
+  --prefix PREFIX      Prefix the variable names with PREFIX, overrides
+                       $DOCOPT_PREFIX and changes `DOCOPT_PREFIX=...` in the
+                       script to match. When not specified, it is detected
+                       from `DOCOPT_PREFIX=...` in the script.
   --no-auto-params -P  Disable auto-detection parser generation parameters
   --parser -p          Output the parser instead of inserting it in the script
   --help -h            Show this help screen

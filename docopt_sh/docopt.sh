@@ -52,8 +52,9 @@ docopt() {
   # if there are no variables to be set docopt() will exit here
   # shellcheck disable=2157,2140
   "EARLY RETURN"
+  # The variable name prefix. Either $DOCOPT_PREFIX or the value of --prefix
   # shellcheck disable=2034
-  local p=${DOCOPT_PREFIX:-''}
+  local p="PREFIX"
 
   # Unset exported variables from parent shell
   # that may clash with names derived from the doc
@@ -62,6 +63,10 @@ docopt() {
   done
   # Assign internal varnames to output varnames and set defaults
   "OUTPUT VARNAMES ASSIGNMENTS"
+  # Never runs. shellcheck can't see the assignments in the eval above, so
+  # without this it complains about the variables not being assigned (SC2154)
+  # wherever they are used in the script.
+  "SHELLCHECK ASSIGNMENTS"
 
   # Workaround for bash-4.3 bug
   # The following script will not work in bash 4.3.0 (and only that version)
