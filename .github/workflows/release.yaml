@@ -15,13 +15,13 @@ jobs:
     permissions:
       id-token: write
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         ref: ${{ github.ref }}
     - uses: orbit-online/git-release@v1
       id: tag
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.11'
     - name: Install dependencies
@@ -38,13 +38,13 @@ jobs:
     runs-on: ubuntu-latest
     environment: release
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         ref: ${{ github.ref }}
     - uses: orbit-online/git-release@v1
       id: tag
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.11'
     - name: Create release assets
