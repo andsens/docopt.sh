@@ -92,6 +92,7 @@ class Parser(object):
 
     shellcheck_ignores = [
       '2016',  # Ignore unexpanded variables in single quotes (used for docopt_exit generation)
+      '1004',  # Ignore literal backslash+linefeed in single quotes (the minified docopt_exit definition)
       '2086',  # Ignore unquoted vars, the DOCOPT_PREFIX var is unquoted to save some space
       '2329',  # Ignore unreachable code, the parse functions are invoked via "node_$idx"
       '2034',  # Ignore unused vars, the shellcheck assignments cover variables the script might not use
