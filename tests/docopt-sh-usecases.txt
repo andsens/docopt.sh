@@ -160,3 +160,82 @@ Options: -o OPT  Option
 """
 $ prog -o ~/x ~/y a:~/z b=~/w
 {"-o": "~/x", "ARG": ["~/y", "a:~/z", "b=~/w"]}
+
+
+#
+# Optional and repeated arguments give back params to the ones after them
+#
+
+r"""Usage: prog [A] B
+"""
+$ prog x
+{"A": null, "B": "x"}
+
+$ prog x y
+{"A": "x", "B": "y"}
+
+$ prog x y z
+"user-error"
+
+
+r"""Usage: prog [A B] [-a] C
+"""
+$ prog x
+{"A": null, "B": null, "-a": false, "C": "x"}
+
+$ prog x -a y
+{"A": "x", "B": null, "-a": true, "C": "y"}
+
+$ prog x y z
+{"A": "x", "B": "y", "-a": false, "C": "z"}
+
+
+r"""Usage: prog [(A [B])] cmd
+"""
+$ prog cmd
+{"A": null, "B": null, "cmd": true}
+
+$ prog x cmd
+{"A": "x", "B": null, "cmd": true}
+
+$ prog x y cmd
+{"A": "x", "B": "y", "cmd": true}
+
+
+r"""Usage: prog A... B
+"""
+$ prog x
+"user-error"
+
+$ prog x y
+{"A": ["x"], "B": "y"}
+
+$ prog x y z
+{"A": ["x", "y"], "B": "z"}
+
+
+r"""Usage: prog [A]... B C
+"""
+$ prog x y
+{"A": [], "B": "x", "C": "y"}
+
+$ prog x y z
+{"A": ["x"], "B": "y", "C": "z"}
+
+
+r"""Usage: prog [-v]... (A cmd)... B
+"""
+$ prog -v x cmd -v y cmd z
+{"-v": 2, "A": ["x", "y"], "cmd": 2, "B": "z"}
+
+$ prog x cmd y
+{"-v": 0, "A": ["x"], "cmd": 1, "B": "y"}
+
+
+r"""Usage: prog ([A] B)... C
+"""
+$ prog x y
+{"A": [], "B": ["x"], "C": "y"}
+
+$ prog x y z
+{"A": ["x"], "B": ["y"], "C": "z"}

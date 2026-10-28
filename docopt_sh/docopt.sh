@@ -138,10 +138,14 @@ Run \`docopt.sh\` to refresh the parser."
 
   # Global params array
   params=()
-  # Global testing depth counter.
-  # When >0, nodes only check for potential matches.
-  # When ==0 leafs will set the actual variable if a match is found.
-  testdepth=0
+  # Global continuation array, the nodes that remain to be matched.
+  # See BACKTRACKING below.
+  continuation=()
+  # Global assignments array, queued up by the leaves when they match.
+  # The values they assign are kept in a separate array so we don't have to
+  # quote them.
+  assignments=()
+  values=()
 
   # Parse argv one word at a time by examining index 0 and then unshifting
   # every parsed word (argv=("${argv[@]:1}"))
@@ -300,84 +304,156 @@ Run \`docopt.sh\` to refresh the parser."
   if ! "node_$root_idx" || [ ${#params[@]} -gt 0 ]; then
     error
   fi
+  # Everything matched, set the variables
+  for ((i=0; i<${#assignments[@]}; i++)); do
+    eval "${assignments[$i]}"
+  done
   return 0
+}
+
+#
+# BACKTRACKING
+#
+# Matching each node greedily is not always enough. Consider the following:
+#   Usage: prog [A] B
+# AST:
+#   <Sequence>
+#     <Optional>
+#       Argument: A
+#     Argument: B
+# Invocation:
+#   $ prog x
+# If [A] simply consumes "x", B has nothing left to match and parsing fails.
+# So instead every node only succeeds if the nodes that come after it match as
+# well. When they don't, the node tries something else (e.g. skipping A) before
+# giving up.
+# The nodes that come after are kept in the global $continuation array.
+# A node prepends its subtree to it and calls match_continuation(), which
+# removes the first entry and matches it. Apart from node indices, the array
+# can contain:
+# * ?IDX: An optional node, we try matching it first and then try skipping it
+# * !: Stop and succeed regardless of the remaining params, see repeatable()
+# Since a node can't know whether the parse succeeds until everything after it
+# has matched, leaves can't set any variables right away. Instead they queue
+# up assignments, which parse() evaluates once the entire AST has matched.
+
+match_continuation() {
+  if [[ ${continuation[0]} = '!' ]]; then
+    return 0
+  elif [[ ${#continuation[@]} -eq 0 ]]; then
+    # Nothing left to match, succeed if all params have been consumed
+    [[ ${#params[@]} -eq 0 ]]
+    return $?
+  fi
+  local node_idx=${continuation[0]} rest=("${continuation[@]:1}")
+  if [[ $node_idx = \?* ]]; then
+    # Optional node, try matching it first (${node_idx#?} strips the "?")
+    continuation=("${node_idx#?}" "${rest[@]}")
+    match_continuation && return 0
+    # Then try skipping it
+    continuation=("${rest[@]}")
+    match_continuation && return 0
+  else
+    continuation=("${rest[@]}")
+    "node_$node_idx" && return 0
+  fi
+  continuation=("$node_idx" "${rest[@]}")
+  return 1
 }
 
 sequence() {
-  local initial_params=("${params[@]}") node_idx
-  # Increase testdepth, so we don't partially set variables and then fail
-  : $((testdepth++))
-  # Check if we can match the entire subtree
-  for node_idx in "$@"; do
-    if ! "node_$node_idx"; then
-      # Unable to match the entire subtree, reset the remaining params
-      params=("${initial_params[@]}")
-      : $((testdepth--))
-      return 1
-    fi
-  done
-  # Decrease testdepth and let subtree set the variables
-  if [[ $((--testdepth)) -eq 0 ]]; then
-    params=("${initial_params[@]}")
-    for node_idx in "$@"; do
-      "node_$node_idx"
-    done
-  fi
-  return 0
+  local initial_continuation=("${continuation[@]}")
+  continuation=("$@" "${continuation[@]}")
+  match_continuation && return 0
+  continuation=("${initial_continuation[@]}")
+  return 1
 }
 
 choice() {
-  local initial_params=("${params[@]}") best_match_idx unmatched_count node_idx
-  # Increase testdepth so that we can test all subtrees without setting variables
-  : $((testdepth++))
-  # Determine the best subtree match
+  local initial_continuation=("${continuation[@]}") node_idx
+  # Try the subtrees in order, the first one that leads to a match wins
   for node_idx in "$@"; do
-    if "node_$node_idx"; then
-      # Subtree matches
-      if [[ -z $unmatched_count || ${#params[@]} -lt $unmatched_count ]]; then
-        # More params consumed than last iteration, best match so far
-        best_match_idx=$node_idx
-        unmatched_count=${#params[@]}
-      fi
-    fi
-    params=("${initial_params[@]}")
+    continuation=("$node_idx" "${initial_continuation[@]}")
+    match_continuation && return 0
   done
-  # Done checking, decrease the testdepth again
-  : $((testdepth--))
-  # Check if any subtree matched
-  if [[ -n $best_match_idx ]]; then
-    # Let the best-matching subtree consume the params
-    # and potentially set the variables
-    "node_$best_match_idx"
-    return 0
-  fi
+  continuation=("${initial_continuation[@]}")
   return 1
 }
 
 optional() {
-  local node_idx
-  # Parse subtree, stop parsing when we can't match any longer
+  local initial_continuation=("${continuation[@]}") optionals=() node_idx
+  # Each subtree is optional on its own
   for node_idx in "$@"; do
-    "node_$node_idx"
+    optionals+=("?$node_idx")
   done
-  # Always succeed
-  return 0
+  continuation=("${optionals[@]}" "${continuation[@]}")
+  match_continuation && return 0
+  continuation=("${initial_continuation[@]}")
+  return 1
 }
 
 repeatable() {
-  local matched=false remaining=${#params[@]}
-  # Parse until we can't any longer
-  while "node_$1"; do
-    matched=true
-    # Nothing was removed from the remaining params, so stop looping
+  # Every consumed param adds frames to the call stack and bash segfaults after
+  # a few thousand of them. So instead of recursing once per repetition, we
+  # match as many repetitions as possible in a loop, each one on its own
+  # (that's what the "!" is for).
+  # Only the last repetition is matched together with the continuation. If that
+  # fails, we try again with one repetition less, rematching the ones before it
+  # from scratch. The downside is that all but the last repetition only use
+  # their first match, not necessarily one that lets the continuation match.
+  local initial_continuation=("${continuation[@]}")
+  local initial_params=("${params[@]}") initial_count=${#assignments[@]}
+  local before_params before_count last_params=() last_count count=0 i
+  while true; do
+    before_params=("${params[@]}")
+    before_count=${#assignments[@]}
+    continuation=("$1" '!')
+    match_continuation || break
+    : $((count++))
+    last_params=("${before_params[@]}")
+    last_count=$before_count
+    # Nothing was consumed, so stop looping.
     # This happens when an optional param can be repeated.
-    # An optional subtree parser never fails.
-    [[ $remaining -eq ${#params[@]} ]] && break
-    remaining=${#params[@]}
+    [[ ${#before_params[@]} -eq ${#params[@]} ]] && break
   done
-  if $matched; then
-    return 0
-  fi
+  while [[ $count -gt 0 ]]; do
+    # Rewind to before the last repetition and match it with the continuation
+    params=("${last_params[@]}")
+    assignments=("${assignments[@]:0:$last_count}")
+    values=("${values[@]:0:$last_count}")
+    continuation=("$1" "${initial_continuation[@]}")
+    match_continuation && return 0
+    # Rematch one repetition less
+    : $((count--))
+    params=("${initial_params[@]}")
+    assignments=("${assignments[@]:0:$initial_count}")
+    values=("${values[@]:0:$initial_count}")
+    for ((i=1; i<count; i++)); do
+      continuation=("$1" '!')
+      match_continuation
+    done
+    last_params=("${params[@]}")
+    last_count=${#assignments[@]}
+  done
+  params=("${initial_params[@]}")
+  assignments=("${assignments[@]:0:$initial_count}")
+  values=("${values[@]:0:$initial_count}")
+  continuation=("${initial_continuation[@]}")
+  return 1
+}
+
+# Signature: $param_idx $assignment $value
+# Removes the matched param, queues its assignment and matches the continuation.
+# Undoes all of that if the continuation does not match.
+consume() {
+  local initial_params=("${params[@]}") initial_count=${#assignments[@]}
+  params=("${params[@]:0:$1}" "${params[@]:(($1+1))}")
+  assignments+=("$2")
+  values+=("$3")
+  match_continuation && return 0
+  params=("${initial_params[@]}")
+  assignments=("${assignments[@]:0:$initial_count}")
+  values=("${values[@]:0:$initial_count}")
   return 1
 }
 
@@ -393,9 +469,8 @@ repeatable() {
 # We can group these into:
 # switches (command, --, --option) and
 # values (ARGUMENT, --option-with=ARGUMENT).
-# When either of these function parse options, they only return 1 when they have
-# run through the complete list of parameters that are yet to parsed and no
-# match was found.
+# Both only consider the first param that matches. Once it is consumed, the
+# rest of the AST is matched through the continuation (see BACKTRACKING).
 # For a better understanding, consider the following program:
 #   Usage: prog ARG (-a|-b)
 # AST:
@@ -436,18 +511,16 @@ switch() {
   for i in "${!params[@]}"; do
     local param=${params[$i]}
     if [[ $param = "$2" || $param = "$2":* ]]; then
-      # Name of the option/command matches, remove the param from remaining params
-      params=("${params[@]:0:$i}" "${params[@]:((i+1))}")
-      [[ $testdepth -gt 0 ]] && return 0
-      # Set the variable if we are not in testing mode
+      # Name of the option/command matches, consume the param
       if [[ $3 = true ]]; then
         # Switch is repeatable, increase a counter
-        eval "((var_$1++))" || true
+        consume "$i" "var_$1=\$((var_$1+1))" && return 0
       else
         # Switch is not repeatable, set to true
-        eval "var_$1=true"
+        consume "$i" "var_$1=true" && return 0
       fi
-      return 0
+      # The rest of the AST did not match
+      return 1
     elif [[ $param = a:* && $2 = a:* ]]; then
       # Fail if we were to parse a non-option and we encountered a non-option
       # where the name doesn't match
@@ -468,18 +541,18 @@ value() {
   for i in "${!params[@]}"; do
     local param=${params[$i]}
     if [[ $param = "$2":* ]]; then
-      # Argument or option matches, remove the param from remaining params
-      params=("${params[@]:0:$i}" "${params[@]:((i+1))}")
-      [[ $testdepth -gt 0 ]] && return 0
-      # Set the variable if we are not in testing mode
+      # Argument or option matches, consume the param.
+      # The assignment refers to the value by its index in $values
+      local value_ref="\${values[${#values[@]}]}"
       if [[ $3 = true ]]; then
         # Value is repeatable, add it to the array
-        eval "var_$1+="'("${param#*:}")'
+        consume "$i" "var_$1+=(\"$value_ref\")" "${param#*:}" && return 0
       else
         # Value is not repeatable, set the value
-        eval "var_$1="'${param#*:}'
+        consume "$i" "var_$1=$value_ref" "${param#*:}" && return 0
       fi
-      return 0
+      # The rest of the AST did not match
+      return 1
     fi
     # We don't fail here like we do in switch() if we were to find a non-option.
     # This is because an ARGUMENT matches anything that isn't an option.
